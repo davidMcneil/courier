@@ -66,7 +66,7 @@ impl<T: Clone + Debug> Debug for Index<T> {
 
 pub struct Cursor<T> {
     cursor: Pointer<T>,
-    to_head: Link<T>,
+    to_head: Pointer<T>,
 }
 
 impl<T> Cursor<T> {
@@ -85,6 +85,10 @@ impl<T> Cursor<T> {
             index: Weak::clone(&self.cursor),
         }
     }
+
+    pub fn valid(&self) -> bool {
+        self.to_head.upgrade().is_some()
+    }
 }
 
 impl<T: Clone> Cursor<T> {
@@ -95,7 +99,7 @@ impl<T: Clone> Cursor<T> {
                 next.read().unwrap().value.clone()
             }),
             None => {
-                self.cursor = Arc::downgrade(&self.to_head);
+                self.cursor = Weak::clone(&self.to_head);
                 self.get_copy()
             }
         }
@@ -142,7 +146,7 @@ impl<T> CommitLog<T> {
     pub fn new_head_cursor(&self) -> Cursor<T> {
         Cursor {
             cursor: Arc::downgrade(&self.to_head),
-            to_head: Arc::clone(&self.to_head),
+            to_head: Arc::downgrade(&self.to_head),
         }
     }
 
@@ -150,7 +154,7 @@ impl<T> CommitLog<T> {
         match self.tail.as_ref() {
             Some(tail) => Cursor {
                 cursor: Arc::downgrade(&tail),
-                to_head: Arc::clone(&self.to_head),
+                to_head: Arc::downgrade(&self.to_head),
             },
             None => self.new_head_cursor(),
         }

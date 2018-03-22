@@ -3,6 +3,7 @@
         "chrono",
         "derive",
         "deserialize",
+        "qorier",
         "serde",
         "uuid"
     ]
