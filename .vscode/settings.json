@@ -1,10 +1,15 @@
 {
     "cSpell.words": [
+        "Deque",
+        "acked",
         "chrono",
+        "codegen",
+        "contrib",
         "derive",
         "deserialize",
         "qorier",
         "serde",
+        "serializer",
         "uuid"
     ]
 }

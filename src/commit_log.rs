@@ -13,10 +13,7 @@ struct Element<T> {
 
 impl<T> Element<T> {
     fn new(value: T) -> Shared<Self> {
-        Arc::new(RwLock::new(Element {
-            value: value,
-            next: None,
-        }))
+        Arc::new(RwLock::new(Self { value, next: None }))
     }
 }
 
@@ -32,14 +29,20 @@ type Pointer<T> = WeakShared<Element<T>>;
 
 type Node<T> = Option<Link<T>>;
 
-
 pub struct Index<T> {
     index: Pointer<T>,
 }
 
 impl<T> Index<T> {
-    pub fn new(cursor: &Cursor<T>) -> Index<T> {
-        cursor.new_index()
+    pub fn new(cursor: &Cursor<T>) -> Self {
+        Self {
+            index: Weak::clone(&cursor.cursor),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn valid(&self) -> bool {
+        self.index.upgrade().is_some()
     }
 }
 
@@ -70,22 +73,22 @@ pub struct Cursor<T> {
 }
 
 impl<T> Cursor<T> {
-    pub fn new_head(log: &CommitLog<T>) -> Cursor<T> {
+    pub fn new_head(log: &CommitLog<T>) -> Self {
         log.new_head_cursor()
     }
 
-    pub fn new_tail(log: &CommitLog<T>) -> Cursor<T> {
+    #[allow(dead_code)]
+    pub fn new_tail(log: &CommitLog<T>) -> Self {
         log.new_tail_cursor()
     }
 }
 
 impl<T> Cursor<T> {
     pub fn new_index(&self) -> Index<T> {
-        Index {
-            index: Weak::clone(&self.cursor),
-        }
+        Index::new(self)
     }
 
+    #[allow(dead_code)]
     pub fn valid(&self) -> bool {
         self.to_head.upgrade().is_some()
     }
@@ -95,7 +98,7 @@ impl<T: Clone> Cursor<T> {
     pub fn get_copy(&mut self) -> Option<T> {
         match self.cursor.upgrade() {
             Some(cursor) => cursor.read().unwrap().next.as_ref().map(|next| {
-                self.cursor = Arc::downgrade(&next);
+                self.cursor = Arc::downgrade(next);
                 next.read().unwrap().value.clone()
             }),
             None => {
@@ -115,13 +118,11 @@ impl<T: Clone + Debug> Debug for Cursor<T> {
                 .upgrade()
                 .as_ref()
                 .map(|c| c.read().unwrap().value.clone()),
-            self.cursor.upgrade().as_ref().map(|c| {
-                c.read()
-                    .unwrap()
-                    .next
-                    .as_ref()
-                    .map(|n| n.read().unwrap().value.clone())
-            })
+            self.cursor.upgrade().as_ref().map(|c| c.read()
+                .unwrap()
+                .next
+                .as_ref()
+                .map(|n| n.read().unwrap().value.clone()))
         )
     }
 }
@@ -134,7 +135,7 @@ pub struct CommitLog<T> {
 
 impl<T: Default> CommitLog<T> {
     pub fn new() -> Self {
-        CommitLog {
+        Self {
             to_head: Element::new(Default::default()),
             tail: None,
             length: 0,
@@ -153,17 +154,19 @@ impl<T> CommitLog<T> {
     pub fn new_tail_cursor(&self) -> Cursor<T> {
         match self.tail.as_ref() {
             Some(tail) => Cursor {
-                cursor: Arc::downgrade(&tail),
+                cursor: Arc::downgrade(tail),
                 to_head: Arc::downgrade(&self.to_head),
             },
             None => self.new_head_cursor(),
         }
     }
 
+    #[allow(dead_code)]
     pub fn empty(&self) -> bool {
         self.length == 0
     }
 
+    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         self.length
     }
