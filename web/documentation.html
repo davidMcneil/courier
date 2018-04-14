@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Courier</title>
+
+    <link rel="stylesheet" href="css/bulma.css" />
+</head>
+
+<body>
+    <section class="hero is-primary">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title is-1">
+                    Courier
+                </h1>
+                <h1 class="subtitle">
+                    A simple pub/sub service.
+                </h1>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <p class="has-text-justified">
+                Courier provides an in-memory, non-distributed pub/sub service with an http, json interface. There are three objects that
+                apps using Courier interact with
+                <strong>messages</strong>,
+                <strong>topics</strong>, and
+                <strong>subscriptions</strong>. The basic flow is that apps
+                <strong>pub</strong>lish messages to a given topic while
+                <strong>sub</strong>scribers read messages from the topic to which they are subscribed.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <h1 class="title is-3">
+                Topic Endpoints
+            </h1>
+            <h1 class="title is-4">
+                Create -
+                <span>/topics/&lt;name&gt;</span>
+            </h1>
+            <div class="columns">
+                <p class="content column">
+                    Create a new topic with the specified name and time-to-live (ttl) for every message published to the topic.
+                </p>
+                <div class="content column">
+                    <pre>
+{
+    // The ttl of all messages published to this topic
+    message_ttl: &lt;i64&gt;
+}</pre>
+                </div>
+            </div>
+            <div class="content">
+                <pre>
+    > curl testing</pre>
+            </div>
+            <table class="table is-bordered is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Status Code</th>
+                        <th>Response Body</th>
+                        <th>Explanation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>201 (Created)</td>
+                        <td>&lt;empty&gt</td>
+                        <td> A new topic was successfully created.</td>
+                    </tr>
+                    <tr>
+                        <td>208 (Already Reported)</td>
+                        <td>&lt;empty&gt</td>
+                        <td>A topic with this name already exists.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h1 class="title is-4">
+                Delete
+            </h1>
+            <p>
+                Delete a topic.
+            </p>
+            <table class="table is-bordered is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Response Code</th>
+                        <th>Response Body</th>
+                        <th>Explanation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> 201</td>
+                        <td> </td>
+                        <td> A new topic was successfully created.</td>
+                    </tr>
+                    <tr>
+                        <td>208</td>
+                        <td></td>
+                        <td>A topic with this name already exists.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer class="footer is-small">
+        <div class="container">
+            <div class="content has-text-centered">
+                <p>
+                    <strong>Courier</strong> by
+                    <a href="https://jgthms.com">David McNeil</a>. The source code is licensed
+                    <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. The website content is licensed
+                    <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY NC SA 4.0</a>.
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
