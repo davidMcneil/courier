@@ -1,7 +1,7 @@
 # Courier
 
 ![Travis](https://img.shields.io/travis/davidMcneil/courier.svg) [![Coverage Status](https://coveralls.io/repos/github/davidMcneil/courier/badge.svg?branch=master)](https://coveralls.io/github/davidMcneil/courier?branch=master)
-![Coveralls github](https://img.shields.io/coveralls/github/jekyll/jekyll.svg)
+![Coveralls github](https://img.shields.io/coveralls/github/davidMcneil/courier.svg)
 [![license](http://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE-MIT) [![license](http://img.shields.io/badge/license-APACHE-blue.svg)](./LICENSE-APACHE)
 
 A simple pub/sub service.
