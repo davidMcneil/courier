@@ -1,7 +1,19 @@
+sudo: required
+dist: xenial
+addons:
+    apt:
+        packages:
+            - libssl-dev
+
 language: rust
 rust:
   - nightly
 cache: cargo
+
 script:
+  - cargo clean
   - cargo build --verbose
   - cargo test --verbose
+after_success: |
+  bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+  cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
