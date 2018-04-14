@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/davidMcneil/courier.svg?branch=master)](https://travis-ci.org/davidMcneil/courier)
 [![Coverage Status](https://coveralls.io/repos/github/davidMcneil/courier/badge.svg)](https://coveralls.io/github/davidMcneil/courier)
-[![LOC](https://tokei.rs/b1/github/davidMcneil/courier)](https://github.com/davidMcneil/courier)
+[![LoC](https://tokei.rs/b1/github/davidMcneil/courier)](https://github.com/davidMcneil/courier)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE-MIT)
 [![License](http://img.shields.io/badge/license-APACHE-blue.svg)](./LICENSE-APACHE)
 

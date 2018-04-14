@@ -1,0 +1,12 @@
+.vscode/
+web/
+.coveralls.yml
+.gitignore
+.ignore
+.travis.yml
+Cargo.lock
+Cargo.toml
+example.txt
+LICENSE-APACHE
+LICENSE-MIT
+README.md
