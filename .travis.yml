@@ -12,8 +12,10 @@ cache: cargo
 
 script:
   - cargo clean
-  - cargo build --verbose
-  - cargo test --verbose
+  - cargo build
+  - cargo test
 after_success: |
-  bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
-  cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+    cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+  fi

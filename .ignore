@@ -1,12 +1,11 @@
+# This is an ignore file for code coverage
 .vscode/
 web/
-.coveralls.yml
+tests.rs
 .gitignore
 .ignore
 .travis.yml
-Cargo.lock
 Cargo.toml
-example.txt
 LICENSE-APACHE
 LICENSE-MIT
 README.md

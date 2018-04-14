@@ -1,15 +1,20 @@
 {
-    "cSpell.words": [
-        "Deque",
-        "acked",
-        "chrono",
-        "codegen",
-        "contrib",
-        "derive",
-        "deserialize",
-        "qorier",
-        "serde",
-        "serializer",
-        "uuid"
-    ]
+  "cSpell.words": [
+    "Deque",
+    "acked",
+    "bulma",
+    "chrono",
+    "clippy",
+    "codegen",
+    "contrib",
+    "derive",
+    "deserialize",
+    "gitignore",
+    "millis",
+    "nexts",
+    "serde",
+    "serializer",
+    "toml",
+    "uuid"
+  ]
 }

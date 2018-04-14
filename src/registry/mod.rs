@@ -3,7 +3,10 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
 use uuid::Uuid;
 
-use qorier::{Message, RawMessage, Subscription, SubscriptionMeta, Topic, TopicMeta};
+use courier::{Message, RawMessage, Subscription, SubscriptionMeta, Topic, TopicMeta};
+
+#[cfg(test)]
+mod tests;
 
 struct TopicStore {
     topic: Topic,
@@ -11,7 +14,7 @@ struct TopicStore {
 }
 
 impl TopicStore {
-    fn new(name: &str, ttl: &Duration) -> Self {
+    fn new(name: &str, ttl: Duration) -> Self {
         TopicStore {
             topic: Topic::new(name, ttl),
             subscriptions: HashSet::new(),
@@ -28,14 +31,13 @@ pub type Reg = Arc<RwLock<Registry>>;
 
 impl Registry {
     pub fn new() -> Reg {
-        let registry = Arc::new(RwLock::new(Self {
+        Arc::new(RwLock::new(Self {
             topics: HashMap::new(),
             subscriptions: HashMap::new(),
-        }));
-        registry
+        }))
     }
 
-    pub fn create_topic(&mut self, topic_name: &str, message_ttl: &Duration) -> (bool, TopicMeta) {
+    pub fn create_topic(&mut self, topic_name: &str, message_ttl: Duration) -> (bool, TopicMeta) {
         let created = !self.topics.contains_key(topic_name);
         let topic = self.topics
             .entry(String::from(topic_name))
@@ -88,14 +90,14 @@ impl Registry {
         &mut self,
         subscription_name: &str,
         topic_name: &str,
-        ack_deadline: &Duration,
+        ack_deadline: Duration,
     ) -> Option<(bool, SubscriptionMeta)> {
         let topic_store = self.topics.get_mut(topic_name)?;
         let topic = &topic_store.topic;
         let created = !self.subscriptions.contains_key(subscription_name);
         let subscription = self.subscriptions
             .entry(String::from(subscription_name))
-            .or_insert_with(|| Subscription::new(subscription_name, topic, ack_deadline));
+            .or_insert_with(|| Subscription::new_head(subscription_name, topic, ack_deadline));
         topic_store
             .subscriptions
             .insert(String::from(subscription_name));
@@ -134,14 +136,14 @@ impl Registry {
         self.subscriptions
             .get_mut(subscription_name)
             .map(|subscription| {
-                subscription.ack(ids);
+                subscription.ack_many(ids);
                 true
             })
             .unwrap_or(false)
     }
 
     pub fn cleanup(&mut self) {
-        for (_, mut topic) in self.topics.iter_mut() {
+        for mut topic in self.topics.values_mut() {
             topic.topic.cleanup();
         }
     }

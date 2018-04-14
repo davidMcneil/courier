@@ -2,23 +2,25 @@
 
 extern crate chrono;
 extern crate core;
+extern crate rand;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
 
-mod commit_log;
-
 use chrono::Duration;
 use chrono::prelude::*;
+use commit_log::{CommitLog, Cursor, Index};
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use uuid::Uuid;
 
-use commit_log::{CommitLog, Cursor, Index};
+mod commit_log;
+#[cfg(test)]
+mod tests;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct RawMessage {
     pub data: String,
 }
@@ -29,7 +31,7 @@ impl RawMessage {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Message {
     pub id: Uuid,
     pub time: DateTime<Utc>,
@@ -88,10 +90,10 @@ pub struct Subscription {
 }
 
 impl Subscription {
-    pub fn new(name: &str, topic: &Topic, ack_deadline: &Duration) -> Self {
+    pub fn new_head(name: &str, topic: &Topic, ack_deadline: Duration) -> Self {
         Self {
             name: String::from(name),
-            ack_deadline: *ack_deadline,
+            ack_deadline,
             topic: topic.name.clone(),
             cursor: Cursor::new_head(&topic.log),
             pending: VecDeque::new(),
@@ -99,25 +101,45 @@ impl Subscription {
         }
     }
 
+    pub fn new_tail(name: &str, topic: &Topic, ack_deadline: Duration) -> Self {
+        Self {
+            name: String::from(name),
+            ack_deadline,
+            topic: topic.name.clone(),
+            cursor: Cursor::new_tail(&topic.log),
+            pending: VecDeque::new(),
+            acked: HashSet::new(),
+        }
+    }
+
     pub fn pull(&mut self) -> Option<Message> {
         let (message, index) = self.check_pending()
-            .unwrap_or_else(|| (self.cursor.get_copy(), self.cursor.new_index()));
+            .unwrap_or_else(|| (self.cursor.next(), Index::new(&self.cursor)));
         if message.is_some() {
             self.pending.push_back(PendingMessage::new(index));
         }
         message
     }
 
-    pub fn ack(&mut self, ids: &[Uuid]) {
+    pub fn ack(&mut self, id: Uuid) {
+        self.acked.insert(id);
+    }
+
+    pub fn ack_many(&mut self, ids: &[Uuid]) {
         for id in ids {
-            self.acked.insert(*id);
+            self.ack(*id);
         }
+    }
+
+    pub fn set_ack_deadline(&mut self, ack_deadline: Duration) {
+        self.ack_deadline = ack_deadline;
     }
 
     fn check_pending(&mut self) -> Option<(Option<Message>, Index<Message>)> {
         while let Some(pending) = self.pending.pop_front() {
-            match pending.index.get_copy() {
+            match pending.index.get() {
                 Some(message) => {
+                    // Check to see if this message was acked
                     if self.acked.contains(&message.id) {
                         self.acked.remove(&message.id);
                         continue;
@@ -128,8 +150,10 @@ impl Subscription {
                         self.pending.push_front(pending);
                         return None;
                     }
+                    // The message ack deadline timed out so return that message to be resent 
                     return Some((Some(message), pending.index));
                 }
+                // The message has timed out in the topic
                 None => continue,
             }
         }
@@ -137,7 +161,7 @@ impl Subscription {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct SubscriptionMeta {
     pub name: String,
     pub topic: String,
@@ -162,10 +186,10 @@ pub struct Topic {
 }
 
 impl Topic {
-    pub fn new(name: &str, message_ttl: &Duration) -> Topic {
+    pub fn new(name: &str, message_ttl: Duration) -> Topic {
         Topic {
             name: String::from(name),
-            message_ttl: *message_ttl,
+            message_ttl,
             log: CommitLog::new(),
         }
     }
@@ -174,24 +198,19 @@ impl Topic {
         self.log.append(message);
     }
 
-    pub fn subscribe(&self, name: &str, ack_deadline: &Duration) -> Subscription {
-        Subscription::new(name, self, ack_deadline)
-    }
-
     pub fn cleanup(&mut self) {
         let ttl = self.message_ttl;
         self.log.cleanup(&|m| {
-            println!(
-                "{}, {}",
-                Utc::now().signed_duration_since(m.time).num_seconds(),
-                ttl.num_seconds()
-            );
             Utc::now().signed_duration_since(m.time) > ttl
         });
     }
+
+    pub fn set_message_ttl(&mut self, message_ttl: Duration) {
+        self.message_ttl = message_ttl;
+    }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct TopicMeta {
     pub name: String,
     pub message_ttl: i64,
@@ -203,15 +222,5 @@ impl<'a> From<&'a Topic> for TopicMeta {
             name: topic.name.clone(),
             message_ttl: topic.message_ttl.num_seconds(),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    // use super::*;
-
-    #[test]
-    fn test00() {
-        assert_eq!(2 + 2, 4);
     }
 }
