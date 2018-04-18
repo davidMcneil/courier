@@ -1,6 +1,6 @@
 use super::*;
-use std::time;
 use std::thread;
+use std::time;
 
 #[test]
 fn pub_sub_create() {
@@ -28,20 +28,23 @@ fn pub_sub_create() {
 #[test]
 fn pub_sub_basic() {
     let mut topic = Topic::new("topic", Duration::seconds(60));
-    let mut subscription = Subscription::new_head("subscription", &topic, Duration::milliseconds(10));
+    let mut subscription =
+        Subscription::new_head("subscription", &topic, Duration::milliseconds(10));
     topic.publish(Message::new(String::from("a")));
     topic.publish(Message::new(String::from("b")));
     let message = subscription.pull().unwrap();
     assert_eq!(String::from("a"), message.data);
     subscription.ack(message.id);
     let message = subscription.pull().unwrap();
+    assert_eq!(None, subscription.pull());
     subscription.ack_many(&[message.id]);
     assert_eq!(String::from("b"), message.data);
     assert_eq!(None, subscription.pull());
     thread::sleep(time::Duration::from_millis(20));
     assert_eq!(None, subscription.pull());
 
-    let mut subscription = Subscription::new_tail("subscription", &topic, Duration::milliseconds(10));
+    let mut subscription =
+        Subscription::new_tail("subscription", &topic, Duration::milliseconds(10));
     assert_eq!(None, subscription.pull());
 
     topic.publish(Message::new(String::from("c")));

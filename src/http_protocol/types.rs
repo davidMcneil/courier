@@ -3,8 +3,13 @@ use uuid::Uuid;
 use courier::{Message, RawMessage, SubscriptionMeta, TopicMeta};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct TopicConfig {
-    pub message_ttl: i64,
+pub struct TopicCreateConfig {
+    pub message_ttl: Option<u32>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct TopicUpdateConfig {
+    pub message_ttl: Option<u32>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -46,9 +51,14 @@ impl SubscriptionNameList {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct SubscriptionConfig {
+pub struct SubscriptionCreateConfig {
     pub topic: String,
-    pub ack_deadline: i64,
+    pub ack_deadline: Option<u32>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct SubscriptionUpdateConfig {
+    pub ack_deadline: Option<u32>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -71,4 +81,10 @@ impl MessageList {
     pub fn new(messages: Vec<Message>) -> Self {
         Self { messages }
     }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct PullConfig {
+    pub return_immediately: bool,
+    pub max_messages: usize,
 }

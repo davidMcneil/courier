@@ -1,6 +1,9 @@
 use chrono::Duration;
+use chrono::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
+use std::thread;
+use std::time;
 use uuid::Uuid;
 
 use courier::{Message, RawMessage, Subscription, SubscriptionMeta, Topic, TopicMeta};
@@ -27,10 +30,10 @@ pub struct Registry {
     subscriptions: HashMap<String, Subscription>,
 }
 
-pub type Reg = Arc<RwLock<Registry>>;
+pub type SharedRegistry = Arc<RwLock<Registry>>;
 
 impl Registry {
-    pub fn new() -> Reg {
+    pub fn new() -> SharedRegistry {
         Arc::new(RwLock::new(Self {
             topics: HashMap::new(),
             subscriptions: HashMap::new(),
@@ -43,6 +46,18 @@ impl Registry {
             .entry(String::from(topic_name))
             .or_insert_with(|| TopicStore::new(topic_name, message_ttl));
         (created, TopicMeta::from(&topic.topic))
+    }
+
+    pub fn update_topic(
+        &mut self,
+        topic_name: &str,
+        message_ttl: Option<Duration>,
+    ) -> Option<TopicMeta> {
+        self.topics.get_mut(topic_name).map(|t| {
+            let old_ttl = t.topic.message_ttl;
+            t.topic.set_message_ttl(message_ttl.unwrap_or(old_ttl));
+            TopicMeta::from(&t.topic)
+        })
     }
 
     pub fn delete_topic(&mut self, topic_name: &str) -> bool {
@@ -104,6 +119,18 @@ impl Registry {
         Some((created, SubscriptionMeta::from(&*subscription)))
     }
 
+    pub fn update_subscription(
+        &mut self,
+        subscription_name: &str,
+        ack_deadline: Option<Duration>,
+    ) -> Option<SubscriptionMeta> {
+        self.subscriptions.get_mut(subscription_name).map(|s| {
+            let old_deadline = s.ack_deadline;
+            s.set_ack_deadline(ack_deadline.unwrap_or(old_deadline));
+            SubscriptionMeta::from(&*s)
+        })
+    }
+
     pub fn delete_subscription(&mut self, subscription_name: &str) -> bool {
         self.subscriptions.remove(subscription_name).is_some()
     }
@@ -121,14 +148,51 @@ impl Registry {
             .collect()
     }
 
-    pub fn pull(&mut self, subscription_name: &str) -> Option<Vec<Message>> {
+    pub fn pull_immediate(
+        &mut self,
+        subscription_name: &str,
+        max_messages: usize,
+    ) -> Option<Vec<Message>> {
         self.subscriptions
             .get_mut(subscription_name)
             .map(|subscription| {
-                subscription
-                    .pull()
-                    .map(|message| vec![message])
-                    .unwrap_or_else(Vec::new)
+                let mut messages = Vec::with_capacity(max_messages);
+                while let Some(message) = subscription.pull() {
+                    messages.push(message);
+                    if messages.len() >= max_messages {
+                        break;
+                    }
+                }
+                messages
+            })
+    }
+
+    pub fn pull_wait(
+        &mut self,
+        subscription_name: &str,
+        max_messages: usize,
+        wait: Duration,
+    ) -> Option<Vec<Message>> {
+        let start = Utc::now();
+        self.subscriptions
+            .get_mut(subscription_name)
+            .map(|subscription| {
+                let mut messages = Vec::with_capacity(max_messages);
+                loop {
+                    while let Some(message) = subscription.pull() {
+                        messages.push(message);
+                        if messages.len() >= max_messages {
+                            break;
+                        }
+                    }
+                    if messages.len() >= max_messages
+                        || Utc::now().signed_duration_since(start) > wait
+                    {
+                        break;
+                    }
+                    thread::sleep(time::Duration::from_millis(10));
+                }
+                messages
             })
     }
 

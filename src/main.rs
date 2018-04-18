@@ -12,9 +12,19 @@ extern crate uuid;
 
 extern crate courier;
 
-mod http_json_protocol;
+mod http_protocol;
 mod registry;
 
+use chrono::Duration;
+
 pub fn main() {
-    http_json_protocol::rocket().launch();
+    let config = http_protocol::Config {
+        default_message_ttl: Duration::seconds(3600),
+        default_ack_deadline: Duration::seconds(60),
+        default_return_immediately: false,
+        default_max_messages: 1,
+        cleanup_interval: Duration::seconds(1),
+        max_pull_wait: Duration::seconds(5),
+    };
+    http_protocol::rocket(config).launch();
 }

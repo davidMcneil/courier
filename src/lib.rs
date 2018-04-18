@@ -31,7 +31,7 @@ impl RawMessage {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct Message {
     pub id: Uuid,
     pub time: DateTime<Utc>,
@@ -150,7 +150,7 @@ impl Subscription {
                         self.pending.push_front(pending);
                         return None;
                     }
-                    // The message ack deadline timed out so return that message to be resent 
+                    // The message ack deadline timed out so return that message to be resent
                     return Some((Some(message), pending.index));
                 }
                 // The message has timed out in the topic
@@ -161,7 +161,7 @@ impl Subscription {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct SubscriptionMeta {
     pub name: String,
     pub topic: String,
@@ -200,9 +200,8 @@ impl Topic {
 
     pub fn cleanup(&mut self) {
         let ttl = self.message_ttl;
-        self.log.cleanup(&|m| {
-            Utc::now().signed_duration_since(m.time) > ttl
-        });
+        self.log
+            .cleanup(&|m| Utc::now().signed_duration_since(m.time) > ttl);
     }
 
     pub fn set_message_ttl(&mut self, message_ttl: Duration) {
@@ -210,7 +209,7 @@ impl Topic {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct TopicMeta {
     pub name: String,
     pub message_ttl: i64,

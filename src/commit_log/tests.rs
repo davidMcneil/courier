@@ -41,6 +41,7 @@ fn commit_log_basic() {
 
     log.cleanup(&|t: &u32| t <= &5);
     assert_eq!(None, index0.get());
+    assert_eq!(None, cursor1.peek());
     assert_eq!(None, cursor1.next());
     log.append(6);
     assert_eq!(Some(6), cursor0.next());
@@ -75,7 +76,7 @@ fn commit_log_random() {
                 log.append(i);
                 expected.push(i);
             }
-            let num_nexts = rng.gen_range(0, r2-r1);
+            let num_nexts = rng.gen_range(0, r2 - r1);
             for i in 0..num_nexts {
                 assert_eq!(Some(expected[i]), cursor.next());
             }
