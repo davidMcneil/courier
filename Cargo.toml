@@ -2,6 +2,7 @@
 name = "courier"
 version = "0.1.0"
 authors = ["David McNeil <mcneil.david2@gmail.com>"]
+description = "A simple pubsub service."
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
@@ -12,6 +13,7 @@ rocket_contrib = "0.3.6"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
+structopt = "0.2.7"
 uuid = { version = "0.6", features = ["serde", "v4"] }
 
 [lib]

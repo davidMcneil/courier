@@ -22,9 +22,12 @@ fn create(
         .ack_deadline
         .map(|deadline| Duration::seconds(i64::from(deadline)))
         .unwrap_or(cfg.default_ack_deadline);
-    let subscribe = reg.write()
-        .unwrap()
-        .create_subscription(&name, &config.topic, deadline);
+    let subscribe = reg.write().unwrap().create_subscription(
+        &name,
+        &config.topic,
+        deadline,
+        config.historical.unwrap_or(false),
+    );
     subscribe.map(|(created, subscription)| {
         let json = Json(subscription);
         if created {
@@ -99,12 +102,8 @@ pub fn pull(
 ) -> Option<Json<types::MessageList>> {
     let mut reg = reg.write().unwrap();
     let config = config.into_inner();
-    let messages = if config.return_immediately {
-        reg.pull_immediate(&name, config.max_messages)
-    } else {
-        reg.pull_wait(&name, config.max_messages, Duration::seconds(5))
-    };
-    messages.map(|messages| Json(types::MessageList::new(messages)))
+    reg.pull(&name, config.max_messages)
+        .map(|messages| Json(types::MessageList::new(messages)))
 }
 
 #[post("/<name>/ack", data = "<ids>")]

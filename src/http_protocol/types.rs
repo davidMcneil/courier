@@ -28,6 +28,13 @@ pub struct RawMessageList {
     pub messages: Vec<RawMessage>,
 }
 
+impl RawMessageList {
+    #[allow(dead_code)]
+    pub fn new(messages: Vec<RawMessage>) -> Self {
+        Self { messages }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct MessageIdList {
     pub message_ids: Vec<Uuid>,
@@ -54,6 +61,7 @@ impl SubscriptionNameList {
 pub struct SubscriptionCreateConfig {
     pub topic: String,
     pub ack_deadline: Option<u32>,
+    pub historical: Option<bool>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -85,6 +93,12 @@ impl MessageList {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PullConfig {
-    pub return_immediately: bool,
     pub max_messages: usize,
+}
+
+impl PullConfig {
+    #[allow(dead_code)]
+    pub fn new(max_messages: usize) -> Self {
+        Self { max_messages }
+    }
 }

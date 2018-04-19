@@ -13,13 +13,13 @@ pub fn documentation() -> Response<'static> {
         .finalize()
 }
 
-#[get("/bulma.css")]
-pub fn bulma() -> Response<'static> {
-    Response::build()
-        .header(ContentType::CSS)
-        .sized_body(Cursor::new(""))
-        .finalize()
-}
+// #[get("/bulma.css")]
+// pub fn bulma() -> Response<'static> {
+//     Response::build()
+//         .header(ContentType::CSS)
+//         .sized_body(Cursor::new(""))
+//         .finalize()
+// }
 
 #[get("/ui")]
 pub fn ui() -> String {

@@ -65,7 +65,6 @@ impl<T> Cursor<T> {
         }
     }
 
-    #[allow(dead_code)]
     pub fn new_tail(log: &CommitLog<T>) -> Self {
         match log.tail.as_ref() {
             Some(tail) => Cursor {

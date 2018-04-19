@@ -1,9 +1,6 @@
 use chrono::Duration;
-use chrono::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
-use std::thread;
-use std::time;
 use uuid::Uuid;
 
 use courier::{Message, RawMessage, Subscription, SubscriptionMeta, Topic, TopicMeta};
@@ -106,13 +103,20 @@ impl Registry {
         subscription_name: &str,
         topic_name: &str,
         ack_deadline: Duration,
+        historical: bool,
     ) -> Option<(bool, SubscriptionMeta)> {
         let topic_store = self.topics.get_mut(topic_name)?;
         let topic = &topic_store.topic;
         let created = !self.subscriptions.contains_key(subscription_name);
         let subscription = self.subscriptions
             .entry(String::from(subscription_name))
-            .or_insert_with(|| Subscription::new_head(subscription_name, topic, ack_deadline));
+            .or_insert_with(|| {
+                if historical {
+                    Subscription::new_head(subscription_name, topic, ack_deadline)
+                } else {
+                    Subscription::new_tail(subscription_name, topic, ack_deadline)
+                }
+            });
         topic_store
             .subscriptions
             .insert(String::from(subscription_name));
@@ -148,49 +152,16 @@ impl Registry {
             .collect()
     }
 
-    pub fn pull_immediate(
-        &mut self,
-        subscription_name: &str,
-        max_messages: usize,
-    ) -> Option<Vec<Message>> {
+    pub fn pull(&mut self, subscription_name: &str, max_messages: usize) -> Option<Vec<Message>> {
         self.subscriptions
             .get_mut(subscription_name)
             .map(|subscription| {
                 let mut messages = Vec::with_capacity(max_messages);
                 while let Some(message) = subscription.pull() {
-                    messages.push(message);
                     if messages.len() >= max_messages {
                         break;
                     }
-                }
-                messages
-            })
-    }
-
-    pub fn pull_wait(
-        &mut self,
-        subscription_name: &str,
-        max_messages: usize,
-        wait: Duration,
-    ) -> Option<Vec<Message>> {
-        let start = Utc::now();
-        self.subscriptions
-            .get_mut(subscription_name)
-            .map(|subscription| {
-                let mut messages = Vec::with_capacity(max_messages);
-                loop {
-                    while let Some(message) = subscription.pull() {
-                        messages.push(message);
-                        if messages.len() >= max_messages {
-                            break;
-                        }
-                    }
-                    if messages.len() >= max_messages
-                        || Utc::now().signed_duration_since(start) > wait
-                    {
-                        break;
-                    }
-                    thread::sleep(time::Duration::from_millis(10));
+                    messages.push(message);
                 }
                 messages
             })

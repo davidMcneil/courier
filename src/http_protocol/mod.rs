@@ -15,6 +15,8 @@ use registry::Registry;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Config {
+    pub host: String,
+    pub port: u16,
     pub default_message_ttl: Duration,
     pub default_ack_deadline: Duration,
     pub default_return_immediately: bool,
@@ -31,12 +33,15 @@ pub fn rocket(config: Config) -> rocket::Rocket {
         registry_cleanup.write().unwrap().cleanup();
         thread::sleep(time::Duration::from_secs(1));
     });
-    rocket::ignite()
+    let rocket_config = rocket::config::Config::build(rocket::config::Environment::Development)
+        .address(config.host.clone())
+        .port(config.port)
+        .unwrap();
+    rocket::custom(rocket_config, true)
         .mount(
             "/",
             routes![general_handlers::documentation, general_handlers::ui],
         )
-        .mount("/css", routes![general_handlers::bulma])
         .mount(&format!("{}", api_root), routes![general_handlers::metrics])
         .mount(
             &format!("{}/topics", api_root),
