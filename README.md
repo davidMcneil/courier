@@ -16,25 +16,22 @@ Courier provides an in-memory, non-distributed pub/sub service with an http, jso
 
 **Table of Contents**
 
-[Topic End Points](#topic_end_points)
-
-* [Create](#topic_create)
-* [Update](#topic_update)
-* [Delete](#topic_delete)
-* [Get](#topic_get)
-* [List](#topic_list)
-* [Subscriptions](#topic_subscriptions)
-* [Publish](#topic_publish)
-
-[Subscription End Points](#subscription_end_points)
-
-* [Create](#subscription_create)
-* [Update](#subscription_update)
-* [Delete](#subscription_delete)
-* [Get](#subscription_get)
-* [List](#subscription_list)
-* [Pull](#subscription_pull)
-* [Ack](#subscription_ack)
+* [Topic End Points](#topic_end_points)
+  * [Create](#topic_create)
+  * [Update](#topic_update)
+  * [Delete](#topic_delete)
+  * [Get](#topic_get)
+  * [List](#topic_list)
+  * [Subscriptions](#topic_subscriptions)
+  * [Publish](#topic_publish)
+* [Subscription End Points](#subscription_end_points)
+  * [Create](#subscription_create)
+  * [Update](#subscription_update)
+  * [Delete](#subscription_delete)
+  * [Get](#subscription_get)
+  * [List](#subscription_list)
+  * [Pull](#subscription_pull)
+  * [Ack](#subscription_ack)
 
 All messages which require the following http headers to be set:
 
@@ -48,8 +45,16 @@ All messages which require the following http headers to be set:
 
 ```json
 {
-    name: <string>,
-    message_ttl: <u32>,
+  "name": "<string>",
+  "message_ttl": "<u32>"
+}
+```
+
+### TopicList <a name="topic_list_type"></a>
+
+```json
+{
+  "topics": "<Topic[]>"
 }
 ```
 
@@ -57,15 +62,23 @@ All messages which require the following http headers to be set:
 
 ```json
 {
-    name: <string>,
-    topic: <string>,
-    ack_deadline: <u32>,
+  "name": "<string>",
+  "topic": "<string>",
+  "ack_deadline": "<u32>"
+}
+```
+
+### SubscriptionList <a name="topic_list_type"></a>
+
+```json
+{
+  "subscriptions": "<Subscription[]>"
 }
 ```
 
 ### Topic End Points <a name="topic_end_points"></a>
 
-#### Create - (PUT) /api/v0/topics/create/<topic> <a name="topic_create"></a>
+#### Create - (PUT) /api/v0/topics/<topic> <a name="topic_create"></a>
 
 Create a new topic.
 
@@ -73,7 +86,7 @@ Create a new topic.
 
 ```json
 {
-  message_ttl: <u32>,
+  "message_ttl": "<u32>"
 }
 ```
 
@@ -89,7 +102,7 @@ Create a new topic.
 | 201 (Created)  | [Topic](#topic_type) | Successfully created a new topic                                                |
 | 409 (Conflict) | &lt;empty&gt;        | Could not create a topic because a topic with the specified name already exists |
 
-#### Update - (PATCH) /api/v0/topics/update/<topic> <a name="topic_update"></a>
+#### Update - (PATCH) /api/v0/topics/<topic> <a name="topic_update"></a>
 
 Update a topic.
 
@@ -97,7 +110,7 @@ Update a topic.
 
 ```json
 {
-  message_ttl: <u32>,
+  "message_ttl": "<u32>"
 }
 ```
 
@@ -113,7 +126,7 @@ Update a topic.
 | 200 (Ok)        | [Topic](#topic_type) | Successfully updated the topic                     |
 | 404 (Not Found) | &lt;empty&gt;        | A topic with the specified name could not be found |
 
-#### Delete - (DELETE) /api/v0/topics/delete/<topic> <a name="topic_delete"></a>
+#### Delete - (DELETE) /api/v0/topics/<topic> <a name="topic_delete"></a>
 
 Delete a topic.
 
@@ -130,9 +143,42 @@ Delete a topic.
 | 200 (Ok)        | &lt;empty&gt; | Successfully deleted the topic                     |
 | 404 (Not Found) | &lt;empty&gt; | A topic with the specified name could not be found |
 
+#### Get - (GET) /api/v0/topics/<topic> <a name="topic_get"></a>
+
+Get a topic.
+
+##### Request
+
+| Parameter | Description                  | Units | Format | Required |
+| --------- | ---------------------------- | ----- | ------ | -------- |
+| topic     | The name of the topic to get |       | path   | true     |
+
+##### Response
+
+| Status Code     | Response Body        | Description                                        |
+| --------------- | -------------------- | -------------------------------------------------- |
+| 200 (Ok)        | [Topic](#topic_type) | Successfully retrieved the topic                   |
+| 404 (Not Found) | &lt;empty&gt;        | A topic with the specified name could not be found |
+
+#### List - (GET) /api/v0/topics <a name="topic_list"></a>
+
+List all of the topics.
+
+##### Request
+
+| Parameter | Description | Units | Format | Required |
+| --------- | ----------- | ----- | ------ | -------- |
+|           |             |       |        |          |
+
+##### Response
+
+| Status Code | Response Body                 | Description                           |
+| ----------- | ----------------------------- | ------------------------------------- |
+| 200 (Ok)    | [TopicList](#topic_list_type) | Successfully retrieved the topic list |
+
 ### Subscription End Points <a name="subscription_end_points"></a>
 
-#### Create - (PUT) /api/v0/subscriptions/create/<subscription> <a name="subscription_create"></a>
+#### Create - (PUT) /api/v0/subscriptions/<subscription> <a name="subscription_create"></a>
 
 Create a new subscription.
 
@@ -140,7 +186,7 @@ Create a new subscription.
 
 ```json
 {
-  ack_deadline: <u32>,
+  "ack_deadline": "<u32>"
 }
 ```
 
@@ -157,7 +203,7 @@ Create a new subscription.
 | 201 (Created)  | [subscription](#subscription_type) | Successfully created a new subscription                                                       |
 | 409 (Conflict) | &lt;empty&gt;                      | Could not create a subscription because a subscription with the specified name already exists |
 
-#### Update - (PATCH) /api/v0/subscriptions/update/<subscription> <a name="subscription_update"></a>
+#### Update - (PATCH) /api/v0/subscriptions/<subscription> <a name="subscription_update"></a>
 
 Update a subscription.
 
@@ -165,7 +211,7 @@ Update a subscription.
 
 ```json
 {
-  ack_deadline: <u32>,
+  "ack_deadline": "<u32>"
 }
 ```
 
@@ -181,7 +227,7 @@ Update a subscription.
 | 200 (Ok)        | [Subscription](#subscription_type) | Successfully updated the subscription                     |
 | 404 (Not Found) | &lt;empty&gt;                      | A subscription with the specified name could not be found |
 
-#### Delete - (DELETE) /api/v0/subscriptions/delete/<subscription> <a name="subscription_delete"></a>
+#### Delete - (DELETE) /api/v0/subscriptions/<subscription> <a name="subscription_delete"></a>
 
 Delete a subscription.
 
@@ -198,11 +244,45 @@ Delete a subscription.
 | 200 (Ok)        | &lt;empty&gt; | Successfully deleted the subscription                     |
 | 404 (Not Found) | &lt;empty&gt; | A subscription with the specified name could not be found |
 
+#### Get - (GET) /api/v0/subscriptions/<subscription> <a name="subscription_get"></a>
+
+Get a subscription.
+
+##### Request
+
+| Parameter    | Description                         | Units | Format | Required |
+| ------------ | ----------------------------------- | ----- | ------ | -------- |
+| subscription | The name of the subscription to get |       | path   | true     |
+
+##### Response
+
+| Status Code     | Response Body                      | Description                                               |
+| --------------- | ---------------------------------- | --------------------------------------------------------- |
+| 200 (Ok)        | [Subscription](#subscription_type) | Successfully retrieved the subscription                   |
+| 404 (Not Found) | &lt;empty&gt;                      | A subscription with the specified name could not be found |
+
+#### List - (GET) /api/v0/subscriptions <a name="subscription_list"></a>
+
+List all of the subscriptions.
+
+##### Request
+
+| Parameter | Description | Units | Format | Required |
+| --------- | ----------- | ----- | ------ | -------- |
+|           |             |       |        |          |
+
+##### Response
+
+| Status Code | Response Body                               | Description                                  |
+| ----------- | ------------------------------------------- | -------------------------------------------- |
+| 200 (Ok)    | [SubscriptionList](#subscription_list_type) | Successfully retrieved the subscription list |
+
 ## Develop
 
-Examples
-curl -X PUT -H "Content-Type: application/json" -d '{"message_ttl": 600}' http://localhost:8000/api/v0/topics/testing && echo
-curl -X POST -H "content-Type: application/json" -d '{"messages": [{"data": "test"}]}' http://localhost:8000/api/v0/topics/testing/publish && echo
-curl -X PUT -H "Content-Type: application/json" -d '{"topic": "testing", "ack_deadline": 60}' http://localhost:8000/api/v0/subscriptions/sub0 && echo
-curl -X POST -H "Content-Type: application/json" http://localhost:8000/api/v0/subscriptions/sub0/pull && echo
-curl -X POST -H "Content-Type: application/json" -d '{"message_ids": ["c639b587-e5b7-4fdd-92ee-42ddc03aca54"]}' http://localhost:8000/api/v0/subscriptions/sub0/ack && echo
+## Example Commands
+
+    > curl -X PUT -H "Content-Type: application/json" -d '{"message_ttl": 600}' http://localhost:8000/api/v0/topics/testing && echo
+    > curl -X POST -H "content-Type: application/json" -d '{"messages": [{"data": "test"}]}' http://localhost:8000/api/v0/topics/testing/publish && echo
+    > curl -X PUT -H "Content-Type: application/json" -d '{"topic": "testing", "ack_deadline": 60}' http://localhost:8000/api/v0/subscriptions/sub0 && echo
+    > curl -X POST -H "Content-Type: application/json" http://localhost:8000/api/v0/subscriptions/sub0/pull && echo
+    > curl -X POST -H "Content-Type: application/json" -d '{"message_ids": ["c639b587-e5b7-4fdd-92ee-42ddc03aca54"]}' http://localhost:8000/api/v0/subscriptions/sub0/ack && echo
