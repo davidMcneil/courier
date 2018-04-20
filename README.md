@@ -33,7 +33,7 @@ Courier provides an in-memory, non-distributed pub/sub service with an http, jso
   * [Pull](#subscription_pull)
   * [Ack](#subscription_ack)
 
-All messages which require the following http headers to be set:
+All messages require the following HTTP headers to be set:
 
 | Headers      | Value            |
 | ------------ | ---------------- |
@@ -76,9 +76,43 @@ All messages which require the following http headers to be set:
 }
 ```
 
+### SubscriptionNameList <a name="subscription_name_list_type"></a>
+
+```json
+{
+  "subscriptions": "<string[]>"
+}
+```
+
+### RawMessage <a name="raw_message_type"></a>
+
+```json
+{
+  "data": "<string>"
+}
+```
+
+### Message <a name="message_type"></a>
+
+```json
+{
+  "id": "string>",
+  "time": "<string>",
+  "data": "<string>"
+}
+```
+
+### MessageList <a name="message_list_type"></a>
+
+```json
+{
+  "messages": "<Message[]>"
+}
+```
+
 ### Topic End Points <a name="topic_end_points"></a>
 
-#### Create - (PUT) /api/v0/topics/<topic> <a name="topic_create"></a>
+#### Create - (PUT) /api/v0/topics/&lt;topic&gt; <a name="topic_create"></a>
 
 Create a new topic.
 
@@ -102,7 +136,7 @@ Create a new topic.
 | 201 (Created)  | [Topic](#topic_type) | Successfully created a new topic                                                |
 | 409 (Conflict) | &lt;empty&gt;        | Could not create a topic because a topic with the specified name already exists |
 
-#### Update - (PATCH) /api/v0/topics/<topic> <a name="topic_update"></a>
+#### Update - (PATCH) /api/v0/topics/&lt;topic&gt; <a name="topic_update"></a>
 
 Update a topic.
 
@@ -114,10 +148,10 @@ Update a topic.
 }
 ```
 
-| Parameter   | Description                                                            | Units   | Format | Required |
-| ----------- | ---------------------------------------------------------------------- | ------- | ------ | -------- |
-| topic       | The unique name of the topic, a random name will be generated if empty |         | path   | true     |
-| message_ttl | The time to live (ttl) applied to all messages                         | seconds | body   | false    |
+| Parameter   | Description                                    | Units   | Format | Required |
+| ----------- | ---------------------------------------------- | ------- | ------ | -------- |
+| topic       | The name of the topic                          |         | path   | true     |
+| message_ttl | The time to live (ttl) applied to all messages | seconds | body   | false    |
 
 ##### Response
 
@@ -126,15 +160,15 @@ Update a topic.
 | 200 (Ok)        | [Topic](#topic_type) | Successfully updated the topic                     |
 | 404 (Not Found) | &lt;empty&gt;        | A topic with the specified name could not be found |
 
-#### Delete - (DELETE) /api/v0/topics/<topic> <a name="topic_delete"></a>
+#### Delete - (DELETE) /api/v0/topics/&lt;topic&gt; <a name="topic_delete"></a>
 
 Delete a topic.
 
 ##### Request
 
-| Parameter | Description                     | Units | Format | Required |
-| --------- | ------------------------------- | ----- | ------ | -------- |
-| topic     | The name of the topic to delete |       | path   | true     |
+| Parameter | Description           | Units | Format | Required |
+| --------- | --------------------- | ----- | ------ | -------- |
+| topic     | The name of the topic |       | path   | true     |
 
 ##### Response
 
@@ -143,15 +177,15 @@ Delete a topic.
 | 200 (Ok)        | &lt;empty&gt; | Successfully deleted the topic                     |
 | 404 (Not Found) | &lt;empty&gt; | A topic with the specified name could not be found |
 
-#### Get - (GET) /api/v0/topics/<topic> <a name="topic_get"></a>
+#### Get - (GET) /api/v0/topics/&lt;topic&gt; <a name="topic_get"></a>
 
 Get a topic.
 
 ##### Request
 
-| Parameter | Description                  | Units | Format | Required |
-| --------- | ---------------------------- | ----- | ------ | -------- |
-| topic     | The name of the topic to get |       | path   | true     |
+| Parameter | Description           | Units | Format | Required |
+| --------- | --------------------- | ----- | ------ | -------- |
+| topic     | The name of the topic |       | path   | true     |
 
 ##### Response
 
@@ -176,9 +210,50 @@ List all of the topics.
 | ----------- | ----------------------------- | ------------------------------------- |
 | 200 (Ok)    | [TopicList](#topic_list_type) | Successfully retrieved the topic list |
 
+#### Subscriptions - (GET) /api/v0/topics/<topic>/subscriptions <a name="topic_subscriptions"></a>
+
+List all of the subscription names which are subscribed to this topic.
+
+##### Request
+
+| Parameter | Description           | Units | Format | Required |
+| --------- | --------------------- | ----- | ------ | -------- |
+| topic     | The name of the topic |       | path   | true     |
+
+##### Response
+
+| Status Code     | Response Body                                        | Description                                        |
+| --------------- | ---------------------------------------------------- | -------------------------------------------------- |
+| 200 (Ok)        | [SubscriptionNameList](#subscription_name_list_type) | Successfully retrieved the subscription name list  |
+| 404 (Not Found) | &lt;empty&gt;                                        | A topic with the specified name could not be found |
+
+#### Publish - (POST) /api/v0/topics/<topic>/publish <a name="topic_publish"></a>
+
+Add messages to the topic.
+
+```json
+{
+  "message": "<RawMessage[]>"
+}
+```
+
+##### Request
+
+| Parameter | Description              | Units | Format | Required |
+| --------- | ------------------------ | ----- | ------ | -------- |
+| topic     | The name of the topic    |       | path   | true     |
+| messages  | The list of raw messages |       | body   | true     |
+
+##### Response
+
+| Status Code     | Response Body                          | Description                                        |
+| --------------- | -------------------------------------- | -------------------------------------------------- |
+| 200 (Ok)        | [MessageIdList](#message_id_list_type) | Successfully published the messages                |
+| 404 (Not Found) | &lt;empty&gt;                          | A topic with the specified name could not be found |
+
 ### Subscription End Points <a name="subscription_end_points"></a>
 
-#### Create - (PUT) /api/v0/subscriptions/<subscription> <a name="subscription_create"></a>
+#### Create - (PUT) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_create"></a>
 
 Create a new subscription.
 
@@ -186,7 +261,8 @@ Create a new subscription.
 
 ```json
 {
-  "ack_deadline": "<u32>"
+  "ack_deadline": "<u32>",
+  "historical": "<bool>"
 }
 ```
 
@@ -195,6 +271,7 @@ Create a new subscription.
 | subscription | The unique name of the subscription, a random name will be generated if empty |         | path   | false    |
 | topic        | The name of the topic to subscribe                                            |         | body   | true     |
 | ack_deadline | The amount of time given to ack a message before it is resent                 | seconds | body   | false    |
+| historical   | Should this subscription start with the first message that has not timed out  |         | body   | false    |
 
 ##### Response
 
@@ -203,7 +280,7 @@ Create a new subscription.
 | 201 (Created)  | [subscription](#subscription_type) | Successfully created a new subscription                                                       |
 | 409 (Conflict) | &lt;empty&gt;                      | Could not create a subscription because a subscription with the specified name already exists |
 
-#### Update - (PATCH) /api/v0/subscriptions/<subscription> <a name="subscription_update"></a>
+#### Update - (PATCH) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_update"></a>
 
 Update a subscription.
 
@@ -215,10 +292,10 @@ Update a subscription.
 }
 ```
 
-| Parameter    | Description                                                                   | Units   | Format | Required |
-| ------------ | ----------------------------------------------------------------------------- | ------- | ------ | -------- |
-| subscription | The unique name of the subscription, a random name will be generated if empty |         | path   | true     |
-| ack_deadline | The amount of time given to ack a message before it is resent                 | seconds | body   | false    |
+| Parameter    | Description                                                   | Units   | Format | Required |
+| ------------ | ------------------------------------------------------------- | ------- | ------ | -------- |
+| subscription | The name of the subscription                                  |         | path   | true     |
+| ack_deadline | The amount of time given to ack a message before it is resent | seconds | body   | false    |
 
 ##### Response
 
@@ -227,15 +304,15 @@ Update a subscription.
 | 200 (Ok)        | [Subscription](#subscription_type) | Successfully updated the subscription                     |
 | 404 (Not Found) | &lt;empty&gt;                      | A subscription with the specified name could not be found |
 
-#### Delete - (DELETE) /api/v0/subscriptions/<subscription> <a name="subscription_delete"></a>
+#### Delete - (DELETE) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_delete"></a>
 
 Delete a subscription.
 
 ##### Request
 
-| Parameter    | Description                            | Units | Format | Required |
-| ------------ | -------------------------------------- | ----- | ------ | -------- |
-| subscription | The name of the subscription to delete |       | path   | true     |
+| Parameter    | Description                  | Units | Format | Required |
+| ------------ | ---------------------------- | ----- | ------ | -------- |
+| subscription | The name of the subscription |       | path   | true     |
 
 ##### Response
 
@@ -244,15 +321,15 @@ Delete a subscription.
 | 200 (Ok)        | &lt;empty&gt; | Successfully deleted the subscription                     |
 | 404 (Not Found) | &lt;empty&gt; | A subscription with the specified name could not be found |
 
-#### Get - (GET) /api/v0/subscriptions/<subscription> <a name="subscription_get"></a>
+#### Get - (GET) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_get"></a>
 
 Get a subscription.
 
 ##### Request
 
-| Parameter    | Description                         | Units | Format | Required |
-| ------------ | ----------------------------------- | ----- | ------ | -------- |
-| subscription | The name of the subscription to get |       | path   | true     |
+| Parameter    | Description                  | Units | Format | Required |
+| ------------ | ---------------------------- | ----- | ------ | -------- |
+| subscription | The name of the subscription |       | path   | true     |
 
 ##### Response
 
@@ -276,6 +353,54 @@ List all of the subscriptions.
 | Status Code | Response Body                               | Description                                  |
 | ----------- | ------------------------------------------- | -------------------------------------------- |
 | 200 (Ok)    | [SubscriptionList](#subscription_list_type) | Successfully retrieved the subscription list |
+
+#### Pull - (POST) /api/v0/subscriptions/<subscription>/pull <a name="subscription_pull"></a>
+
+Pull messages from a subscription.
+
+```json
+{
+  "max_messages": "<u32>"
+}
+```
+
+##### Request
+
+| Parameter    | Description                            | Units | Format | Required |
+| ------------ | -------------------------------------- | ----- | ------ | -------- |
+| subscription | The name of the subscription           |       | path   | true     |
+| max_messages | The max number of messages to retrieve |       | body   | false    |
+
+##### Response
+
+| Status Code     | Response Body                     | Description                                               |
+| --------------- | --------------------------------- | --------------------------------------------------------- |
+| 200 (Ok)        | [MessageList](#message_list_type) | Successfully retrieved the messages                       |
+| 404 (Not Found) | &lt;empty&gt;                     | A subscription with the specified name could not be found |
+
+#### Ack - (POST) /api/v0/subscriptions/<subscription>/ack <a name="subscription_pull"></a>
+
+Acknowledged that messages have been processed.
+
+```json
+{
+  "message_ids": "<string[]>"
+}
+```
+
+##### Request
+
+| Parameter    | Description                            | Units | Format | Required |
+| ------------ | -------------------------------------- | ----- | ------ | -------- |
+| subscription | The name of the subscription           |       | path   | true     |
+| message_ids  | The ids of the messaged to acknowledge |       | body   | true     |
+
+##### Response
+
+| Status Code     | Response Body | Description                                               |
+| --------------- | ------------- | --------------------------------------------------------- |
+| 200 (Ok)        | &lt;empty&gt; | Successfully acknowledged the messages                    |
+| 404 (Not Found) | &lt;empty&gt; | A subscription with the specified name could not be found |
 
 ## Develop
 
