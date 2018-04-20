@@ -13,6 +13,7 @@ Courier provides an in-memory, non-distributed pub/sub service with an http, jso
 ## Install
 
 **Linux** - simply grab the latest release it 100% statically linked should run on any x86 unix-like system
+
 **Windows** - TODO?
 
 ## HTTP JSON API
@@ -418,6 +419,20 @@ Run the test suite
 Check test coverage
 
     > cargo tarpaulin --ignore-tests --line --no-count
+
+## TODO
+
+* Fix topic subscription list if deleted
+* Do not use global mutex
+* Add metrics end point
+* Add management ui page
+* Time out subscriptions if not being read
+* Benchmark
+* Add other protocols
+  * TCP Binary
+  * GRPC
+* Add durability (write to disk)
+* Make distributed
 
 ## Example Commands
 
