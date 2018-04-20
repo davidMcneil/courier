@@ -1,7 +1,7 @@
 # Courier
 
 [![Build Status](https://travis-ci.org/davidMcneil/courier.svg?branch=master)](https://travis-ci.org/davidMcneil/courier)
-[![Coverage Status](https://coveralls.io/repos/github/davidMcneil/courier/badge.svg)](https://coveralls.io/github/davidMcneil/courier)
+[![Coverage Status](https://coveralls.io/repos/github/davidMcneil/courier/badge.svg?branch=master)](https://coveralls.io/github/davidMcneil/courier?branch=master)
 [![LoC](https://tokei.rs/b1/github/davidMcneil/courier)](https://github.com/davidMcneil/courier)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE-MIT)
 [![License](http://img.shields.io/badge/license-APACHE-blue.svg)](./LICENSE-APACHE)
@@ -11,6 +11,9 @@ A simple pub/sub service.
 Courier provides an in-memory, non-distributed pub/sub service with an http, json interface. There are three objects that apps using Courier interact with **messages**, **topics**, and **subscriptions**. The basic flow is that apps **pub**lish messages to a given topic while **sub**scribers read messages from the topic to which they are subscribed.
 
 ## Install
+
+**Linux** - simply grab the latest release it 100% statically linked should run on any x86 unix-like system
+**Windows** - TODO?
 
 ## HTTP JSON API
 
@@ -210,7 +213,7 @@ List all of the topics.
 | ----------- | ----------------------------- | ------------------------------------- |
 | 200 (Ok)    | [TopicList](#topic_list_type) | Successfully retrieved the topic list |
 
-#### Subscriptions - (GET) /api/v0/topics/<topic>/subscriptions <a name="topic_subscriptions"></a>
+#### Subscriptions - (GET) /api/v0/topics/&lt;topic&gt;/subscriptions <a name="topic_subscriptions"></a>
 
 List all of the subscription names which are subscribed to this topic.
 
@@ -227,13 +230,13 @@ List all of the subscription names which are subscribed to this topic.
 | 200 (Ok)        | [SubscriptionNameList](#subscription_name_list_type) | Successfully retrieved the subscription name list  |
 | 404 (Not Found) | &lt;empty&gt;                                        | A topic with the specified name could not be found |
 
-#### Publish - (POST) /api/v0/topics/<topic>/publish <a name="topic_publish"></a>
+#### Publish - (POST) /api/v0/topics/&lt;topic&gt;/publish <a name="topic_publish"></a>
 
-Add messages to the topic.
+Add messages to a topic.
 
 ```json
 {
-  "message": "<RawMessage[]>"
+  "messages": "<RawMessage[]>"
 }
 ```
 
@@ -266,18 +269,18 @@ Create a new subscription.
 }
 ```
 
-| Parameter    | Description                                                                   | Units   | Format | Required |
-| ------------ | ----------------------------------------------------------------------------- | ------- | ------ | -------- |
-| subscription | The unique name of the subscription, a random name will be generated if empty |         | path   | false    |
-| topic        | The name of the topic to subscribe                                            |         | body   | true     |
-| ack_deadline | The amount of time given to ack a message before it is resent                 | seconds | body   | false    |
-| historical   | Should this subscription start with the first message that has not timed out  |         | body   | false    |
+| Parameter    | Description                                                                                                                                         | Units   | Format | Required |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------ | -------- |
+| subscription | The unique name of the subscription, a random name will be generated if empty                                                                       |         | path   | false    |
+| topic        | The name of the topic to subscribe                                                                                                                  |         | body   | true     |
+| ack_deadline | The amount of time given to ack a message before it is resent                                                                                       | seconds | body   | false    |
+| historical   | Should this subscription start pulling from first message that is part of the topic, otherwise it will only pull messages added after it is created |         | body   | false    |
 
 ##### Response
 
 | Status Code    | Response Body                      | Description                                                                                   |
 | -------------- | ---------------------------------- | --------------------------------------------------------------------------------------------- |
-| 201 (Created)  | [subscription](#subscription_type) | Successfully created a new subscription                                                       |
+| 201 (Created)  | [Subscription](#subscription_type) | Successfully created a new subscription                                                       |
 | 409 (Conflict) | &lt;empty&gt;                      | Could not create a subscription because a subscription with the specified name already exists |
 
 #### Update - (PATCH) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_update"></a>
@@ -354,7 +357,7 @@ List all of the subscriptions.
 | ----------- | ------------------------------------------- | -------------------------------------------- |
 | 200 (Ok)    | [SubscriptionList](#subscription_list_type) | Successfully retrieved the subscription list |
 
-#### Pull - (POST) /api/v0/subscriptions/<subscription>/pull <a name="subscription_pull"></a>
+#### Pull - (POST) /api/v0/subscriptions/&lt;subscription&gt;/pull <a name="subscription_pull"></a>
 
 Pull messages from a subscription.
 
@@ -378,7 +381,7 @@ Pull messages from a subscription.
 | 200 (Ok)        | [MessageList](#message_list_type) | Successfully retrieved the messages                       |
 | 404 (Not Found) | &lt;empty&gt;                     | A subscription with the specified name could not be found |
 
-#### Ack - (POST) /api/v0/subscriptions/<subscription>/ack <a name="subscription_pull"></a>
+#### Ack - (POST) /api/v0/subscriptions/&lt;subscription&gt;/ack <a name="subscription_pull"></a>
 
 Acknowledged that messages have been processed.
 
@@ -403,6 +406,18 @@ Acknowledged that messages have been processed.
 | 404 (Not Found) | &lt;empty&gt; | A subscription with the specified name could not be found |
 
 ## Develop
+
+Run the application
+
+    > cargo run
+
+Run the test suite
+
+    > cargo test
+
+Check test coverage
+
+    > cargo tarpaulin --ignore-tests --line --no-count
 
 ## Example Commands
 
