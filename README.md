@@ -8,13 +8,13 @@
 
 A simple pub/sub service.
 
-Courier provides an in-memory, non-distributed pub/sub service with an http, json interface. There are three objects that apps using Courier interact with **messages**, **topics**, and **subscriptions**. The basic flow is that apps **pub**lish messages to a given topic while **sub**scribers read messages from the topic to which they are subscribed.
+Courier provides an in-memory, non-distributed pub/sub service with an http, json interface. There are three primary objects that apps using Courier interact with **messages**, **topics**, and **subscriptions**. The basic flow is that apps **pub**lish messages to a given topic while **sub**scribers read messages from the topic to which they are subscribed.
 
 ## Install
 
-**Linux** - simply grab the latest release it 100% statically linked should run on any x86 unix-like system
+**Linux** - Simply grab the [latest release](https://github.com/davidMcneil/courier/releases/latest). It is 100% statically linked and _should_ run on any x86, unix-like system.
 
-**Windows** - TODO?
+**Windows** - TODO
 
 ## HTTP JSON API
 
@@ -49,8 +49,8 @@ All messages require the following HTTP headers to be set:
 
 ```json
 {
-  "name": "<string>",
-  "message_ttl": "<u32>"
+  "name": "string",
+  "message_ttl": "u32"
 }
 ```
 
@@ -58,7 +58,7 @@ All messages require the following HTTP headers to be set:
 
 ```json
 {
-  "topics": "<Topic[]>"
+  "topics": "Topic[]"
 }
 ```
 
@@ -66,9 +66,9 @@ All messages require the following HTTP headers to be set:
 
 ```json
 {
-  "name": "<string>",
-  "topic": "<string>",
-  "ack_deadline": "<u32>"
+  "name": "string",
+  "topic": "string",
+  "ack_deadline": "u32"
 }
 ```
 
@@ -76,7 +76,7 @@ All messages require the following HTTP headers to be set:
 
 ```json
 {
-  "subscriptions": "<Subscription[]>"
+  "subscriptions": "Subscription[]"
 }
 ```
 
@@ -84,7 +84,7 @@ All messages require the following HTTP headers to be set:
 
 ```json
 {
-  "subscriptions": "<string[]>"
+  "subscriptions": "string[]"
 }
 ```
 
@@ -92,7 +92,7 @@ All messages require the following HTTP headers to be set:
 
 ```json
 {
-  "data": "<string>"
+  "data": "string"
 }
 ```
 
@@ -100,9 +100,9 @@ All messages require the following HTTP headers to be set:
 
 ```json
 {
-  "id": "string>",
-  "time": "<string>",
-  "data": "<string>"
+  "id": "string",
+  "time": "string",
+  "data": "string"
 }
 ```
 
@@ -110,7 +110,7 @@ All messages require the following HTTP headers to be set:
 
 ```json
 {
-  "messages": "<Message[]>"
+  "messages": "Message[]"
 }
 ```
 
@@ -124,13 +124,13 @@ Create a new topic.
 
 ```json
 {
-  "message_ttl": "<u32>"
+  "message_ttl": "u32"
 }
 ```
 
 | Parameter   | Description                                                            | Units   | Format | Required |
 | ----------- | ---------------------------------------------------------------------- | ------- | ------ | -------- |
-| topic       | The unique name of the topic, a random name will be generated if empty |         | path   | false    |
+| topic       | The unique name of the topic, a random name will be generated if empty | n/a     | path   | false    |
 | message_ttl | The time to live (ttl) applied to all messages                         | seconds | body   | false    |
 
 ##### Response
@@ -148,13 +148,13 @@ Update a topic.
 
 ```json
 {
-  "message_ttl": "<u32>"
+  "message_ttl": "u32"
 }
 ```
 
 | Parameter   | Description                                    | Units   | Format | Required |
 | ----------- | ---------------------------------------------- | ------- | ------ | -------- |
-| topic       | The name of the topic                          |         | path   | true     |
+| topic       | The name of the topic                          | n/a     | path   | true     |
 | message_ttl | The time to live (ttl) applied to all messages | seconds | body   | false    |
 
 ##### Response
@@ -172,7 +172,7 @@ Delete a topic.
 
 | Parameter | Description           | Units | Format | Required |
 | --------- | --------------------- | ----- | ------ | -------- |
-| topic     | The name of the topic |       | path   | true     |
+| topic     | The name of the topic | n/a   | path   | true     |
 
 ##### Response
 
@@ -189,7 +189,7 @@ Get a topic.
 
 | Parameter | Description           | Units | Format | Required |
 | --------- | --------------------- | ----- | ------ | -------- |
-| topic     | The name of the topic |       | path   | true     |
+| topic     | The name of the topic | n/a   | path   | true     |
 
 ##### Response
 
@@ -222,7 +222,7 @@ List all of the subscription names which are subscribed to this topic.
 
 | Parameter | Description           | Units | Format | Required |
 | --------- | --------------------- | ----- | ------ | -------- |
-| topic     | The name of the topic |       | path   | true     |
+| topic     | The name of the topic | n/a   | path   | true     |
 
 ##### Response
 
@@ -237,7 +237,7 @@ Add messages to a topic.
 
 ```json
 {
-  "messages": "<RawMessage[]>"
+  "messages": "RawMessage[]"
 }
 ```
 
@@ -245,8 +245,8 @@ Add messages to a topic.
 
 | Parameter | Description              | Units | Format | Required |
 | --------- | ------------------------ | ----- | ------ | -------- |
-| topic     | The name of the topic    |       | path   | true     |
-| messages  | The list of raw messages |       | body   | true     |
+| topic     | The name of the topic    | n/a   | path   | true     |
+| messages  | The list of raw messages | n/a   | body   | true     |
 
 ##### Response
 
@@ -265,17 +265,17 @@ Create a new subscription.
 
 ```json
 {
-  "ack_deadline": "<u32>",
-  "historical": "<bool>"
+  "ack_deadline": "u32",
+  "historical": "bool"
 }
 ```
 
-| Parameter    | Description                                                                                                                                         | Units   | Format | Required |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------ | -------- |
-| subscription | The unique name of the subscription, a random name will be generated if empty                                                                       |         | path   | false    |
-| topic        | The name of the topic to subscribe                                                                                                                  |         | body   | true     |
-| ack_deadline | The amount of time given to ack a message before it is resent                                                                                       | seconds | body   | false    |
-| historical   | Should this subscription start pulling from first message that is part of the topic, otherwise it will only pull messages added after it is created |         | body   | false    |
+| Parameter    | Description                                                                                                                                                                      | Units   | Format | Required |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------ | -------- |
+| subscription | The unique name of the subscription, a random name will be generated if empty                                                                                                    |         | path   | false    |
+| topic        | The name of the topic to subscribe                                                                                                                                               |         | body   | true     |
+| ack_deadline | The amount of time given to ack a message before it is resent                                                                                                                    | seconds | body   | false    |
+| historical   | Should this subscription start pulling from the first message that is part of the subscribed topic, otherwise it will only pull messages added after the subscription is created |         | body   | false    |
 
 ##### Response
 
@@ -292,13 +292,13 @@ Update a subscription.
 
 ```json
 {
-  "ack_deadline": "<u32>"
+  "ack_deadline": "u32"
 }
 ```
 
 | Parameter    | Description                                                   | Units   | Format | Required |
 | ------------ | ------------------------------------------------------------- | ------- | ------ | -------- |
-| subscription | The name of the subscription                                  |         | path   | true     |
+| subscription | The name of the subscription                                  | n/a     | path   | true     |
 | ack_deadline | The amount of time given to ack a message before it is resent | seconds | body   | false    |
 
 ##### Response
@@ -316,7 +316,7 @@ Delete a subscription.
 
 | Parameter    | Description                  | Units | Format | Required |
 | ------------ | ---------------------------- | ----- | ------ | -------- |
-| subscription | The name of the subscription |       | path   | true     |
+| subscription | The name of the subscription | n/a   | path   | true     |
 
 ##### Response
 
@@ -333,7 +333,7 @@ Get a subscription.
 
 | Parameter    | Description                  | Units | Format | Required |
 | ------------ | ---------------------------- | ----- | ------ | -------- |
-| subscription | The name of the subscription |       | path   | true     |
+| subscription | The name of the subscription | n/a   | path   | true     |
 
 ##### Response
 
@@ -364,7 +364,7 @@ Pull messages from a subscription.
 
 ```json
 {
-  "max_messages": "<u32>"
+  "max_messages": "u32"
 }
 ```
 
@@ -372,8 +372,8 @@ Pull messages from a subscription.
 
 | Parameter    | Description                            | Units | Format | Required |
 | ------------ | -------------------------------------- | ----- | ------ | -------- |
-| subscription | The name of the subscription           |       | path   | true     |
-| max_messages | The max number of messages to retrieve |       | body   | false    |
+| subscription | The name of the subscription           | n/a   | path   | true     |
+| max_messages | The max number of messages to retrieve | n/a   | body   | false    |
 
 ##### Response
 
@@ -388,7 +388,7 @@ Acknowledged that messages have been processed.
 
 ```json
 {
-  "message_ids": "<string[]>"
+  "message_ids": "string[]"
 }
 ```
 
@@ -396,8 +396,8 @@ Acknowledged that messages have been processed.
 
 | Parameter    | Description                            | Units | Format | Required |
 | ------------ | -------------------------------------- | ----- | ------ | -------- |
-| subscription | The name of the subscription           |       | path   | true     |
-| message_ids  | The ids of the messaged to acknowledge |       | body   | true     |
+| subscription | The name of the subscription           | n/a   | path   | true     |
+| message_ids  | The ids of the messaged to acknowledge | n/a   | body   | true     |
 
 ##### Response
 
@@ -407,6 +407,18 @@ Acknowledged that messages have been processed.
 | 404 (Not Found) | &lt;empty&gt; | A subscription with the specified name could not be found |
 
 ## Develop
+
+This project makes heavy use of the [rust](https://www.rust-lang.org/en-US/) ecosystem. It is highly recommended to use [rustup](https://rustup.rs/) and [cargo](https://github.com/rust-lang/cargo) when working on Courier.
+
+For the time being, Courier uses a nightly version of the rust compiler due to its dependency on [rocket](https://rocket.rs). Courier has been tested against the 2018-03-29 nightly release. To install and use with nightly:
+
+    > rustup install nightly-2018-03-29
+    > rustup default nightly-2018-03-29
+
+Courier also uses [tarpaulin](https://github.com/xd009642/tarpaulin) and [cross](https://github.com/japaric/cross) for doing code coverage and cross compilation respectively. They can be installed with:
+
+    > cargo install cargo-tarpaulin
+    > cargo install cross
 
 Run the application
 
@@ -420,24 +432,30 @@ Check test coverage
 
     > cargo tarpaulin --ignore-tests --line --no-count
 
-## TODO
+Perform a cross release build with the [msul](https://www.musl-libc.org/) target
 
-* Fix topic subscription list if deleted
-* Do not use global mutex
-* Add metrics end point
-* Add management ui page
-* Time out subscriptions if not being read
-* Benchmark
-* Add other protocols
+    > cross build --release --target=x86_64-unknown-linux-musl
+
+## Road Map
+
+* [ ] Add metrics and an api to retrieve them
+* [ ] Add management ui page
+* [ ] Benchmark performance
+* [ ] Use a concurrent hashmap instead of having the state of the app behind a single mutex
+* [ ] Add other protocols
   * TCP Binary
-  * GRPC
-* Add durability (write to disk)
-* Make distributed
+  * gRPC
+  * ...
+* [ ] Write drivers for a variety of languages
+* [ ] Add durability (write to disk)
+* [ ] Make distributed and fault tolerant
 
 ## Example Commands
 
-    > curl -X PUT -H "Content-Type: application/json" -d '{"message_ttl": 600}' http://localhost:8000/api/v0/topics/testing && echo
-    > curl -X POST -H "content-Type: application/json" -d '{"messages": [{"data": "test"}]}' http://localhost:8000/api/v0/topics/testing/publish && echo
-    > curl -X PUT -H "Content-Type: application/json" -d '{"topic": "testing", "ack_deadline": 60}' http://localhost:8000/api/v0/subscriptions/sub0 && echo
-    > curl -X POST -H "Content-Type: application/json" http://localhost:8000/api/v0/subscriptions/sub0/pull && echo
-    > curl -X POST -H "Content-Type: application/json" -d '{"message_ids": ["c639b587-e5b7-4fdd-92ee-42ddc03aca54"]}' http://localhost:8000/api/v0/subscriptions/sub0/ack && echo
+Create a topic and subscription. Publish a message to the topic and then pull and ack the message.
+
+    > curl -X PUT -H "Content-Type: application/json" -d '{"message_ttl": 600}' http://localhost:3140/api/v0/topics/topic0 && echo
+    > curl -X PUT -H "Content-Type: application/json" -d '{"topic": "topic0", "ack_deadline": 60}' http://localhost:3140/api/v0/subscriptions/sub0 && echo
+    > curl -X POST -H "content-Type: application/json" -d '{"messages": [{"data": "testing 123"}]}' http://localhost:3140/api/v0/topics/topic0/publish && echo
+    > curl -X POST -H "Content-Type: application/json" -d '{}' http://localhost:3140/api/v0/subscriptions/sub0/pull && echo
+    > curl -X POST -H "Content-Type: application/json" -d '{"message_ids": ["<some id>"]}' http://localhost:3140/api/v0/subscriptions/sub0/ack && echo

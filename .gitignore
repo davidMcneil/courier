@@ -3,3 +3,6 @@
 **/*.rs.bk
 Cargo.lock
 .idea
+web/.cache/
+web/dist/
+web/node_modules/
