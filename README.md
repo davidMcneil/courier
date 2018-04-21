@@ -382,7 +382,7 @@ Pull messages from a subscription.
 | 200 (Ok)        | [MessageList](#message_list_type) | Successfully retrieved the messages                       |
 | 404 (Not Found) | &lt;empty&gt;                     | A subscription with the specified name could not be found |
 
-#### Ack - (POST) /api/v0/subscriptions/&lt;subscription&gt;/ack <a name="subscription_pull"></a>
+#### Ack - (POST) /api/v0/subscriptions/&lt;subscription&gt;/ack <a name="subscription_ack"></a>
 
 Acknowledged that messages have been processed.
 
