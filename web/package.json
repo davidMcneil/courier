@@ -1,19 +1,23 @@
 {
   "name": "courier-ui",
   "version": "0.1.0",
-  "description": "A web ui for the courier pussub service.",
-  "main": "index.js",
+  "description": "A web ui for the courier pubsub service.",
+  "main": "dist/index.html",
   "repository": "https://github.com/davidMcneil/courier",
   "author": "David McNeil",
-  "license": "MIT",
+  "license": "(MIT or Apache-2)",
+  "browserslist": "defaults",
   "scripts": {
-    "run": "parcel index.html"
+    "start": "parcel index.html",
+    "build": "parcel build --detailed-report index.html",
+    "clean": "rm -rf dist/"
   },
   "dependencies": {
-    "inferno": "^5.0.4",
-    "parcel-bundler": "^1.7.1"
+    "inferno": "^5.0.4"
   },
   "devDependencies": {
+    "babel-plugin-inferno": "^5.0.1",
+    "parcel-bundler": "^1.7.1",
     "typescript": "^2.8.3"
   }
 }

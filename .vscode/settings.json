@@ -1,6 +1,7 @@
 {
   "cSpell.words": [
     "Deque",
+    "Incrementer",
     "acked",
     "bulma",
     "chrono",
@@ -12,6 +13,7 @@
     "gitignore",
     "millis",
     "nexts",
+    "pubsub",
     "serde",
     "serializer",
     "structopt",
