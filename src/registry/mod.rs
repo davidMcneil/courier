@@ -136,7 +136,16 @@ impl Registry {
     }
 
     pub fn delete_subscription(&mut self, subscription_name: &str) -> bool {
-        self.subscriptions.remove(subscription_name).is_some()
+        let subscription = self.subscriptions.remove(subscription_name);
+        match subscription {
+            Some(sub) => {
+                if let Some(topic_store) = self.topics.get_mut(&sub.topic) {
+                    topic_store.subscriptions.remove(&sub.name);
+                }
+                true
+            }
+            None => false,
+        }
     }
 
     pub fn get_subscription(&self, subscription_name: &str) -> Option<SubscriptionMeta> {

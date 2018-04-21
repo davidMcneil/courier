@@ -21,7 +21,6 @@ fn get_client() -> (Config, Client) {
         port: 3140,
         default_message_ttl: Duration::seconds(3600),
         default_ack_deadline: Duration::seconds(60),
-        default_return_immediately: false,
         default_max_messages: 1,
         cleanup_interval: Duration::seconds(1),
         max_pull_wait: Duration::seconds(5),
@@ -440,6 +439,21 @@ fn http_protocol_lists() {
     let mut actual = response_as::<SubscriptionNameList>(&mut response);
     actual.subscriptions.sort();
     assert_eq!(expected, actual);
+    // Delete a subscription
+    client
+        .delete("api/v0/subscriptions/subscription1")
+        .header(ContentType::JSON)
+        .dispatch();
+    // List the topic subscriptions
+    let expected = SubscriptionNameList::new(vec![String::from("subscription0")]);
+    let mut response = client
+        .get("api/v0/topics/topic0/subscriptions")
+        .header(ContentType::JSON)
+        .dispatch();
+    assert_eq!(Status::Ok, response.status());
+    let mut actual = response_as::<SubscriptionNameList>(&mut response);
+    actual.subscriptions.sort();
+    assert_eq!(expected, actual);
 }
 
 #[test]
@@ -497,7 +511,7 @@ fn http_protocol_basic() {
         .dispatch();
     let messages = response_as::<MessageList>(&mut response).messages;
     assert_eq!(Status::Ok, response.status());
-    assert_eq!(pull_config.max_messages, messages.len());
+    assert_eq!(pull_config.max_messages.unwrap(), messages.len());
     assert_eq!(messages[0].data, String::from("first"));
     assert_eq!(messages[1].data, String::from("second"));
     // Try and pull messages from historical subscription1

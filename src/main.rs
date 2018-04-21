@@ -47,7 +47,6 @@ pub fn main() {
         port: opt.port,
         default_message_ttl: Duration::seconds(3600),
         default_ack_deadline: Duration::seconds(60),
-        default_return_immediately: false,
         default_max_messages: 1,
         cleanup_interval: Duration::seconds(1),
         max_pull_wait: Duration::seconds(5),

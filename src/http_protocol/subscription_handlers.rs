@@ -1,13 +1,13 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
-use super::Config;
 use super::types;
+use super::Config;
 use chrono::Duration;
 use courier::SubscriptionMeta;
 use registry::SharedRegistry;
-use rocket::State;
 use rocket::http::Status;
 use rocket::response::status::Custom;
+use rocket::State;
 use rocket_contrib::Json;
 use uuid::Uuid;
 
@@ -96,13 +96,15 @@ pub fn list(reg: State<SharedRegistry>) -> Json<types::SubscriptionList> {
 
 #[post("/<name>/pull", data = "<config>")]
 pub fn pull(
+    cfg: State<Config>,
     reg: State<SharedRegistry>,
     name: String,
     config: Json<types::PullConfig>,
 ) -> Option<Json<types::MessageList>> {
     let mut reg = reg.write().unwrap();
     let config = config.into_inner();
-    reg.pull(&name, config.max_messages)
+    let max = config.max_messages.unwrap_or(cfg.default_max_messages);
+    reg.pull(&name, max)
         .map(|messages| Json(types::MessageList::new(messages)))
 }
 

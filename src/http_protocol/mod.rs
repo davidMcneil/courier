@@ -19,7 +19,6 @@ pub struct Config {
     pub port: u16,
     pub default_message_ttl: Duration,
     pub default_ack_deadline: Duration,
-    pub default_return_immediately: bool,
     pub default_max_messages: usize,
     pub cleanup_interval: Duration,
     pub max_pull_wait: Duration,

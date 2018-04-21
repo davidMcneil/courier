@@ -93,12 +93,14 @@ impl MessageList {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PullConfig {
-    pub max_messages: usize,
+    pub max_messages: Option<usize>,
 }
 
 impl PullConfig {
     #[allow(dead_code)]
     pub fn new(max_messages: usize) -> Self {
-        Self { max_messages }
+        Self {
+            max_messages: Some(max_messages),
+        }
     }
 }
