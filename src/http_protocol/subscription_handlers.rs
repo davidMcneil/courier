@@ -22,7 +22,7 @@ fn create(
         .ack_deadline
         .map(|deadline| Duration::seconds(i64::from(deadline)))
         .unwrap_or(cfg.default_ack_deadline);
-    let subscribe = reg.write().unwrap().create_subscription(
+    let subscribe = reg.create_subscription(
         &name,
         &config.topic,
         deadline,
@@ -67,15 +67,12 @@ pub fn update(
     let deadline = config
         .ack_deadline
         .map(|deadline| Duration::seconds(i64::from(deadline)));
-    reg.write()
-        .unwrap()
-        .update_subscription(&name, deadline)
-        .map(Json)
+    reg.update_subscription(&name, deadline).map(Json)
 }
 
 #[delete("/<name>")]
 pub fn delete(reg: State<SharedRegistry>, name: String) -> Custom<()> {
-    if reg.write().unwrap().delete_subscription(&name) {
+    if reg.delete_subscription(&name) {
         Custom(Status::Ok, ())
     } else {
         Custom(Status::NotFound, ())
@@ -84,14 +81,12 @@ pub fn delete(reg: State<SharedRegistry>, name: String) -> Custom<()> {
 
 #[get("/<name>")]
 pub fn get(reg: State<SharedRegistry>, name: String) -> Option<Json<SubscriptionMeta>> {
-    reg.write().unwrap().get_subscription(&name).map(Json)
+    reg.get_subscription(&name).map(Json)
 }
 
 #[get("/")]
 pub fn list(reg: State<SharedRegistry>) -> Json<types::SubscriptionList> {
-    Json(types::SubscriptionList::new(
-        reg.read().unwrap().list_subscriptions(),
-    ))
+    Json(types::SubscriptionList::new(reg.list_subscriptions()))
 }
 
 #[post("/<name>/pull", data = "<config>")]
@@ -101,7 +96,6 @@ pub fn pull(
     name: String,
     config: Json<types::PullConfig>,
 ) -> Option<Json<types::MessageList>> {
-    let mut reg = reg.write().unwrap();
     let config = config.into_inner();
     let max = config.max_messages.unwrap_or(cfg.default_max_messages);
     reg.pull(&name, max)
@@ -114,10 +108,7 @@ pub fn ack(
     name: String,
     ids: Json<types::MessageIdList>,
 ) -> Custom<()> {
-    if reg.write()
-        .unwrap()
-        .ack(&name, &ids.into_inner().message_ids)
-    {
+    if reg.ack(&name, &ids.into_inner().message_ids) {
         Custom(Status::Ok, ())
     } else {
         Custom(Status::NotFound, ())

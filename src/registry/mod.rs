@@ -23,63 +23,59 @@ impl TopicStore {
 }
 
 pub struct Registry {
-    topics: HashMap<String, TopicStore>,
-    subscriptions: HashMap<String, Subscription>,
+    topics: RwLock<HashMap<String, TopicStore>>,
+    subscriptions: RwLock<HashMap<String, Subscription>>,
 }
 
-pub type SharedRegistry = Arc<RwLock<Registry>>;
+pub type SharedRegistry = Arc<Registry>;
 
 impl Registry {
     pub fn new() -> SharedRegistry {
-        Arc::new(RwLock::new(Self {
-            topics: HashMap::new(),
-            subscriptions: HashMap::new(),
-        }))
+        Arc::new(Self {
+            topics: RwLock::new(HashMap::new()),
+            subscriptions: RwLock::new(HashMap::new()),
+        })
     }
 
-    pub fn create_topic(&mut self, topic_name: &str, message_ttl: Duration) -> (bool, TopicMeta) {
-        let created = !self.topics.contains_key(topic_name);
-        let topic = self.topics
+    pub fn create_topic(&self, topic_name: &str, message_ttl: Duration) -> (bool, TopicMeta) {
+        let mut topics = self.topics.write().unwrap();
+        let created = !topics.contains_key(topic_name);
+        let topic = topics
             .entry(String::from(topic_name))
             .or_insert_with(|| TopicStore::new(topic_name, message_ttl));
         (created, TopicMeta::from(&topic.topic))
     }
 
     pub fn update_topic(
-        &mut self,
+        &self,
         topic_name: &str,
         message_ttl: Option<Duration>,
     ) -> Option<TopicMeta> {
-        self.topics.get_mut(topic_name).map(|t| {
+        let mut topics = self.topics.write().unwrap();
+        topics.get_mut(topic_name).map(|t| {
             let old_ttl = t.topic.message_ttl;
             t.topic.set_message_ttl(message_ttl.unwrap_or(old_ttl));
             TopicMeta::from(&t.topic)
         })
     }
 
-    pub fn delete_topic(&mut self, topic_name: &str) -> bool {
-        self.topics.remove(topic_name).is_some()
+    pub fn delete_topic(&self, topic_name: &str) -> bool {
+        self.topics.write().unwrap().remove(topic_name).is_some()
     }
 
     pub fn get_topic(&self, topic_name: &str) -> Option<TopicMeta> {
-        self.topics
-            .get(topic_name)
-            .map(|t| TopicMeta::from(&t.topic))
+        let topics = self.topics.read().unwrap();
+        topics.get(topic_name).map(|t| TopicMeta::from(&t.topic))
     }
 
     pub fn list_topics(&self) -> Vec<TopicMeta> {
-        self.topics
-            .values()
-            .map(|t| TopicMeta::from(&t.topic))
-            .collect()
+        let topics = self.topics.read().unwrap();
+        topics.values().map(|t| TopicMeta::from(&t.topic)).collect()
     }
 
-    pub fn publish(
-        &mut self,
-        topic_name: &str,
-        raw_messages: Vec<RawMessage>,
-    ) -> Option<Vec<Uuid>> {
-        self.topics.get_mut(topic_name).map(|topic_store| {
+    pub fn publish(&self, topic_name: &str, raw_messages: Vec<RawMessage>) -> Option<Vec<Uuid>> {
+        let mut topics = self.topics.write().unwrap();
+        topics.get_mut(topic_name).map(|topic_store| {
             let topic = &mut topic_store.topic;
             let mut ids = Vec::with_capacity(raw_messages.len());
             for raw_message in raw_messages {
@@ -91,24 +87,27 @@ impl Registry {
         })
     }
 
-    pub fn list_topic_subscriptions(&mut self, topic_name: &str) -> Option<Vec<String>> {
-        self.topics.get_mut(topic_name).map(|topic_store| {
+    pub fn list_topic_subscriptions(&self, topic_name: &str) -> Option<Vec<String>> {
+        let mut topics = self.topics.write().unwrap();
+        topics.get_mut(topic_name).map(|topic_store| {
             let subscriptions = &topic_store.subscriptions;
             subscriptions.into_iter().cloned().collect()
         })
     }
 
     pub fn create_subscription(
-        &mut self,
+        &self,
         subscription_name: &str,
         topic_name: &str,
         ack_deadline: Duration,
         historical: bool,
     ) -> Option<(bool, SubscriptionMeta)> {
-        let topic_store = self.topics.get_mut(topic_name)?;
+        let mut topics = self.topics.write().unwrap();
+        let topic_store = topics.get_mut(topic_name)?;
         let topic = &topic_store.topic;
-        let created = !self.subscriptions.contains_key(subscription_name);
-        let subscription = self.subscriptions
+        let mut subscriptions = self.subscriptions.write().unwrap();
+        let created = !subscriptions.contains_key(subscription_name);
+        let subscription = subscriptions
             .entry(String::from(subscription_name))
             .or_insert_with(|| {
                 if historical {
@@ -124,22 +123,25 @@ impl Registry {
     }
 
     pub fn update_subscription(
-        &mut self,
+        &self,
         subscription_name: &str,
         ack_deadline: Option<Duration>,
     ) -> Option<SubscriptionMeta> {
-        self.subscriptions.get_mut(subscription_name).map(|s| {
+        let mut subscriptions = self.subscriptions.write().unwrap();
+        subscriptions.get_mut(subscription_name).map(|s| {
             let old_deadline = s.ack_deadline;
             s.set_ack_deadline(ack_deadline.unwrap_or(old_deadline));
             SubscriptionMeta::from(&*s)
         })
     }
 
-    pub fn delete_subscription(&mut self, subscription_name: &str) -> bool {
-        let subscription = self.subscriptions.remove(subscription_name);
+    pub fn delete_subscription(&self, subscription_name: &str) -> bool {
+        let mut subscriptions = self.subscriptions.write().unwrap();
+        let subscription = subscriptions.remove(subscription_name);
         match subscription {
             Some(sub) => {
-                if let Some(topic_store) = self.topics.get_mut(&sub.topic) {
+                let mut topics = self.topics.write().unwrap();
+                if let Some(topic_store) = topics.get_mut(&sub.topic) {
                     topic_store.subscriptions.remove(&sub.name);
                 }
                 true
@@ -149,20 +151,20 @@ impl Registry {
     }
 
     pub fn get_subscription(&self, subscription_name: &str) -> Option<SubscriptionMeta> {
-        self.subscriptions
+        let subscriptions = self.subscriptions.read().unwrap();
+        subscriptions
             .get(subscription_name)
             .map(SubscriptionMeta::from)
     }
 
     pub fn list_subscriptions(&self) -> Vec<SubscriptionMeta> {
-        self.subscriptions
-            .values()
-            .map(SubscriptionMeta::from)
-            .collect()
+        let subscriptions = self.subscriptions.read().unwrap();
+        subscriptions.values().map(SubscriptionMeta::from).collect()
     }
 
-    pub fn pull(&mut self, subscription_name: &str, max_messages: usize) -> Option<Vec<Message>> {
-        self.subscriptions
+    pub fn pull(&self, subscription_name: &str, max_messages: usize) -> Option<Vec<Message>> {
+        let mut subscriptions = self.subscriptions.write().unwrap();
+        subscriptions
             .get_mut(subscription_name)
             .map(|subscription| {
                 let mut messages = Vec::with_capacity(max_messages);
@@ -176,8 +178,9 @@ impl Registry {
             })
     }
 
-    pub fn ack(&mut self, subscription_name: &str, ids: &[Uuid]) -> bool {
-        self.subscriptions
+    pub fn ack(&self, subscription_name: &str, ids: &[Uuid]) -> bool {
+        let mut subscriptions = self.subscriptions.write().unwrap();
+        subscriptions
             .get_mut(subscription_name)
             .map(|subscription| {
                 subscription.ack_many(ids);
@@ -186,8 +189,9 @@ impl Registry {
             .unwrap_or(false)
     }
 
-    pub fn cleanup(&mut self) {
-        for mut topic in self.topics.values_mut() {
+    pub fn cleanup(&self) {
+        let mut topics = self.topics.write().unwrap();
+        for mut topic in topics.values_mut() {
             topic.topic.cleanup();
         }
     }

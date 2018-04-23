@@ -1,0 +1,30 @@
+===web ui===
+Totals
+    -Current messages
+    -Published
+    -Expired
+    -Pulled
+    -Acked
+    -Timed out
+
+    -Topics
+    -Subscriptions
+    -Deleted topics
+    -Deleted subscriptions
+    
+    -Application start time
+    -Up time
+    -Memory usage
+
+Topics
+    -Create
+    -Delete
+    -Creation time
+    -Up time
+    -Length
+    -Messages published
+    -Expired
+
+Subscriptions
+
+

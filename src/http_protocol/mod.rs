@@ -29,7 +29,7 @@ pub fn rocket(config: Config) -> rocket::Rocket {
     let registry = Registry::new();
     let registry_cleanup = Arc::clone(&registry);
     thread::spawn(move || loop {
-        registry_cleanup.write().unwrap().cleanup();
+        registry_cleanup.cleanup();
         thread::sleep(time::Duration::from_secs(1));
     });
     let rocket_config = rocket::config::Config::build(rocket::config::Environment::Development)
