@@ -1,3 +1,4 @@
+use chrono::prelude::*;
 use chrono::Duration;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
@@ -20,6 +21,35 @@ impl TopicStore {
             subscriptions: HashSet::new(),
         }
     }
+}
+
+struct TopicMetrics {
+    count: u64,
+    expired_count: u64,
+}
+
+struct SubscriptionMetrics {
+    pulled_count: u64,
+    acked_count: u64,
+}
+
+struct Metrics {
+    messages_count: u64,
+    expired_messages_count: u64,
+    all_time_messages_count: u64,
+    all_time_messages_pulled: u64,
+    all_time_messages_acked: u64,
+
+    topics_count: u64,
+    all_time_topics_count: u64,
+    subscriptions_count: u64,
+    all_time_subscriptions_count: u64,
+
+    topics: HashMap<String, TopicMetrics>,
+    subscriptions: HashMap<String, SubscriptionMetrics>,
+
+    memory_resident_set_size: u64,
+    start_time: DateTime<Utc>,
 }
 
 pub struct Registry {
