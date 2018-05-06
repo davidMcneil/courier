@@ -2,6 +2,7 @@
 #![plugin(rocket_codegen)]
 
 extern crate chrono;
+extern crate psutil;
 extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use]

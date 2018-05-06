@@ -14,7 +14,7 @@ Courier provides an in-memory, non-distributed pub/sub service with an http, jso
 
 **Linux** - Simply grab the [latest release](https://github.com/davidMcneil/courier/releases/latest). It is 100% statically linked and _should_ run on any x86, unix-like system.
 
-**Windows** - TODO
+**Windows** - Currently Courier is not distributed for Windows.
 
 ## HTTP JSON API
 

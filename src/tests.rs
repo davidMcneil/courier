@@ -32,6 +32,7 @@ fn pub_sub_basic() {
         Subscription::new_head("subscription", &topic, Duration::milliseconds(10));
     topic.publish(Message::new(String::from("a")));
     topic.publish(Message::new(String::from("b")));
+    assert_eq!(2, topic.len());
     let message = subscription.pull().unwrap();
     assert_eq!(String::from("a"), message.data);
     subscription.ack(message.id);

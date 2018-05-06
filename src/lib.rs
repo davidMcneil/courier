@@ -9,8 +9,8 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate uuid;
 
-use chrono::Duration;
 use chrono::prelude::*;
+use chrono::Duration;
 use commit_log::{CommitLog, Cursor, Index};
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -67,13 +67,15 @@ impl Default for Message {
 #[derive(Debug)]
 struct PendingMessage {
     time_sent: DateTime<Utc>,
+    message_id: Uuid,
     index: Index<Message>,
 }
 
 impl PendingMessage {
-    fn new(index: Index<Message>) -> Self {
+    fn new(message_id: Uuid, index: Index<Message>) -> Self {
         Self {
             time_sent: Utc::now(),
+            message_id,
             index,
         }
     }
@@ -86,6 +88,7 @@ pub struct Subscription {
     pub ack_deadline: Duration,
     cursor: Cursor<Message>,
     pending: VecDeque<PendingMessage>,
+    pending_ids: HashSet<Uuid>,
     acked: HashSet<Uuid>,
 }
 
@@ -97,6 +100,7 @@ impl Subscription {
             topic: topic.name.clone(),
             cursor: Cursor::new_head(&topic.log),
             pending: VecDeque::new(),
+            pending_ids: HashSet::new(),
             acked: HashSet::new(),
         }
     }
@@ -108,6 +112,7 @@ impl Subscription {
             topic: topic.name.clone(),
             cursor: Cursor::new_tail(&topic.log),
             pending: VecDeque::new(),
+            pending_ids: HashSet::new(),
             acked: HashSet::new(),
         }
     }
@@ -115,24 +120,41 @@ impl Subscription {
     pub fn pull(&mut self) -> Option<Message> {
         let (message, index) = self.check_pending()
             .unwrap_or_else(|| (self.cursor.next(), Index::new(&self.cursor)));
-        if message.is_some() {
-            self.pending.push_back(PendingMessage::new(index));
+        if let Some(m) = message.as_ref() {
+            self.pending_ids.insert(m.id);
+            self.pending.push_back(PendingMessage::new(m.id, index));
         }
         message
     }
 
-    pub fn ack(&mut self, id: Uuid) {
-        self.acked.insert(id);
+    pub fn ack(&mut self, id: Uuid) -> bool {
+        if self.pending_ids.remove(&id) {
+            self.acked.insert(id);
+            return true;
+        }
+        false
     }
 
-    pub fn ack_many(&mut self, ids: &[Uuid]) {
+    pub fn ack_many(&mut self, ids: &[Uuid]) -> usize {
+        let mut count = 0;
         for id in ids {
-            self.ack(*id);
+            if self.ack(*id) {
+                count += 1;
+            }
         }
+        count
     }
 
     pub fn set_ack_deadline(&mut self, ack_deadline: Duration) {
         self.ack_deadline = ack_deadline;
+    }
+
+    pub fn next_index(&self) -> usize {
+        self.cursor.next_index()
+    }
+
+    pub fn num_pending(&self) -> usize {
+        self.pending_ids.len()
     }
 
     fn check_pending(&mut self) -> Option<(Option<Message>, Index<Message>)> {
@@ -140,8 +162,7 @@ impl Subscription {
             match pending.index.get() {
                 Some(message) => {
                     // Check to see if this message was acked
-                    if self.acked.contains(&message.id) {
-                        self.acked.remove(&message.id);
+                    if self.acked.remove(&message.id) {
                         continue;
                     }
                     if Utc::now().signed_duration_since(pending.time_sent) < self.ack_deadline {
@@ -154,9 +175,15 @@ impl Subscription {
                     return Some((Some(message), pending.index));
                 }
                 // The message has timed out in the topic
-                None => continue,
+                None => {
+                    // Cleanup the message from pending and acked
+                    self.pending_ids.remove(&pending.message_id);
+                    self.acked.remove(&pending.message_id);
+                    continue;
+                }
             }
         }
+        // There are no pending messages
         None
     }
 }
@@ -194,14 +221,18 @@ impl Topic {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.log.len()
+    }
+
     pub fn publish(&mut self, message: Message) {
         self.log.append(message);
     }
 
-    pub fn cleanup(&mut self) {
+    pub fn cleanup(&mut self) -> usize {
         let ttl = self.message_ttl;
         self.log
-            .cleanup(&|m| Utc::now().signed_duration_since(m.time) > ttl);
+            .cleanup(&|m| Utc::now().signed_duration_since(m.time) > ttl)
     }
 
     pub fn set_message_ttl(&mut self, message_ttl: Duration) {

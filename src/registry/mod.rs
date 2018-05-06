@@ -1,5 +1,6 @@
 use chrono::prelude::*;
 use chrono::Duration;
+use psutil;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
 use uuid::Uuid;
@@ -23,38 +24,73 @@ impl TopicStore {
     }
 }
 
-struct TopicMetrics {
-    count: u64,
-    expired_count: u64,
+#[derive(Debug, Deserialize, Serialize)]
+pub struct TopicMetrics {
+    messages: usize,
+    expired: u64,
+    message_ttl: i64,
 }
 
-struct SubscriptionMetrics {
-    pulled_count: u64,
-    acked_count: u64,
+impl TopicMetrics {
+    pub fn new(message_ttl: i64) -> Self {
+        Self {
+            messages: 0,
+            expired: 0,
+            message_ttl,
+        }
+    }
 }
 
-struct Metrics {
-    messages_count: u64,
-    expired_messages_count: u64,
-    all_time_messages_count: u64,
-    all_time_messages_pulled: u64,
-    all_time_messages_acked: u64,
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SubscriptionMetrics {
+    pending: usize,
+    pulled: u64,
+    acked: u64,
+    topic: String,
+    topic_message_index: usize,
+    ack_deadline: i64,
+}
 
-    topics_count: u64,
-    all_time_topics_count: u64,
-    subscriptions_count: u64,
-    all_time_subscriptions_count: u64,
+impl SubscriptionMetrics {
+    pub fn new(topic: String, topic_message_index: usize, ack_deadline: i64) -> Self {
+        Self {
+            pending: 0,
+            pulled: 0,
+            acked: 0,
+            topic,
+            topic_message_index,
+            ack_deadline,
+        }
+    }
+}
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Metrics {
+    all_time_topics: u64,
+    all_time_subscriptions: u64,
+    memory_resident_set_size: i64,
+    start_time: DateTime<Utc>,
     topics: HashMap<String, TopicMetrics>,
     subscriptions: HashMap<String, SubscriptionMetrics>,
+}
 
-    memory_resident_set_size: u64,
-    start_time: DateTime<Utc>,
+impl Metrics {
+    pub fn new() -> Self {
+        Self {
+            all_time_topics: 0,
+            all_time_subscriptions: 0,
+            memory_resident_set_size: 0,
+            start_time: Utc::now(),
+            topics: HashMap::new(),
+            subscriptions: HashMap::new(),
+        }
+    }
 }
 
 pub struct Registry {
     topics: RwLock<HashMap<String, TopicStore>>,
     subscriptions: RwLock<HashMap<String, Subscription>>,
+    metrics: Arc<RwLock<Metrics>>,
 }
 
 pub type SharedRegistry = Arc<Registry>;
@@ -64,6 +100,7 @@ impl Registry {
         Arc::new(Self {
             topics: RwLock::new(HashMap::new()),
             subscriptions: RwLock::new(HashMap::new()),
+            metrics: Arc::new(RwLock::new(Metrics::new())),
         })
     }
 
@@ -73,6 +110,17 @@ impl Registry {
         let topic = topics
             .entry(String::from(topic_name))
             .or_insert_with(|| TopicStore::new(topic_name, message_ttl));
+
+        // Update metrics
+        if created {
+            let mut metrics = self.metrics.write().unwrap();
+            metrics.all_time_topics += 1;
+            metrics.topics.insert(
+                String::from(topic_name),
+                TopicMetrics::new(message_ttl.num_seconds()),
+            );
+        }
+
         (created, TopicMeta::from(&topic.topic))
     }
 
@@ -85,11 +133,23 @@ impl Registry {
         topics.get_mut(topic_name).map(|t| {
             let old_ttl = t.topic.message_ttl;
             t.topic.set_message_ttl(message_ttl.unwrap_or(old_ttl));
+
+            // Update metrics
+            let mut metrics = self.metrics.write().unwrap();
+            metrics
+                .topics
+                .get_mut(topic_name)
+                .map(|m| m.message_ttl = t.topic.message_ttl.num_seconds());
+
             TopicMeta::from(&t.topic)
         })
     }
 
     pub fn delete_topic(&self, topic_name: &str) -> bool {
+        // Update metrics
+        let mut metrics = self.metrics.write().unwrap();
+        metrics.topics.remove(topic_name);
+
         self.topics.write().unwrap().remove(topic_name).is_some()
     }
 
@@ -113,6 +173,14 @@ impl Registry {
                 ids.push(message.id);
                 topic.publish(message)
             }
+
+            // Update metrics
+            let mut metrics = self.metrics.write().unwrap();
+            metrics
+                .topics
+                .get_mut(topic_name)
+                .map(|m| m.messages = topic.len());
+
             ids
         })
     }
@@ -149,6 +217,21 @@ impl Registry {
         topic_store
             .subscriptions
             .insert(String::from(subscription_name));
+
+        // Update metrics
+        if created {
+            let mut metrics = self.metrics.write().unwrap();
+            metrics.all_time_subscriptions += 1;
+            metrics.subscriptions.insert(
+                String::from(subscription_name),
+                SubscriptionMetrics::new(
+                    String::from(topic_name),
+                    subscription.next_index(),
+                    ack_deadline.num_seconds(),
+                ),
+            );
+        }
+
         Some((created, SubscriptionMeta::from(&*subscription)))
     }
 
@@ -161,11 +244,23 @@ impl Registry {
         subscriptions.get_mut(subscription_name).map(|s| {
             let old_deadline = s.ack_deadline;
             s.set_ack_deadline(ack_deadline.unwrap_or(old_deadline));
+
+            // Update metrics
+            let mut metrics = self.metrics.write().unwrap();
+            metrics
+                .subscriptions
+                .get_mut(subscription_name)
+                .map(|m| m.ack_deadline = s.ack_deadline.num_seconds());
+
             SubscriptionMeta::from(&*s)
         })
     }
 
     pub fn delete_subscription(&self, subscription_name: &str) -> bool {
+        // Update metrics
+        let mut metrics = self.metrics.write().unwrap();
+        metrics.subscriptions.remove(subscription_name);
+
         let mut subscriptions = self.subscriptions.write().unwrap();
         let subscription = subscriptions.remove(subscription_name);
         match subscription {
@@ -204,6 +299,15 @@ impl Registry {
                     }
                     messages.push(message);
                 }
+
+                // Update metrics
+                let mut metrics = self.metrics.write().unwrap();
+                metrics.subscriptions.get_mut(subscription_name).map(|m| {
+                    m.pending = subscription.num_pending();
+                    m.pulled += messages.len() as u64;
+                    m.topic_message_index = subscription.next_index();
+                });
+
                 messages
             })
     }
@@ -213,16 +317,44 @@ impl Registry {
         subscriptions
             .get_mut(subscription_name)
             .map(|subscription| {
-                subscription.ack_many(ids);
+                let count = subscription.ack_many(ids);
+
+                // Update metrics
+                let mut metrics = self.metrics.write().unwrap();
+                metrics.subscriptions.get_mut(subscription_name).map(|m| {
+                    m.pending = subscription.num_pending();
+                    m.acked += count as u64;
+                });
+
                 true
             })
             .unwrap_or(false)
     }
 
+    pub fn metrics(&self) -> Arc<RwLock<Metrics>> {
+        Arc::clone(&self.metrics)
+    }
+
     pub fn cleanup(&self) {
         let mut topics = self.topics.write().unwrap();
-        for mut topic in topics.values_mut() {
-            topic.topic.cleanup();
+        for (topic_name, mut topic) in topics.iter_mut() {
+            let count = topic.topic.cleanup();
+
+            // Update metrics
+            let mut metrics = self.metrics.write().unwrap();
+            metrics.topics.get_mut(topic_name).map(|m| {
+                m.messages = topic.topic.len();
+                m.expired += count as u64
+            });
         }
+
+        //Update metrics
+        let process = psutil::process::Process::new(psutil::getpid());
+        let mut metrics = self.metrics.write().unwrap();
+        metrics.memory_resident_set_size = if let Ok(process) = process {
+            process.rss
+        } else {
+            -1
+        };
     }
 }

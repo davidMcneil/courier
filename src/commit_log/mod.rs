@@ -3,6 +3,7 @@ mod tests;
 
 use std::fmt;
 use std::fmt::Debug;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock, Weak};
 
 type Shared<T> = Arc<RwLock<T>>;
@@ -54,14 +55,18 @@ impl<T: Clone + Debug> Debug for Index<T> {
 
 pub struct Cursor<T> {
     cursor: Pointer<T>,
+    next_index: usize,
     to_head: Pointer<T>,
+    to_head_index: Arc<AtomicUsize>,
 }
 
 impl<T> Cursor<T> {
     pub fn new_head(log: &CommitLog<T>) -> Self {
         Cursor {
             cursor: Arc::downgrade(&log.to_head),
+            next_index: log.to_head_index.load(Ordering::SeqCst),
             to_head: Arc::downgrade(&log.to_head),
+            to_head_index: Arc::clone(&log.to_head_index),
         }
     }
 
@@ -69,10 +74,16 @@ impl<T> Cursor<T> {
         match log.tail.as_ref() {
             Some(tail) => Cursor {
                 cursor: Arc::downgrade(tail),
+                next_index: log.to_head_index.load(Ordering::SeqCst) + log.len(),
                 to_head: Arc::downgrade(&log.to_head),
+                to_head_index: Arc::clone(&log.to_head_index),
             },
             None => Cursor::new_head(log),
         }
+    }
+
+    pub fn next_index(&self) -> usize {
+        self.next_index
     }
 }
 
@@ -80,10 +91,12 @@ impl<T: Clone> Cursor<T> {
     pub fn next(&mut self) -> Option<T> {
         match self.cursor.upgrade() {
             Some(cursor) => cursor.read().unwrap().next.as_ref().map(|next| {
+                self.next_index += 1;
                 self.cursor = Arc::downgrade(next);
                 next.read().unwrap().value.clone()
             }),
             None => {
+                self.next_index = self.to_head_index.load(Ordering::SeqCst);
                 self.cursor = Weak::clone(&self.to_head);
                 self.next()
             }
@@ -113,6 +126,7 @@ pub struct CommitLog<T> {
     to_head: Link<T>,
     tail: Node<T>,
     length: usize,
+    to_head_index: Arc<AtomicUsize>,
 }
 
 impl<T: Default> CommitLog<T> {
@@ -121,6 +135,7 @@ impl<T: Default> CommitLog<T> {
             to_head: Element::new(Default::default()),
             tail: None,
             length: 0,
+            to_head_index: Arc::new(AtomicUsize::new(0)),
         }
     }
 }
@@ -131,7 +146,6 @@ impl<T> CommitLog<T> {
         self.length == 0
     }
 
-    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         self.length
     }
@@ -151,21 +165,26 @@ impl<T> CommitLog<T> {
         };
         self.tail = Some(element);
         self.length += 1;
+        self.to_head_index.fetch_add(1, Ordering::SeqCst);
     }
 
-    pub fn cleanup(&mut self, expired: &Fn(&T) -> bool) {
+    pub fn cleanup(&mut self, expired: &Fn(&T) -> bool) -> usize {
+        let mut count = 0;
         loop {
             let did_expire;
             match self.to_head.read().unwrap().next.as_ref() {
                 Some(next) => {
                     did_expire = expired(&next.read().unwrap().value);
                     if !did_expire {
-                        return;
+                        return count;
                     }
                 }
-                None => return,
+                None => {
+                    return count;
+                }
             }
             if did_expire {
+                count += 1;
                 self.remove_head();
             }
         }

@@ -1,5 +1,9 @@
+use registry::SharedRegistry;
 use rocket::http::ContentType;
+use rocket::response::content;
 use rocket::response::Response;
+use rocket::State;
+use serde_json;
 use std::io::Cursor;
 
 // static BULMA_CSS: &'static str = include_str!("../../web/css/bulma.css");
@@ -27,6 +31,9 @@ pub fn ui() -> String {
 }
 
 #[get("/metrics")]
-pub fn metrics() -> String {
-    String::from("metrics")
+pub fn metrics(reg: State<SharedRegistry>) -> content::Json<String> {
+    let metrics_wrapper = reg.metrics();
+    let metrics = metrics_wrapper.read().unwrap();
+    let json = serde_json::to_string(&*metrics).unwrap_or(String::from("{}"));
+    content::Json(json)
 }
