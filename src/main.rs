@@ -24,10 +24,10 @@ use structopt::StructOpt;
 #[structopt()]
 struct Opt {
     /// An IP address or host the application will listen on
-    #[structopt(default_value = "0.0.0.0", long = "host", short = "H", env = "COURIER_HOST")]
+    #[structopt(default_value = "0.0.0.0", env = "COURIER_HOST", long = "host", short = "H")]
     host: String,
     /// A port number to listen on
-    #[structopt(default_value = "3140", long = "port", short = "P", env = "COURIER_PORT")]
+    #[structopt(default_value = "3140", env = "COURIER_PORT", long = "port", short = "P")]
     port: u16,
     #[structopt(subcommand)]
     cmd: Command,
@@ -38,22 +38,39 @@ enum Command {
     #[structopt()]
     /// Run the service
     #[structopt(name = "run")]
-    Run {},
+    Run {
+        /// The default amount time to live (ttl) of a topic's messages (seconds)
+        #[structopt(default_value = "3600", long = "default-message-ttl")]
+        default_message_ttl: i64,
+        /// The default amount of time a subscription has to acknowledge a message (seconds)
+        #[structopt(default_value = "60", long = "default-ack-deadline")]
+        default_ack_deadline: i64,
+        /// The default max number of messages pulled by a subscription
+        #[structopt(default_value = "1", long = "default-max-messages")]
+        default_max_messages: usize,
+        /// The amount of time between running the cleanup thread (seconds)
+        #[structopt(default_value = "1", long = "cleanup-interval")]
+        cleanup_interval: i64,
+    },
 }
 
 pub fn main() {
     let opt = Opt::from_args();
-    let config = http_protocol::Config {
-        host: opt.host.clone(),
-        port: opt.port,
-        default_message_ttl: Duration::seconds(3600),
-        default_ack_deadline: Duration::seconds(60),
-        default_max_messages: 1,
-        cleanup_interval: Duration::seconds(1),
-        max_pull_wait: Duration::seconds(5),
-    };
     match opt.cmd {
-        Command::Run {} => {
+        Command::Run {
+            default_message_ttl,
+            default_ack_deadline,
+            default_max_messages,
+            cleanup_interval,
+        } => {
+            let config = http_protocol::Config {
+                host: opt.host.clone(),
+                port: opt.port,
+                default_message_ttl: Duration::seconds(default_message_ttl),
+                default_ack_deadline: Duration::seconds(default_ack_deadline),
+                default_max_messages: default_max_messages,
+                cleanup_interval: Duration::seconds(cleanup_interval),
+            };
             http_protocol::rocket(config).launch();
         }
     }

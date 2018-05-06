@@ -21,7 +21,6 @@ pub struct Config {
     pub default_ack_deadline: Duration,
     pub default_max_messages: usize,
     pub cleanup_interval: Duration,
-    pub max_pull_wait: Duration,
 }
 
 pub fn rocket(config: Config) -> rocket::Rocket {
