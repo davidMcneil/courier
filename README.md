@@ -438,7 +438,7 @@ Perform a cross release build with the [msul](https://www.musl-libc.org/) target
 
 ## Road Map
 
-* [ ] Add metrics and an api to retrieve them
+* [x] Add metrics and an api to retrieve them
 * [ ] Add management ui page
 * [ ] Benchmark performance
 * [ ] Use a concurrent hashmap instead of having the state of the app behind a single mutex

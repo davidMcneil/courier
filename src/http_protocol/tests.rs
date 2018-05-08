@@ -23,7 +23,6 @@ fn get_client() -> (Config, Client) {
         default_ack_deadline: Duration::seconds(60),
         default_max_messages: 1,
         cleanup_interval: Duration::seconds(1),
-        max_pull_wait: Duration::seconds(5),
     };
     let client = Client::new(rocket(config.clone())).expect("valid rocket instance");
     (config, client)

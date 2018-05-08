@@ -27,6 +27,7 @@ impl TopicStore {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TopicMetrics {
     messages: usize,
+    messages_all_time: u64,
     expired: u64,
     message_ttl: i64,
 }
@@ -35,6 +36,7 @@ impl TopicMetrics {
     pub fn new(message_ttl: i64) -> Self {
         Self {
             messages: 0,
+            messages_all_time: 0,
             expired: 0,
             message_ttl,
         }
@@ -176,10 +178,10 @@ impl Registry {
 
             // Update metrics
             let mut metrics = self.metrics.write().unwrap();
-            metrics
-                .topics
-                .get_mut(topic_name)
-                .map(|m| m.messages = topic.len());
+            metrics.topics.get_mut(topic_name).map(|m| {
+                m.messages = topic.len();
+                m.messages_all_time += 1;
+            });
 
             ids
         })
