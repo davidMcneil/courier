@@ -28,7 +28,7 @@ impl TopicStore {
 pub struct TopicMetrics {
     messages: usize,
     messages_all_time: u64,
-    expired: u64,
+    expired_all_time: u64,
     message_ttl: i64,
 }
 
@@ -37,7 +37,7 @@ impl TopicMetrics {
         Self {
             messages: 0,
             messages_all_time: 0,
-            expired: 0,
+            expired_all_time: 0,
             message_ttl,
         }
     }
@@ -46,8 +46,8 @@ impl TopicMetrics {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SubscriptionMetrics {
     pending: usize,
-    pulled: u64,
-    acked: u64,
+    pulled_all_time: u64,
+    acked_all_time: u64,
     topic: String,
     topic_message_index: usize,
     ack_deadline: i64,
@@ -57,8 +57,8 @@ impl SubscriptionMetrics {
     pub fn new(topic: String, topic_message_index: usize, ack_deadline: i64) -> Self {
         Self {
             pending: 0,
-            pulled: 0,
-            acked: 0,
+            pulled_all_time: 0,
+            acked_all_time: 0,
             topic,
             topic_message_index,
             ack_deadline,
@@ -68,8 +68,8 @@ impl SubscriptionMetrics {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Metrics {
-    all_time_topics: u64,
-    all_time_subscriptions: u64,
+    topics_all_time: u64,
+    subscriptions_all_time: u64,
     memory_resident_set_size: i64,
     start_time: DateTime<Utc>,
     topics: HashMap<String, TopicMetrics>,
@@ -79,8 +79,8 @@ pub struct Metrics {
 impl Metrics {
     pub fn new() -> Self {
         Self {
-            all_time_topics: 0,
-            all_time_subscriptions: 0,
+            topics_all_time: 0,
+            subscriptions_all_time: 0,
             memory_resident_set_size: 0,
             start_time: Utc::now(),
             topics: HashMap::new(),
@@ -116,7 +116,7 @@ impl Registry {
         // Update metrics
         if created {
             let mut metrics = self.metrics.write().unwrap();
-            metrics.all_time_topics += 1;
+            metrics.topics_all_time += 1;
             metrics.topics.insert(
                 String::from(topic_name),
                 TopicMetrics::new(message_ttl.num_seconds()),
@@ -223,7 +223,7 @@ impl Registry {
         // Update metrics
         if created {
             let mut metrics = self.metrics.write().unwrap();
-            metrics.all_time_subscriptions += 1;
+            metrics.subscriptions_all_time += 1;
             metrics.subscriptions.insert(
                 String::from(subscription_name),
                 SubscriptionMetrics::new(
@@ -306,7 +306,7 @@ impl Registry {
                 let mut metrics = self.metrics.write().unwrap();
                 metrics.subscriptions.get_mut(subscription_name).map(|m| {
                     m.pending = subscription.num_pending();
-                    m.pulled += messages.len() as u64;
+                    m.pulled_all_time += messages.len() as u64;
                     m.topic_message_index = subscription.next_index();
                 });
 
@@ -325,7 +325,7 @@ impl Registry {
                 let mut metrics = self.metrics.write().unwrap();
                 metrics.subscriptions.get_mut(subscription_name).map(|m| {
                     m.pending = subscription.num_pending();
-                    m.acked += count as u64;
+                    m.acked_all_time += count as u64;
                 });
 
                 true
@@ -346,7 +346,7 @@ impl Registry {
             let mut metrics = self.metrics.write().unwrap();
             metrics.topics.get_mut(topic_name).map(|m| {
                 m.messages = topic.topic.len();
-                m.expired += count as u64
+                m.expired_all_time += count as u64
             });
         }
 
