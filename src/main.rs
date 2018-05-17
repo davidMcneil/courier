@@ -5,6 +5,7 @@ extern crate chrono;
 extern crate psutil;
 extern crate rocket;
 extern crate rocket_contrib;
+extern crate rocket_cors;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
@@ -71,7 +72,9 @@ pub fn main() {
                 default_max_messages: default_max_messages,
                 cleanup_interval: Duration::seconds(cleanup_interval),
             };
-            http_protocol::rocket(config).launch();
+            http_protocol::rocket(config)
+                .attach(rocket_cors::Cors::default())
+                .launch();
         }
     }
 }

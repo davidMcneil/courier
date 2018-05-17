@@ -265,6 +265,7 @@ Create a new subscription.
 
 ```json
 {
+  "topic": "string",
   "ack_deadline": "u32",
   "historical": "bool"
 }
