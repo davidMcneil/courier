@@ -296,10 +296,10 @@ impl Registry {
             .map(|subscription| {
                 let mut messages = Vec::with_capacity(max_messages);
                 while let Some(message) = subscription.pull() {
+                    messages.push(message);
                     if messages.len() >= max_messages {
                         break;
                     }
-                    messages.push(message);
                 }
 
                 // Update metrics
