@@ -1,11 +1,20 @@
 # This is an ignore file for code coverage
 .vscode/
-web/
 tests.rs
+web/.cache
+web/dist
+web/node_modules
+web/.babelrc
+web/.prettierrc
+web/index.html
+web/package.json
+web/tslint.json
+web/yarn.lock
 .gitignore
 .ignore
 .travis.yml
 Cargo.toml
+Cargo.lock
 LICENSE-APACHE
 LICENSE-MIT
 README.md

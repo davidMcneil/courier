@@ -1,0 +1,73 @@
+@charset "utf-8";
+
+@import "node_modules/bulma/sass/utilities/initial-variables";
+@import "node_modules/bulma/sass/utilities/functions";
+@import "node_modules/bulma/sass/utilities/derived-variables";
+@import "node_modules/bulma/sass/utilities/animations";
+@import "node_modules/bulma/sass/utilities/mixins";
+@import "node_modules/bulma/sass/utilities/controls";
+
+@import "node_modules/bulma/sass/base/minireset";
+@import "node_modules/bulma/sass/base/generic";
+@import "node_modules/bulma/sass/base/helpers";
+
+// Bulma customization
+$section-padding: 0.75rem 1.5rem !default;
+
+// @import "node_modules/bulma/sass/elements/box";
+@import "node_modules/bulma/sass/elements/button";
+@import "node_modules/bulma/sass/elements/container";
+@import "node_modules/bulma/sass/elements/content";
+@import "node_modules/bulma/sass/elements/form";
+// @import "node_modules/bulma/sass/elements/icon";
+// @import "node_modules/bulma/sass/elements/image";
+// @import "node_modules/bulma/sass/elements/notification";
+@import "node_modules/bulma/sass/elements/other";
+// @import "node_modules/bulma/sass/elements/progress";
+@import "node_modules/bulma/sass/elements/table";
+// @import "node_modules/bulma/sass/elements/tag";
+@import "node_modules/bulma/sass/elements/title";
+
+// @import "node_modules/bulma/sass/components/breadcrumb";
+// @import "node_modules/bulma/sass/components/card";
+// @import "node_modules/bulma/sass/components/dropdown";
+@import "node_modules/bulma/sass/components/level";
+// @import "node_modules/bulma/sass/components/media";
+// @import "node_modules/bulma/sass/components/menu";
+// @import "node_modules/bulma/sass/components/message";
+// @import "node_modules/bulma/sass/components/modal";
+@import "node_modules/bulma/sass/components/navbar";
+// @import "node_modules/bulma/sass/components/pagination";
+// @import "node_modules/bulma/sass/components/panel";
+@import "node_modules/bulma/sass/components/tabs";
+
+@import "node_modules/bulma/sass/grid/columns";
+// @import "node_modules/bulma/sass/grid/tiles";
+
+@import "node_modules/bulma/sass/layout/footer";
+// @import "node_modules/bulma/sass/layout/hero";
+@import "node_modules/bulma/sass/layout/section";
+
+.down-arrow {
+  margin-bottom: 8px;
+  &:before {
+    content: "\2304";
+  }
+}
+
+.up-arrow {
+  margin-top: 8px;
+  &:before {
+    content: "\2303";
+  }
+}
+
+.has-sticky-footer {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.has-sticky-footer-content {
+  flex: 1;
+}

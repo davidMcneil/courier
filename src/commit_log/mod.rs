@@ -165,7 +165,6 @@ impl<T> CommitLog<T> {
         };
         self.tail = Some(element);
         self.length += 1;
-        self.to_head_index.fetch_add(1, Ordering::SeqCst);
     }
 
     pub fn cleanup(&mut self, expired: &Fn(&T) -> bool) -> usize {
@@ -185,6 +184,7 @@ impl<T> CommitLog<T> {
             }
             if did_expire {
                 count += 1;
+                self.to_head_index.fetch_add(1, Ordering::SeqCst);
                 self.remove_head();
             }
         }

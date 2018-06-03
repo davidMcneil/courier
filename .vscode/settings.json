@@ -1,26 +1,36 @@
 {
+  "tslint.autoFixOnSave": true,
   "cSpell.words": [
     "Deque",
     "Incrementer",
     "acked",
+    "browserslist",
     "bulma",
     "chrono",
     "clippy",
     "codegen",
     "contrib",
+    "cors",
     "derive",
     "deserialize",
+    "dropdown",
+    "fullwidth",
     "getpid",
     "gitignore",
+    "marginless",
     "millis",
+    "minireset",
+    "mixins",
     "nexts",
     "psutil",
     "pubsub",
+    "rocket",
     "serde",
     "serializer",
     "structopt",
     "subcommand",
     "toml",
-    "uuid"
+    "uuid",
+    "vcentered"
   ]
 }
