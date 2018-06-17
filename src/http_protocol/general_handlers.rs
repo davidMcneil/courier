@@ -1,39 +1,43 @@
-use registry::SharedRegistry;
-use rocket::http::ContentType;
-use rocket::response::content;
-use rocket::response::Response;
-use rocket::State;
+#![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+
+use actix_web::{FromRequest, HttpRequest, HttpResponse, State};
 use serde_json;
-use std::io::Cursor;
+use std::clone::Clone;
+use std::sync::Arc;
 
-// static BULMA_CSS: &'static str = include_str!("../../web/css/bulma.css");
-// static DOCUMENTATION_HTML: &'static str = include_str!("../../web/documentation.html");
+use http_protocol::HttpState;
 
-#[get("/")]
-pub fn documentation() -> Response<'static> {
-    Response::build()
-        .header(ContentType::HTML)
-        .sized_body(Cursor::new(""))
-        .finalize()
-}
+// // static BULMA_CSS: &'static str = include_str!("../../web/css/bulma.css");
+// // static DOCUMENTATION_HTML: &'static str = include_str!("../../web/documentation.html");
 
-// #[get("/bulma.css")]
-// pub fn bulma() -> Response<'static> {
+// pub fn documentation() -> Response<'static> {
 //     Response::build()
-//         .header(ContentType::CSS)
+//         .header(ContentType::HTML)
 //         .sized_body(Cursor::new(""))
 //         .finalize()
 // }
 
-#[get("/ui")]
-pub fn ui() -> String {
-    String::from("ui")
+// // #[get("/bulma.css")]
+// // pub fn bulma() -> Response<'static> {
+// //     Response::build()
+// //         .header(ContentType::CSS)
+// //         .sized_body(Cursor::new(""))
+// //         .finalize()
+// // }
+
+// pub fn ui(_: HttpRequest) -> String {
+//     String::from("ui")
+// }
+
+pub fn heartbeat(_: HttpRequest<HttpState>) -> &'static str {
+    "heartbeat"
 }
 
-#[get("/metrics")]
-pub fn metrics(reg: State<SharedRegistry>) -> content::Json<String> {
+pub fn metrics(req: HttpRequest<HttpState>) -> HttpResponse {
+    let state = State::extract(&req);
+    let reg = Arc::clone(&state.registry);
     let metrics_wrapper = reg.metrics();
     let metrics = metrics_wrapper.read().unwrap();
-    let json = serde_json::to_string(&*metrics).unwrap_or(String::from("{}"));
-    content::Json(json)
+    let json = serde_json::to_string(&*metrics).unwrap_or_else(|_| String::from("{}"));
+    HttpResponse::Ok().body(json)
 }

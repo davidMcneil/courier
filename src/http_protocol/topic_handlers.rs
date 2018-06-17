@@ -1,104 +1,104 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
+use actix_web::dev::HttpResponseBuilder;
+use actix_web::{HttpResponse, Json, Path, State};
 use chrono::Duration;
-use rocket::http::Status;
-use rocket::response::status::Custom;
-use rocket::State;
-use rocket_contrib::Json;
 use uuid::Uuid;
 
 use courier::TopicMeta;
 
-use super::types;
-use super::Config;
+use http_protocol::state::HttpState;
+use http_protocol::types;
+use http_protocol::Config;
 use registry::SharedRegistry;
 
 fn create(
-    cfg: State<Config>,
-    reg: State<SharedRegistry>,
-    name: String,
-    config: Json<types::TopicCreateConfig>,
-) -> Custom<Json<TopicMeta>> {
-    let config = config.into_inner();
+    name: &str,
+    config: &types::TopicCreateConfig,
+    reg: &SharedRegistry,
+    cfg: &Config,
+) -> HttpResponse {
     let ttl = config
         .message_ttl
         .map(|ttl| Duration::seconds(i64::from(ttl)))
         .unwrap_or(cfg.default_message_ttl);
     let (created, topic) = reg.create_topic(&name, ttl);
-    let json = Json(topic);
-    if created {
-        Custom(Status::Created, json)
+    let mut response = if created {
+        HttpResponse::Created()
     } else {
-        Custom(Status::Conflict, json)
-    }
+        HttpResponse::Conflict()
+    };
+    response.json(topic)
 }
 
-#[put("/<name>", data = "<config>")]
 pub fn create_with_name(
-    cfg: State<Config>,
-    reg: State<SharedRegistry>,
-    name: String,
-    config: Json<types::TopicCreateConfig>,
-) -> Custom<Json<TopicMeta>> {
-    create(cfg, reg, name, config)
+    (name, config, state): (
+        Path<String>,
+        Json<types::TopicCreateConfig>,
+        State<HttpState>,
+    ),
+) -> HttpResponse {
+    create(
+        &name.into_inner(),
+        &config.into_inner(),
+        &state.registry,
+        &state.config,
+    )
 }
 
-#[put("/", data = "<config>")]
 pub fn create_without_name(
-    cfg: State<Config>,
-    reg: State<SharedRegistry>,
-    config: Json<types::TopicCreateConfig>,
-) -> Custom<Json<TopicMeta>> {
-    create(cfg, reg, Uuid::new_v4().to_string(), config)
+    (config, state): (Json<types::TopicCreateConfig>, State<HttpState>),
+) -> HttpResponse {
+    create(
+        &Uuid::new_v4().to_string(),
+        &config.into_inner(),
+        &state.registry,
+        &state.config,
+    )
 }
 
-#[patch("/<name>", data = "<config>")]
 pub fn update(
-    reg: State<SharedRegistry>,
-    name: String,
-    config: Json<types::TopicUpdateConfig>,
+    (name, config, state): (
+        Path<String>,
+        Json<types::TopicUpdateConfig>,
+        State<HttpState>,
+    ),
 ) -> Option<Json<TopicMeta>> {
     let config = config.into_inner();
     let ttl = config
         .message_ttl
         .map(|ttl| Duration::seconds(i64::from(ttl)));
-    reg.update_topic(&name, ttl).map(Json)
+    state.registry.update_topic(&name, ttl).map(Json)
 }
 
-#[delete("/<name>")]
-pub fn delete(reg: State<SharedRegistry>, name: String) -> Custom<()> {
-    if reg.delete_topic(&name) {
-        Custom(Status::Ok, ())
+pub fn delete((name, state): (Path<String>, State<HttpState>)) -> HttpResponseBuilder {
+    if state.registry.delete_topic(&name) {
+        HttpResponse::Ok()
     } else {
-        Custom(Status::NotFound, ())
+        HttpResponse::NotFound()
     }
 }
 
-#[get("/<name>")]
-pub fn get(reg: State<SharedRegistry>, name: String) -> Option<Json<TopicMeta>> {
-    reg.get_topic(&name).map(Json)
+pub fn get((name, state): (Path<String>, State<HttpState>)) -> Option<Json<TopicMeta>> {
+    state.registry.get_topic(&name).map(Json)
 }
 
-#[get("/")]
-pub fn list(reg: State<SharedRegistry>) -> Json<types::TopicList> {
-    Json(types::TopicList::new(reg.list_topics()))
+pub fn list(state: State<HttpState>) -> Json<types::TopicList> {
+    Json(types::TopicList::new(state.registry.list_topics()))
 }
 
-#[get("/<name>/subscriptions")]
 pub fn subscriptions(
-    reg: State<SharedRegistry>,
-    name: String,
+    (name, state): (Path<String>, State<HttpState>),
 ) -> Option<Json<types::SubscriptionNameList>> {
+    let reg = &state.registry;
     reg.list_topic_subscriptions(&name)
         .map(|l| Json(types::SubscriptionNameList::new(l)))
 }
 
-#[post("/<name>/publish", data = "<messages>")]
 pub fn publish(
-    reg: State<SharedRegistry>,
-    name: String,
-    messages: Json<types::RawMessageList>,
+    (name, messages, state): (Path<String>, Json<types::RawMessageList>, State<HttpState>),
 ) -> Option<Json<types::MessageIdList>> {
+    let reg = &state.registry;
     reg.publish(&name, messages.into_inner().messages)
         .map(|m| Json(types::MessageIdList::new(m)))
 }

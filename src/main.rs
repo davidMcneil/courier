@@ -1,15 +1,14 @@
-#![feature(plugin, proc_macro, decl_macro)]
-#![plugin(rocket_codegen)]
-
+extern crate actix;
+extern crate actix_web;
 extern crate chrono;
+extern crate env_logger;
+extern crate futures;
 extern crate psutil;
-extern crate rocket;
-extern crate rocket_contrib;
-extern crate rocket_cors;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
+#[macro_use]
 extern crate structopt;
 extern crate uuid;
 
@@ -56,6 +55,9 @@ enum Command {
 }
 
 pub fn main() {
+    std::env::set_var("RUST_LOG", "actix_web=info");
+    env_logger::init();
+
     let opt = Opt::from_args();
     match opt.cmd {
         Command::Run {
@@ -69,12 +71,10 @@ pub fn main() {
                 port: opt.port,
                 default_message_ttl: Duration::seconds(default_message_ttl),
                 default_ack_deadline: Duration::seconds(default_ack_deadline),
-                default_max_messages: default_max_messages,
+                default_max_messages,
                 cleanup_interval: Duration::seconds(cleanup_interval),
             };
-            http_protocol::rocket(config)
-                .attach(rocket_cors::Cors::default())
-                .launch();
+            http_protocol::start(config)
         }
     }
 }

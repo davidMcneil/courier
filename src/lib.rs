@@ -1,5 +1,3 @@
-#![feature(custom_attribute)]
-
 extern crate chrono;
 extern crate core;
 extern crate rand;
@@ -118,7 +116,8 @@ impl Subscription {
     }
 
     pub fn pull(&mut self) -> Option<Message> {
-        let (message, index) = self.check_pending()
+        let (message, index) = self
+            .check_pending()
             .unwrap_or_else(|| (self.cursor.next(), Index::new(&self.cursor)));
         if let Some(m) = message.as_ref() {
             self.pending_ids.insert(m.id);

@@ -7,9 +7,6 @@ use uuid::Uuid;
 
 use courier::{Message, RawMessage, Subscription, SubscriptionMeta, Topic, TopicMeta};
 
-#[cfg(test)]
-mod tests;
-
 struct TopicStore {
     topic: Topic,
     subscriptions: HashSet<String>,
@@ -138,10 +135,9 @@ impl Registry {
 
             // Update metrics
             let mut metrics = self.metrics.write().unwrap();
-            metrics
-                .topics
-                .get_mut(topic_name)
-                .map(|m| m.message_ttl = t.topic.message_ttl.num_seconds());
+            if let Some(m) = metrics.topics.get_mut(topic_name) {
+                m.message_ttl = t.topic.message_ttl.num_seconds()
+            };
 
             TopicMeta::from(&t.topic)
         })
@@ -169,7 +165,8 @@ impl Registry {
         let mut topics = self.topics.write().unwrap();
         topics.get_mut(topic_name).map(|topic_store| {
             let topic = &mut topic_store.topic;
-            let mut ids = Vec::with_capacity(raw_messages.len());
+            let count = raw_messages.len();
+            let mut ids = Vec::with_capacity(count);
             for raw_message in raw_messages {
                 let message = Message::from(raw_message);
                 ids.push(message.id);
@@ -178,10 +175,10 @@ impl Registry {
 
             // Update metrics
             let mut metrics = self.metrics.write().unwrap();
-            metrics.topics.get_mut(topic_name).map(|m| {
+            if let Some(m) = metrics.topics.get_mut(topic_name) {
                 m.messages = topic.len();
-                m.messages_all_time += 1;
-            });
+                m.messages_all_time += count as u64;
+            }
 
             ids
         })
@@ -249,10 +246,9 @@ impl Registry {
 
             // Update metrics
             let mut metrics = self.metrics.write().unwrap();
-            metrics
-                .subscriptions
-                .get_mut(subscription_name)
-                .map(|m| m.ack_deadline = s.ack_deadline.num_seconds());
+            if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
+                m.ack_deadline = s.ack_deadline.num_seconds()
+            }
 
             SubscriptionMeta::from(&*s)
         })
@@ -304,11 +300,11 @@ impl Registry {
 
                 // Update metrics
                 let mut metrics = self.metrics.write().unwrap();
-                metrics.subscriptions.get_mut(subscription_name).map(|m| {
+                if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
                     m.pending = subscription.num_pending();
                     m.pulled_all_time += messages.len() as u64;
                     m.topic_message_index = subscription.next_index();
-                });
+                }
 
                 messages
             })
@@ -323,10 +319,10 @@ impl Registry {
 
                 // Update metrics
                 let mut metrics = self.metrics.write().unwrap();
-                metrics.subscriptions.get_mut(subscription_name).map(|m| {
+                if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
                     m.pending = subscription.num_pending();
                     m.acked_all_time += count as u64;
-                });
+                };
 
                 true
             })
@@ -344,10 +340,10 @@ impl Registry {
 
             // Update metrics
             let mut metrics = self.metrics.write().unwrap();
-            metrics.topics.get_mut(topic_name).map(|m| {
+            if let Some(m) = metrics.topics.get_mut(topic_name) {
                 m.messages = topic.topic.len();
                 m.expired_all_time += count as u64
-            });
+            }
         }
 
         //Update metrics

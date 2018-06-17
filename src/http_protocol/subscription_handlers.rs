@@ -1,23 +1,23 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
-use super::types;
-use super::Config;
+use actix_web::dev::HttpResponseBuilder;
+use actix_web::{HttpResponse, Json, Path, State};
 use chrono::Duration;
-use courier::SubscriptionMeta;
-use registry::SharedRegistry;
-use rocket::http::Status;
-use rocket::response::status::Custom;
-use rocket::State;
-use rocket_contrib::Json;
 use uuid::Uuid;
 
+use courier::SubscriptionMeta;
+
+use http_protocol::state::HttpState;
+use http_protocol::types;
+use http_protocol::Config;
+use registry::SharedRegistry;
+
 fn create(
-    cfg: State<Config>,
-    reg: State<SharedRegistry>,
-    name: String,
-    config: Json<types::SubscriptionCreateConfig>,
-) -> Option<Custom<Json<SubscriptionMeta>>> {
-    let config = config.into_inner();
+    name: &str,
+    config: &types::SubscriptionCreateConfig,
+    reg: &SharedRegistry,
+    cfg: &Config,
+) -> Option<HttpResponse> {
     let deadline = config
         .ack_deadline
         .map(|deadline| Duration::seconds(i64::from(deadline)))
@@ -29,40 +29,49 @@ fn create(
         config.historical.unwrap_or(false),
     );
     subscribe.map(|(created, subscription)| {
-        let json = Json(subscription);
-        if created {
-            Custom(Status::Created, json)
+        let mut response = if created {
+            HttpResponse::Created()
         } else {
-            Custom(Status::Conflict, json)
-        }
+            HttpResponse::Conflict()
+        };
+        response.json(subscription)
     })
 }
 
-#[put("/<name>", data = "<config>")]
 pub fn create_with_name(
-    cfg: State<Config>,
-    reg: State<SharedRegistry>,
-    name: String,
-    config: Json<types::SubscriptionCreateConfig>,
-) -> Option<Custom<Json<SubscriptionMeta>>> {
-    create(cfg, reg, name, config)
+    (name, config, state): (
+        Path<String>,
+        Json<types::SubscriptionCreateConfig>,
+        State<HttpState>,
+    ),
+) -> Option<HttpResponse> {
+    create(
+        &name.into_inner(),
+        &config.into_inner(),
+        &state.registry,
+        &state.config,
+    )
 }
 
-#[put("/", data = "<config>")]
 pub fn create_without_name(
-    cfg: State<Config>,
-    reg: State<SharedRegistry>,
-    config: Json<types::SubscriptionCreateConfig>,
-) -> Option<Custom<Json<SubscriptionMeta>>> {
-    create(cfg, reg, Uuid::new_v4().to_string(), config)
+    (config, state): (Json<types::SubscriptionCreateConfig>, State<HttpState>),
+) -> Option<HttpResponse> {
+    create(
+        &Uuid::new_v4().to_string(),
+        &config.into_inner(),
+        &state.registry,
+        &state.config,
+    )
 }
 
-#[patch("/<name>", data = "<config>")]
 pub fn update(
-    reg: State<SharedRegistry>,
-    name: String,
-    config: Json<types::SubscriptionUpdateConfig>,
+    (name, config, state): (
+        Path<String>,
+        Json<types::SubscriptionUpdateConfig>,
+        State<HttpState>,
+    ),
 ) -> Option<Json<SubscriptionMeta>> {
+    let reg = &state.registry;
     let config = config.into_inner();
     let deadline = config
         .ack_deadline
@@ -70,47 +79,42 @@ pub fn update(
     reg.update_subscription(&name, deadline).map(Json)
 }
 
-#[delete("/<name>")]
-pub fn delete(reg: State<SharedRegistry>, name: String) -> Custom<()> {
-    if reg.delete_subscription(&name) {
-        Custom(Status::Ok, ())
+pub fn delete((name, state): (Path<String>, State<HttpState>)) -> HttpResponseBuilder {
+    if state.registry.delete_subscription(&name) {
+        HttpResponse::Ok()
     } else {
-        Custom(Status::NotFound, ())
+        HttpResponse::NotFound()
     }
 }
 
-#[get("/<name>")]
-pub fn get(reg: State<SharedRegistry>, name: String) -> Option<Json<SubscriptionMeta>> {
-    reg.get_subscription(&name).map(Json)
+pub fn get((name, state): (Path<String>, State<HttpState>)) -> Option<Json<SubscriptionMeta>> {
+    state.registry.get_subscription(&name).map(Json)
 }
 
-#[get("/")]
-pub fn list(reg: State<SharedRegistry>) -> Json<types::SubscriptionList> {
-    Json(types::SubscriptionList::new(reg.list_subscriptions()))
+pub fn list(state: State<HttpState>) -> Json<types::SubscriptionList> {
+    Json(types::SubscriptionList::new(
+        state.registry.list_subscriptions(),
+    ))
 }
 
-#[post("/<name>/pull", data = "<config>")]
 pub fn pull(
-    cfg: State<Config>,
-    reg: State<SharedRegistry>,
-    name: String,
-    config: Json<types::PullConfig>,
+    (name, config, state): (Path<String>, Json<types::PullConfig>, State<HttpState>),
 ) -> Option<Json<types::MessageList>> {
     let config = config.into_inner();
+    let reg = &state.registry;
+    let cfg = &state.config;
     let max = config.max_messages.unwrap_or(cfg.default_max_messages);
     reg.pull(&name, max)
         .map(|messages| Json(types::MessageList::new(messages)))
 }
 
-#[post("/<name>/ack", data = "<ids>")]
 pub fn ack(
-    reg: State<SharedRegistry>,
-    name: String,
-    ids: Json<types::MessageIdList>,
-) -> Custom<()> {
+    (name, ids, state): (Path<String>, Json<types::MessageIdList>, State<HttpState>),
+) -> HttpResponseBuilder {
+    let reg = &state.registry;
     if reg.ack(&name, &ids.into_inner().message_ids) {
-        Custom(Status::Ok, ())
+        HttpResponse::Ok()
     } else {
-        Custom(Status::NotFound, ())
+        HttpResponse::NotFound()
     }
 }
