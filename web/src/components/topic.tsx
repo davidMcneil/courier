@@ -1,7 +1,7 @@
 import { Component } from "inferno";
 import { TopicMetrics } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
-import { fetchError2message, HEADERS, topicsUrl } from "../utils/util";
+import { fetchError2message, HEADERS, numberAsTimeStr, topicsUrl } from "../utils/util";
 
 interface Props {
   metrics: TopicMetrics;
@@ -27,6 +27,7 @@ export class Topic extends Component<Props, State> {
   public render() {
     const m = this.props.metrics;
     const expanded = this.state.expanded;
+    const age = (new Date().getTime() - m.created.getTime()) / 1000;
     return (
       <tbody key={m.name} class={`${expanded ? "no-bottom-border" : ""}`}>
         <tr>
@@ -39,7 +40,7 @@ export class Topic extends Component<Props, State> {
           <td>{m.numMessages}</td>
           <td>0</td>
           <td>{m.percentageProcessed}</td>
-          <td>0y 1d 0m</td>
+          <td>{numberAsTimeStr(age)}</td>
           <td class={"is-table-icon has-text-centered"}>
             <a class="delete is-small" onClick={this.tryDelete} />
           </td>
@@ -66,7 +67,7 @@ export class Topic extends Component<Props, State> {
                 <td>0</td>
                 <td>{m.messageTtl}</td>
                 <td>yyyy-mm-ddThh:mm::ss</td>
-                <td>yyyy-mm-ddThh:mm::ss</td>
+                <td>{m.created.toISOString()}</td>
               </tr>
             </table>
             <table>Subscriptions Table</table>

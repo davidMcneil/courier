@@ -27,15 +27,17 @@ pub struct TopicMetrics {
     messages_all_time: u64,
     expired_all_time: u64,
     message_ttl: i64,
+    created: DateTime<Utc>,
 }
 
 impl TopicMetrics {
-    pub fn new(message_ttl: i64) -> Self {
+    pub fn new(topic: &Topic) -> Self {
         Self {
             messages: 0,
             messages_all_time: 0,
             expired_all_time: 0,
-            message_ttl,
+            message_ttl: topic.message_ttl.num_seconds(),
+            created: topic.created,
         }
     }
 }
@@ -48,17 +50,19 @@ pub struct SubscriptionMetrics {
     topic: String,
     topic_message_index: usize,
     ack_deadline: i64,
+    created: DateTime<Utc>,
 }
 
 impl SubscriptionMetrics {
-    pub fn new(topic: String, topic_message_index: usize, ack_deadline: i64) -> Self {
+    pub fn new(subscription: &Subscription) -> Self {
         Self {
             pending: 0,
             pulled_all_time: 0,
             acked_all_time: 0,
-            topic,
-            topic_message_index,
-            ack_deadline,
+            topic: subscription.topic.clone(),
+            topic_message_index: subscription.next_index(),
+            ack_deadline: subscription.ack_deadline.num_seconds(),
+            created: subscription.created,
         }
     }
 }
@@ -114,10 +118,9 @@ impl Registry {
         if created {
             let mut metrics = self.metrics.write().unwrap();
             metrics.topics_all_time += 1;
-            metrics.topics.insert(
-                String::from(topic_name),
-                TopicMetrics::new(message_ttl.num_seconds()),
-            );
+            metrics
+                .topics
+                .insert(String::from(topic_name), TopicMetrics::new(&topic.topic));
         }
 
         (created, TopicMeta::from(&topic.topic))
@@ -223,11 +226,7 @@ impl Registry {
             metrics.subscriptions_all_time += 1;
             metrics.subscriptions.insert(
                 String::from(subscription_name),
-                SubscriptionMetrics::new(
-                    String::from(topic_name),
-                    subscription.next_index(),
-                    ack_deadline.num_seconds(),
-                ),
+                SubscriptionMetrics::new(subscription),
             );
         }
 

@@ -1,7 +1,7 @@
 import { Component } from "inferno";
 
 import { Tabs } from "../utils/types";
-import { numberAsTime, str2number } from "../utils/util";
+import { numberAsTimeStr, str2number } from "../utils/util";
 
 interface Props {
   displayStats: boolean;
@@ -19,7 +19,6 @@ interface Props {
 
 export function TopNavbar(props: Props) {
   const uptime = (new Date().getTime() - props.startTime.getTime()) / 1000;
-  const [d, h, m] = numberAsTime(uptime);
   return (
     <nav class="navbar is-fixed-top">
       <div class="container">
@@ -55,7 +54,7 @@ export function TopNavbar(props: Props) {
           </div>
           <div class="navbar-end">
             <div class="navbar-item">
-              <b>Uptime:&nbsp;</b> {d}d {h}h {m}m
+              <b>Uptime:&nbsp;</b> {numberAsTimeStr(uptime)}
             </div>
             <div class="navbar-item is-paddingless">
               <input

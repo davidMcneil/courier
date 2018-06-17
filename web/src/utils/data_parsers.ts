@@ -11,6 +11,7 @@ export interface TopicMetrics {
   numExpiredInterval: number;
   numMessages: number;
   percentageProcessed: number;
+  created: Date;
 }
 
 function newTopicMetrics(name: string): TopicMetrics {
@@ -23,6 +24,7 @@ function newTopicMetrics(name: string): TopicMetrics {
     numExpiredInterval: 0,
     numMessages: 0,
     percentageProcessed: 0,
+    created: new Date(),
   };
 }
 
@@ -41,6 +43,10 @@ function topicMetricsFromAny(name: string, blob: any): TopicMetrics {
     if (isNumber(blob.message_ttl)) {
       topicMetrics.messageTtl = blob.message_ttl;
     }
+    const created = new Date(blob.created);
+    if (isNumber(created.getTime())) {
+      topicMetrics.created = created;
+    }
   }
   return topicMetrics;
 }
@@ -57,6 +63,7 @@ export interface SubscriptionMetrics {
   numPending: number;
   percentageProcessed: number;
   orphaned: boolean;
+  created: Date;
 }
 
 function newSubscriptionMetrics(name: string): SubscriptionMetrics {
@@ -72,6 +79,7 @@ function newSubscriptionMetrics(name: string): SubscriptionMetrics {
     numPending: 0,
     percentageProcessed: 0,
     orphaned: false,
+    created: new Date(),
   };
 }
 
@@ -95,6 +103,10 @@ function subscriptionMetricsFromAny(name: string, blob: any): SubscriptionMetric
     }
     if (isString(blob.topic)) {
       subscriptionMetrics.topic = blob.topic;
+    }
+    const created = new Date(blob.created);
+    if (isNumber(created.getTime())) {
+      subscriptionMetrics.created = created;
     }
   }
   return subscriptionMetrics;

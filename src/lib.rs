@@ -84,6 +84,7 @@ pub struct Subscription {
     pub name: String,
     pub topic: String,
     pub ack_deadline: Duration,
+    pub created: DateTime<Utc>,
     cursor: Cursor<Message>,
     pending: VecDeque<PendingMessage>,
     pending_ids: HashSet<Uuid>,
@@ -96,6 +97,7 @@ impl Subscription {
             name: String::from(name),
             ack_deadline,
             topic: topic.name.clone(),
+            created: Utc::now(),
             cursor: Cursor::new_head(&topic.log),
             pending: VecDeque::new(),
             pending_ids: HashSet::new(),
@@ -108,6 +110,7 @@ impl Subscription {
             name: String::from(name),
             ack_deadline,
             topic: topic.name.clone(),
+            created: Utc::now(),
             cursor: Cursor::new_tail(&topic.log),
             pending: VecDeque::new(),
             pending_ids: HashSet::new(),
@@ -192,6 +195,7 @@ pub struct SubscriptionMeta {
     pub name: String,
     pub topic: String,
     pub ack_deadline: i64,
+    pub created: DateTime<Utc>,
 }
 
 impl<'a> From<&'a Subscription> for SubscriptionMeta {
@@ -200,6 +204,7 @@ impl<'a> From<&'a Subscription> for SubscriptionMeta {
             name: subscription.name.clone(),
             topic: subscription.topic.clone(),
             ack_deadline: subscription.ack_deadline.num_seconds(),
+            created: subscription.created,
         }
     }
 }
@@ -208,6 +213,7 @@ impl<'a> From<&'a Subscription> for SubscriptionMeta {
 pub struct Topic {
     pub name: String,
     pub message_ttl: Duration,
+    pub created: DateTime<Utc>,
     log: CommitLog<Message>,
 }
 
@@ -216,6 +222,7 @@ impl Topic {
         Topic {
             name: String::from(name),
             message_ttl,
+            created: Utc::now(),
             log: CommitLog::new(),
         }
     }
@@ -243,6 +250,7 @@ impl Topic {
 pub struct TopicMeta {
     pub name: String,
     pub message_ttl: i64,
+    pub created: DateTime<Utc>,
 }
 
 impl<'a> From<&'a Topic> for TopicMeta {
@@ -250,6 +258,7 @@ impl<'a> From<&'a Topic> for TopicMeta {
         Self {
             name: topic.name.clone(),
             message_ttl: topic.message_ttl.num_seconds(),
+            created: topic.created,
         }
     }
 }

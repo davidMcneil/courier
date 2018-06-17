@@ -61,6 +61,11 @@ export function numberAsTime(seconds: number): [number, number, number] {
   return [days, hours, minutes];
 }
 
+export function numberAsTimeStr(seconds: number): string {
+  const [d, h, m] = numberAsTime(seconds);
+  return `${d}d ${h}h ${m}m`;
+}
+
 export function str2uint(s: string, def: number = 0): number {
   let n = parseInt(s, 10);
   if (isNaN(n) || n < 0) {
