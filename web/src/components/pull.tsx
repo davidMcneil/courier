@@ -2,11 +2,17 @@ import { ChangeEvent, Component, FormEvent } from "inferno";
 import { createElement } from "inferno-create-element";
 
 import { messageFromMessagesBlob } from "../utils/data_parsers";
-import { ackUrl, HEADERS, logError, pullUrl } from "../utils/util";
+import { NotificationType } from "../utils/types";
+import { ackUrl, fetchError2message, HEADERS, isJson, pullUrl } from "../utils/util";
+
+interface Props {
+  setNotification: (type: NotificationType, message: string) => void;
+}
 
 interface State {
   subscription: string;
   ack: boolean;
+  format: boolean;
   id: string;
   time: Date | null;
   data: string;
@@ -21,12 +27,13 @@ const emptyMessage = {
 const emptyState: State = {
   subscription: "",
   ack: false,
+  format: false,
   ...emptyMessage,
 };
 
 const maxMessages = 1;
 
-export class Pull extends Component<null, State> {
+export class Pull extends Component<Props, State> {
   public state = emptyState;
 
   constructor(props: null, context: null) {
@@ -34,11 +41,19 @@ export class Pull extends Component<null, State> {
 
     this.setSubscription = this.setSubscription.bind(this);
     this.setAck = this.setAck.bind(this);
+    this.setFormat = this.setFormat.bind(this);
     this.pull = this.pull.bind(this);
     this.ackLast = this.ackLast.bind(this);
   }
 
   public render() {
+    let displayData = this.state.data;
+    if (this.state.format) {
+      const [wasJson, json] = isJson(displayData);
+      if (wasJson) {
+        displayData = JSON.stringify(json, null, 4);
+      }
+    }
     return (
       <div>
         <div class="field has-addons">
@@ -72,7 +87,7 @@ export class Pull extends Component<null, State> {
             {createElement(
               "textarea",
               { class: "textarea", placeholder: "Message contents...", rows: 6, readonly: true },
-              this.state.data,
+              displayData,
             )}
           </div>
         </div>
@@ -95,8 +110,8 @@ export class Pull extends Component<null, State> {
               <input
                 class="checkbox"
                 type="checkbox"
-                // checked={this.state.ack}
-                // onChange={this.setAck}
+                checked={this.state.format}
+                onChange={this.setFormat}
               />
               &nbsp;Format
             </label>
@@ -107,6 +122,7 @@ export class Pull extends Component<null, State> {
               class="button is-primary"
               type="button"
               value="Ack Last"
+              disabled={this.state.id === ""}
               onClick={this.ackLast}
             />
           </div>
@@ -123,6 +139,10 @@ export class Pull extends Component<null, State> {
     this.setState({ ack: event.currentTarget.checked });
   }
 
+  private setFormat(event: ChangeEvent<HTMLInputElement>) {
+    this.setState({ format: event.currentTarget.checked });
+  }
+
   private pull() {
     const body = {
       max_messages: maxMessages,
@@ -133,7 +153,7 @@ export class Pull extends Component<null, State> {
         if (response.ok) {
           return response.json();
         }
-        throw new Error(`Response was ${response.status}.`);
+        throw response;
       })
       .then(json => {
         const message = messageFromMessagesBlob(json);
@@ -147,23 +167,27 @@ export class Pull extends Component<null, State> {
         }
       })
       .catch(error => {
-        logError("Failed to pull message!", error);
+        const message = `Unable to pull message! (${fetchError2message(error)})`;
+        this.props.setNotification(NotificationType.Failure, message);
       });
   }
 
   private ackLast() {
+    const id = this.state.id;
     const body = {
-      message_ids: [this.state.id],
+      message_ids: [id],
     };
     const init = { method: "POST", headers: HEADERS, body: JSON.stringify(body) };
     fetch(ackUrl(this.state.subscription), init)
       .then(response => {
         if (!response.ok) {
-          throw new Error(`Response was ${response.status}.`);
+          throw response;
         }
+        this.props.setNotification(NotificationType.Success, `Acked message '${id}'.`);
       })
       .catch(error => {
-        logError("Failed to ack message!", error);
+        const message = `Unable to ack message! (${fetchError2message(error)})`;
+        this.props.setNotification(NotificationType.Failure, message);
       });
   }
 }

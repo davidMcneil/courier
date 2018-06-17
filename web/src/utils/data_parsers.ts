@@ -201,7 +201,7 @@ function computeState(
 
     // Update subscription specific metrics
     const numUnprocessed =
-      topicMetrics.numMessagesAllTime - metrics.topicMessageIndex + c.numPending;
+      topicMetrics.numMessagesAllTime - metrics.topicMessageIndex + metrics.numPending;
     totalNumUnprocessed += numUnprocessed;
     totalNumSubscriptionMessages += topicMetrics.numMessages;
     let percentageUnprocessed = 0;
@@ -221,7 +221,7 @@ function computeState(
   c.numPulledInterval = c.numPulledAllTime - p.numPulledAllTime;
   c.numAckedInterval = c.numAckedAllTime - p.numAckedAllTime;
   let totalPercentageUnprocessed = 0;
-  if (c.numMessages > 0) {
+  if (totalNumSubscriptionMessages > 0) {
     totalPercentageUnprocessed = totalNumUnprocessed / totalNumSubscriptionMessages;
   }
   c.percentageProcessed = Math.max(0, 1 - totalPercentageUnprocessed);
@@ -294,6 +294,43 @@ export function messageFromMessagesBlob(blob: any): Message | null {
       created.data = message.data;
     }
     return created;
+  }
+  return null;
+}
+
+export interface Topic {
+  name: string;
+  messageTtl: number;
+}
+
+export function topicFromAny(blob: any): Topic | null {
+  if (isObject(blob) && isString(blob.name) && isNumber(blob.message_ttl)) {
+    return {
+      name: blob.name,
+      messageTtl: blob.message_ttl,
+    };
+  }
+  return null;
+}
+
+export interface Subscription {
+  name: string;
+  topic: string;
+  ackDeadline: number;
+}
+
+export function subscriptionFromAny(blob: any): Subscription | null {
+  if (
+    isObject(blob) &&
+    isString(blob.name) &&
+    isString(blob.topic) &&
+    isNumber(blob.ack_deadline)
+  ) {
+    return {
+      name: blob.name,
+      topic: blob.topic,
+      ackDeadline: blob.ack_deadline,
+    };
   }
   return null;
 }

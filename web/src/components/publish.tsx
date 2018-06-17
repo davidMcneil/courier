@@ -1,6 +1,11 @@
 import { Component, FormEvent } from "inferno";
 
-import { HEADERS, logError, publishUrl } from "../utils/util";
+import { NotificationType } from "../utils/types";
+import { fetchError2message, HEADERS, publishUrl } from "../utils/util";
+
+interface Props {
+  setNotification: (type: NotificationType, message: string) => void;
+}
 
 interface State {
   topic: string;
@@ -12,7 +17,7 @@ const emptyState: State = {
   message: "",
 };
 
-export class Publish extends Component<null, State> {
+export class Publish extends Component<Props, State> {
   public state = emptyState;
 
   constructor(props: null, context: null) {
@@ -71,11 +76,21 @@ export class Publish extends Component<null, State> {
     fetch(publishUrl(this.state.topic), init)
       .then(response => {
         if (!response.ok) {
-          throw new Error(`Response was ${response.status}.`);
+          throw response;
+        }
+        return response.json();
+      })
+      .then(json => {
+        if (json.message_ids && json.message_ids.length > 0) {
+          const id = json.message_ids[0];
+          this.props.setNotification(NotificationType.Success, `Published message '${id}'.`);
+        } else {
+          this.props.setNotification(NotificationType.Failure, "No message id was returned!");
         }
       })
       .catch(error => {
-        logError("Failed to publish message!", error);
+        const message = `Unable to publish message! (${fetchError2message(error)})`;
+        this.props.setNotification(NotificationType.Failure, message);
       });
   }
 }

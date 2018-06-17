@@ -1,5 +1,10 @@
 @charset "utf-8";
 
+// Custom bulma variables
+// @import "styles/theme_variables";
+@import "styles/variables";
+
+// Core bulma imports
 @import "node_modules/bulma/sass/utilities/initial-variables";
 @import "node_modules/bulma/sass/utilities/functions";
 @import "node_modules/bulma/sass/utilities/derived-variables";
@@ -11,17 +16,15 @@
 @import "node_modules/bulma/sass/base/generic";
 @import "node_modules/bulma/sass/base/helpers";
 
-// Bulma customization
-$section-padding: 0.75rem 1.5rem !default;
-
-// @import "node_modules/bulma/sass/elements/box";
+// Import the needed bulma components
+@import "node_modules/bulma/sass/elements/box";
 @import "node_modules/bulma/sass/elements/button";
 @import "node_modules/bulma/sass/elements/container";
 @import "node_modules/bulma/sass/elements/content";
 @import "node_modules/bulma/sass/elements/form";
 // @import "node_modules/bulma/sass/elements/icon";
 // @import "node_modules/bulma/sass/elements/image";
-// @import "node_modules/bulma/sass/elements/notification";
+@import "node_modules/bulma/sass/elements/notification";
 @import "node_modules/bulma/sass/elements/other";
 // @import "node_modules/bulma/sass/elements/progress";
 @import "node_modules/bulma/sass/elements/table";
@@ -35,7 +38,7 @@ $section-padding: 0.75rem 1.5rem !default;
 // @import "node_modules/bulma/sass/components/media";
 // @import "node_modules/bulma/sass/components/menu";
 // @import "node_modules/bulma/sass/components/message";
-// @import "node_modules/bulma/sass/components/modal";
+@import "node_modules/bulma/sass/components/modal";
 @import "node_modules/bulma/sass/components/navbar";
 // @import "node_modules/bulma/sass/components/pagination";
 // @import "node_modules/bulma/sass/components/panel";
@@ -48,26 +51,9 @@ $section-padding: 0.75rem 1.5rem !default;
 // @import "node_modules/bulma/sass/layout/hero";
 @import "node_modules/bulma/sass/layout/section";
 
-.down-arrow {
-  margin-bottom: 8px;
-  &:before {
-    content: "\2304";
-  }
-}
+// Bulma overrides
+// @import "styles/theme_overrides";
+@import "styles/overrides";
 
-.up-arrow {
-  margin-top: 8px;
-  &:before {
-    content: "\2303";
-  }
-}
-
-.has-sticky-footer {
-  display: flex;
-  min-height: 100vh;
-  flex-direction: column;
-}
-
-.has-sticky-footer-content {
-  flex: 1;
-}
+// Additional styles
+@import "styles/styles";

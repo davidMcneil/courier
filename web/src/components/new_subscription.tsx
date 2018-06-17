@@ -1,5 +1,11 @@
 import { ChangeEvent, Component, FormEvent } from "inferno";
-import { HEADERS, logError, str2uint, subscriptionsUrl } from "../utils/util";
+import { subscriptionFromAny } from "../utils/data_parsers";
+import { NotificationType } from "../utils/types";
+import { fetchError2message, HEADERS, str2uint, subscriptionsUrl } from "../utils/util";
+
+interface Props {
+  setNotification: (type: NotificationType, message: string) => void;
+}
 
 interface State {
   name: string;
@@ -15,7 +21,7 @@ const emptyState: State = {
   historical: false,
 };
 
-export class NewSubscription extends Component<null, State> {
+export class NewSubscription extends Component<Props, State> {
   public state = emptyState;
 
   constructor(props: null, context: null) {
@@ -46,7 +52,7 @@ export class NewSubscription extends Component<null, State> {
         </div>
 
         <div class="field">
-          <label class="label">Ack Deadline</label>
+          <label class="label">Ack Deadline (s)</label>
           <div class="control">
             <input
               class="input"
@@ -102,11 +108,24 @@ export class NewSubscription extends Component<null, State> {
     fetch(subscriptionsUrl(this.state.name), init)
       .then(response => {
         if (!response.ok) {
-          throw new Error(`Response was ${response.status}.`);
+          throw response;
+        }
+        return response.json();
+      })
+      .then(json => {
+        const subscription = subscriptionFromAny(json);
+        if (subscription !== null) {
+          this.props.setNotification(
+            NotificationType.Success,
+            `Created subscription '${subscription.name}'.`,
+          );
+        } else {
+          this.props.setNotification(NotificationType.Failure, `Unable to parse subscription!`);
         }
       })
       .catch(error => {
-        logError("Failed to create new subscription!", error);
+        const message = `Unable to create subscription! (${fetchError2message(error)})`;
+        this.props.setNotification(NotificationType.Failure, message);
       });
   }
 }

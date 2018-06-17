@@ -1,26 +1,30 @@
 import { Component } from "inferno";
 
 import { CourierState } from "../utils/data_parsers";
+import { NotificationType } from "../utils/types";
 import { NewTopic } from "./new_topic";
 import { Publish } from "./publish";
 import { Topic } from "./topic";
 
 interface Props {
+  visible: boolean;
   courierState: CourierState;
+  setNotification: (type: NotificationType, message: string) => void;
+  setDeleteConfirmation: (message: string, action: () => void) => void;
 }
 
 export function TopicsTab(props: Props) {
   const c = props.courierState;
   return (
-    <div>
+    <div class={props.visible ? "" : "is-hidden"}>
       <section class="section">
         <div class="container">
           <div class="columns">
             <div class="column">
-              <NewTopic />
+              <NewTopic setNotification={props.setNotification} />
             </div>
             <div class="column">
-              <Publish />
+              <Publish setNotification={props.setNotification} />
             </div>
           </div>
         </div>
@@ -28,17 +32,28 @@ export function TopicsTab(props: Props) {
 
       <section class="section">
         <div class="container">
-          <table class="table is-bordered is-striped is-narrow is-fullwidth">
-            <thead>
-              <tr>
-                <th>Topic</th>
+          <table
+            class="table table-with-bottom-border is-hoverable is-narrow is-fullwidth"
+            $HasKeyedChildren
+          >
+            {[
+              <thead key="header">
+                <th />
+                <th>Name</th>
                 <th>Messages</th>
-                <th>Messages Interval</th>
-                <th>Messages All Time</th>
-                <th>Message TTL (s)</th>
-              </tr>
-            </thead>
-            <tbody>{Array.from(c.topics.values()).map(t => <Topic metrics={t} />)}</tbody>
+                <th>Subscriptions</th>
+                <th>Processed</th>
+                <th>Age</th>
+                <th />
+              </thead>,
+              ...Array.from(c.topics.values()).map(t => (
+                <Topic
+                  metrics={t}
+                  setNotification={props.setNotification}
+                  setDeleteConfirmation={props.setDeleteConfirmation}
+                />
+              )),
+            ]}
           </table>
         </div>
       </section>

@@ -1,0 +1,49 @@
+// Styles
+.arrow-down {
+  &:before {
+    position: relative;
+    bottom: 4px;
+    display: inline-block;
+    font-weight: bold;
+    content: "\2304";
+  }
+}
+
+.arrow-up {
+  &:before {
+    position: relative;
+    top: 4px;
+    display: inline-block;
+    font-weight: bold;
+    content: "\2303";
+  }
+}
+
+.arrow-right {
+  &:before {
+    transform: rotate(90deg);
+    position: relative;
+    right: 4px;
+    display: inline-block;
+    font-weight: bold;
+    content: "\2303";
+  }
+}
+
+.has-sticky-footer {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.has-sticky-footer-content {
+  flex: 1;
+}
+
+.is-hidden {
+  display: none;
+}
+
+.is-table-icon {
+  width: 24px;
+}

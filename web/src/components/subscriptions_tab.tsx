@@ -1,26 +1,29 @@
 import { Component } from "inferno";
 
 import { CourierState } from "../utils/data_parsers";
+import { NotificationType } from "../utils/types";
 import { NewSubscription } from "./new_subscription";
 import { Pull } from "./pull";
 import { Subscription } from "./subscription";
 
 interface Props {
+  visible: boolean;
   courierState: CourierState;
+  setNotification: (type: NotificationType, message: string) => void;
 }
 
 export function SubscriptionsTab(props: Props) {
   const c = props.courierState;
   return (
-    <div>
+    <div class={props.visible ? "" : "is-hidden"}>
       <section class="section">
         <div class="container">
           <div class="columns">
             <div class="column">
-              <NewSubscription />
+              <NewSubscription setNotification={props.setNotification} />
             </div>
             <div class="column">
-              <Pull />
+              <Pull setNotification={props.setNotification} />
             </div>
           </div>
         </div>

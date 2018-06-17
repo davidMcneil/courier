@@ -1,5 +1,11 @@
 import { Component, FormEvent } from "inferno";
-import { HEADERS, logError, str2uint, topicsUrl } from "../utils/util";
+import { topicFromAny } from "../utils/data_parsers";
+import { NotificationType } from "../utils/types";
+import { fetchError2message, HEADERS, str2uint, topicsUrl } from "../utils/util";
+
+interface Props {
+  setNotification: (type: NotificationType, message: string) => void;
+}
 
 interface State {
   name: string;
@@ -11,7 +17,7 @@ const emptyState: State = {
   ttl: 3600,
 };
 
-export class NewTopic extends Component<null, State> {
+export class NewTopic extends Component<Props, State> {
   public state = emptyState;
 
   constructor(props: null, context: null) {
@@ -33,7 +39,7 @@ export class NewTopic extends Component<null, State> {
         </div>
 
         <div class="field">
-          <label class="label">Time to Live (seconds)</label>
+          <label class="label">Message Time to Live (s)</label>
           <div class="control">
             <input class="input" type="number" value={this.state.ttl} onInput={this.setTtl} />
           </div>
@@ -64,11 +70,21 @@ export class NewTopic extends Component<null, State> {
     fetch(topicsUrl(this.state.name), init)
       .then(response => {
         if (!response.ok) {
-          throw new Error(`Response was ${response.status}.`);
+          throw response;
+        }
+        return response.json();
+      })
+      .then(json => {
+        const topic = topicFromAny(json);
+        if (topic !== null) {
+          this.props.setNotification(NotificationType.Success, `Created topic '${topic.name}'.`);
+        } else {
+          this.props.setNotification(NotificationType.Failure, `Unable to parse topic!`);
         }
       })
       .catch(error => {
-        logError("Failed to create new topic!", error);
+        const message = `Unable to create topic! (${fetchError2message(error)})`;
+        this.props.setNotification(NotificationType.Failure, message);
       });
   }
 }
