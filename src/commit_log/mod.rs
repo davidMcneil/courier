@@ -96,9 +96,13 @@ impl<T: Clone> Cursor<T> {
                 next.read().unwrap().value.clone()
             }),
             None => {
-                self.next_index = self.to_head_index.load(Ordering::SeqCst);
-                self.cursor = Weak::clone(&self.to_head);
-                self.next()
+                if let Some(_) = self.to_head.upgrade() {
+                    self.next_index = self.to_head_index.load(Ordering::SeqCst);
+                    self.cursor = Weak::clone(&self.to_head);
+                    self.next()
+                } else {
+                    None
+                }
             }
         }
     }

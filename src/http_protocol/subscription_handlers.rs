@@ -18,14 +18,19 @@ fn create(
     reg: &SharedRegistry,
     cfg: &Config,
 ) -> Option<HttpResponse> {
-    let deadline = config
+    let ack_deadline = config
         .ack_deadline
-        .map(|deadline| Duration::seconds(i64::from(deadline)))
+        .map(|ack_deadline| Duration::seconds(i64::from(ack_deadline)))
         .unwrap_or(cfg.default_ack_deadline);
+    let ttl = config
+        .ttl
+        .map(|ttl| Duration::seconds(i64::from(ttl)))
+        .unwrap_or(cfg.default_subscription_ttl);
     let subscribe = reg.create_subscription(
         &name,
         &config.topic,
-        deadline,
+        ack_deadline,
+        ttl,
         config.historical.unwrap_or(false),
     );
     subscribe.map(|(created, subscription)| {
@@ -73,10 +78,11 @@ pub fn update(
 ) -> Option<Json<SubscriptionMeta>> {
     let reg = &state.registry;
     let config = config.into_inner();
-    let deadline = config
+    let ack_deadline = config
         .ack_deadline
-        .map(|deadline| Duration::seconds(i64::from(deadline)));
-    reg.update_subscription(&name, deadline).map(Json)
+        .map(|ack_deadline| Duration::seconds(i64::from(ack_deadline)));
+    let ttl = config.ttl.map(|ttl| Duration::seconds(i64::from(ttl)));
+    reg.update_subscription(&name, ack_deadline, ttl).map(Json)
 }
 
 pub fn delete((name, state): (Path<String>, State<HttpState>)) -> HttpResponseBuilder {

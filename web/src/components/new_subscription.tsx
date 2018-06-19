@@ -11,6 +11,7 @@ interface State {
   name: string;
   topic: string;
   ackDeadline: number;
+  ttl: number;
   historical: boolean;
 }
 
@@ -18,6 +19,7 @@ const emptyState: State = {
   name: "",
   topic: "",
   ackDeadline: 60,
+  ttl: 0,
   historical: false,
 };
 
@@ -30,6 +32,7 @@ export class NewSubscription extends Component<Props, State> {
     this.setName = this.setName.bind(this);
     this.setTopic = this.setTopic.bind(this);
     this.setAckDeadline = this.setAckDeadline.bind(this);
+    this.setTtl = this.setTtl.bind(this);
     this.setHistorical = this.setHistorical.bind(this);
     this.create = this.create.bind(this);
   }
@@ -60,6 +63,13 @@ export class NewSubscription extends Component<Props, State> {
               value={this.state.ackDeadline}
               onInput={this.setAckDeadline}
             />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Time to Live (s)</label>
+          <div class="control">
+            <input class="input" type="number" value={this.state.ttl} onInput={this.setTtl} />
           </div>
         </div>
 
@@ -94,6 +104,10 @@ export class NewSubscription extends Component<Props, State> {
     this.setState({ ackDeadline: str2uint(event.currentTarget.value) });
   }
 
+  private setTtl(event: FormEvent<HTMLInputElement>) {
+    this.setState({ ttl: str2uint(event.currentTarget.value) });
+  }
+
   private setHistorical(event: ChangeEvent<HTMLInputElement>) {
     this.setState({ historical: event.currentTarget.checked });
   }
@@ -102,6 +116,7 @@ export class NewSubscription extends Component<Props, State> {
     const body = {
       topic: this.state.topic,
       ack_deadline: this.state.ackDeadline,
+      ttl: this.state.ttl,
       historical: this.state.historical,
     };
     const init = { method: "PUT", headers: HEADERS, body: JSON.stringify(body) };

@@ -18,11 +18,15 @@ fn create(
     reg: &SharedRegistry,
     cfg: &Config,
 ) -> HttpResponse {
-    let ttl = config
+    let message_ttl = config
         .message_ttl
         .map(|ttl| Duration::seconds(i64::from(ttl)))
         .unwrap_or(cfg.default_message_ttl);
-    let (created, topic) = reg.create_topic(&name, ttl);
+    let ttl = config
+        .ttl
+        .map(|ttl| Duration::seconds(i64::from(ttl)))
+        .unwrap_or(cfg.default_topic_ttl);
+    let (created, topic) = reg.create_topic(&name, message_ttl, ttl);
     let mut response = if created {
         HttpResponse::Created()
     } else {
@@ -65,10 +69,14 @@ pub fn update(
     ),
 ) -> Option<Json<TopicMeta>> {
     let config = config.into_inner();
-    let ttl = config
+    let message_ttl = config
         .message_ttl
-        .map(|ttl| Duration::seconds(i64::from(ttl)));
-    state.registry.update_topic(&name, ttl).map(Json)
+        .map(|message_ttl| Duration::seconds(i64::from(message_ttl)));
+    let ttl = config.ttl.map(|ttl| Duration::seconds(i64::from(ttl)));
+    state
+        .registry
+        .update_topic(&name, message_ttl, ttl)
+        .map(Json)
 }
 
 pub fn delete((name, state): (Path<String>, State<HttpState>)) -> HttpResponseBuilder {

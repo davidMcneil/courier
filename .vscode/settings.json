@@ -33,6 +33,7 @@
     "structopt",
     "subcommand",
     "toml",
+    "ttls",
     "uuid",
     "vcentered"
   ]

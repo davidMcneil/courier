@@ -13,9 +13,9 @@ struct TopicStore {
 }
 
 impl TopicStore {
-    fn new(name: &str, ttl: Duration) -> Self {
+    fn new(name: &str, message_ttl: Duration, ttl: Duration) -> Self {
         TopicStore {
-            topic: Topic::new(name, ttl),
+            topic: Topic::new(name, message_ttl, ttl),
             subscriptions: HashSet::new(),
         }
     }
@@ -27,7 +27,9 @@ pub struct TopicMetrics {
     messages_all_time: u64,
     expired_all_time: u64,
     message_ttl: i64,
+    ttl: i64,
     created: DateTime<Utc>,
+    updated: DateTime<Utc>,
 }
 
 impl TopicMetrics {
@@ -37,7 +39,9 @@ impl TopicMetrics {
             messages_all_time: 0,
             expired_all_time: 0,
             message_ttl: topic.message_ttl.num_seconds(),
+            ttl: topic.ttl.num_seconds(),
             created: topic.created,
+            updated: topic.updated,
         }
     }
 }
@@ -50,7 +54,9 @@ pub struct SubscriptionMetrics {
     topic: String,
     topic_message_index: usize,
     ack_deadline: i64,
+    ttl: i64,
     created: DateTime<Utc>,
+    updated: DateTime<Utc>,
 }
 
 impl SubscriptionMetrics {
@@ -62,7 +68,9 @@ impl SubscriptionMetrics {
             topic: subscription.topic.clone(),
             topic_message_index: subscription.next_index(),
             ack_deadline: subscription.ack_deadline.num_seconds(),
+            ttl: subscription.ttl.num_seconds(),
             created: subscription.created,
+            updated: subscription.updated,
         }
     }
 }
@@ -107,12 +115,17 @@ impl Registry {
         })
     }
 
-    pub fn create_topic(&self, topic_name: &str, message_ttl: Duration) -> (bool, TopicMeta) {
+    pub fn create_topic(
+        &self,
+        topic_name: &str,
+        message_ttl: Duration,
+        ttl: Duration,
+    ) -> (bool, TopicMeta) {
         let mut topics = self.topics.write().unwrap();
         let created = !topics.contains_key(topic_name);
         let topic = topics
             .entry(String::from(topic_name))
-            .or_insert_with(|| TopicStore::new(topic_name, message_ttl));
+            .or_insert_with(|| TopicStore::new(topic_name, message_ttl, ttl));
 
         // Update metrics
         if created {
@@ -130,16 +143,25 @@ impl Registry {
         &self,
         topic_name: &str,
         message_ttl: Option<Duration>,
+        ttl: Option<Duration>,
     ) -> Option<TopicMeta> {
         let mut topics = self.topics.write().unwrap();
         topics.get_mut(topic_name).map(|t| {
-            let old_ttl = t.topic.message_ttl;
-            t.topic.set_message_ttl(message_ttl.unwrap_or(old_ttl));
+            if let Some(v) = message_ttl {
+                t.topic.set_message_ttl(v);
+            }
+            if let Some(v) = ttl {
+                t.topic.set_ttl(v);
+            }
+
+            // Ensure that updated was updated
+            t.topic.update();
 
             // Update metrics
             let mut metrics = self.metrics.write().unwrap();
             if let Some(m) = metrics.topics.get_mut(topic_name) {
-                m.message_ttl = t.topic.message_ttl.num_seconds()
+                m.message_ttl = t.topic.message_ttl.num_seconds();
+                m.ttl = t.topic.ttl.num_seconds();
             };
 
             TopicMeta::from(&t.topic)
@@ -200,6 +222,7 @@ impl Registry {
         subscription_name: &str,
         topic_name: &str,
         ack_deadline: Duration,
+        ttl: Duration,
         historical: bool,
     ) -> Option<(bool, SubscriptionMeta)> {
         let mut topics = self.topics.write().unwrap();
@@ -211,9 +234,9 @@ impl Registry {
             .entry(String::from(subscription_name))
             .or_insert_with(|| {
                 if historical {
-                    Subscription::new_head(subscription_name, topic, ack_deadline)
+                    Subscription::new_head(subscription_name, topic, ack_deadline, ttl)
                 } else {
-                    Subscription::new_tail(subscription_name, topic, ack_deadline)
+                    Subscription::new_tail(subscription_name, topic, ack_deadline, ttl)
                 }
             });
         topic_store
@@ -237,16 +260,25 @@ impl Registry {
         &self,
         subscription_name: &str,
         ack_deadline: Option<Duration>,
+        ttl: Option<Duration>,
     ) -> Option<SubscriptionMeta> {
         let mut subscriptions = self.subscriptions.write().unwrap();
         subscriptions.get_mut(subscription_name).map(|s| {
-            let old_deadline = s.ack_deadline;
-            s.set_ack_deadline(ack_deadline.unwrap_or(old_deadline));
+            if let Some(v) = ack_deadline {
+                s.set_ack_deadline(v);
+            }
+            if let Some(v) = ttl {
+                s.set_ttl(v);
+            }
+
+            // Ensure that updated was updated
+            s.update();
 
             // Update metrics
             let mut metrics = self.metrics.write().unwrap();
             if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
-                m.ack_deadline = s.ack_deadline.num_seconds()
+                m.ack_deadline = s.ack_deadline.num_seconds();
+                m.ttl = s.ttl.num_seconds();
             }
 
             SubscriptionMeta::from(&*s)
@@ -286,40 +318,38 @@ impl Registry {
 
     pub fn pull(&self, subscription_name: &str, max_messages: usize) -> Option<Vec<Message>> {
         let mut subscriptions = self.subscriptions.write().unwrap();
-        subscriptions
-            .get_mut(subscription_name)
-            .map(|subscription| {
-                let mut messages = Vec::with_capacity(max_messages);
-                while let Some(message) = subscription.pull() {
-                    messages.push(message);
-                    if messages.len() >= max_messages {
-                        break;
-                    }
+        subscriptions.get_mut(subscription_name).map(|s| {
+            let mut messages = Vec::with_capacity(max_messages);
+            while let Some(message) = s.pull() {
+                messages.push(message);
+                if messages.len() >= max_messages {
+                    break;
                 }
+            }
 
-                // Update metrics
-                let mut metrics = self.metrics.write().unwrap();
-                if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
-                    m.pending = subscription.num_pending();
-                    m.pulled_all_time += messages.len() as u64;
-                    m.topic_message_index = subscription.next_index();
-                }
+            // Update metrics
+            let mut metrics = self.metrics.write().unwrap();
+            if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
+                m.pending = s.num_pending();
+                m.pulled_all_time += messages.len() as u64;
+                m.topic_message_index = s.next_index();
+            }
 
-                messages
-            })
+            messages
+        })
     }
 
     pub fn ack(&self, subscription_name: &str, ids: &[Uuid]) -> bool {
         let mut subscriptions = self.subscriptions.write().unwrap();
         subscriptions
             .get_mut(subscription_name)
-            .map(|subscription| {
-                let count = subscription.ack_many(ids);
+            .map(|s| {
+                let count = s.ack_many(ids);
 
                 // Update metrics
                 let mut metrics = self.metrics.write().unwrap();
                 if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
-                    m.pending = subscription.num_pending();
+                    m.pending = s.num_pending();
                     m.acked_all_time += count as u64;
                 };
 
@@ -333,21 +363,46 @@ impl Registry {
     }
 
     pub fn cleanup(&self) {
+        let mut metrics = self.metrics.write().unwrap();
+
+        let mut subscriptions = self.subscriptions.write().unwrap();
+        subscriptions.retain(|_, s| {
+            if s.ttl == Duration::seconds(0) {
+                true
+            } else {
+                Utc::now().signed_duration_since(s.updated) <= s.ttl
+            }
+        });
+
+        // Update metrics
+        metrics
+            .subscriptions
+            .retain(|name, _| subscriptions.contains_key(name));
+
         let mut topics = self.topics.write().unwrap();
-        for (topic_name, mut topic) in topics.iter_mut() {
-            let count = topic.topic.cleanup();
+        topics.retain(|_, ts| {
+            if ts.topic.ttl == Duration::seconds(0) {
+                true
+            } else {
+                Utc::now().signed_duration_since(ts.topic.updated) <= ts.topic.ttl
+            }
+        });
+
+        // Update metrics
+        metrics.topics.retain(|name, _| topics.contains_key(name));
+
+        for (topic_name, mut topic_store) in topics.iter_mut() {
+            let count = topic_store.topic.cleanup();
 
             // Update metrics
-            let mut metrics = self.metrics.write().unwrap();
             if let Some(m) = metrics.topics.get_mut(topic_name) {
-                m.messages = topic.topic.len();
-                m.expired_all_time += count as u64
+                m.messages = topic_store.topic.len();
+                m.expired_all_time += count as u64;
             }
         }
 
         //Update metrics
         let process = psutil::process::Process::new(psutil::getpid());
-        let mut metrics = self.metrics.write().unwrap();
         metrics.memory_resident_set_size = if let Ok(process) = process {
             process.rss
         } else {

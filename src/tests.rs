@@ -12,12 +12,17 @@ fn pub_sub_create() {
     assert_eq!(message.data, String::from("abc"));
     let message = Message::default();
     assert_eq!(message.data, String::from(""));
-    let mut topic = Topic::new("topic", Duration::seconds(60));
+    let mut topic = Topic::new("topic", Duration::seconds(60), Duration::seconds(0));
     topic.set_message_ttl(Duration::seconds(120));
     let topic_meta = TopicMeta::from(&topic);
     assert_eq!(topic_meta.name, String::from("topic"));
     assert_eq!(topic_meta.message_ttl, 120);
-    let mut subscription = Subscription::new_head("subscription", &topic, Duration::seconds(60));
+    let mut subscription = Subscription::new_head(
+        "subscription",
+        &topic,
+        Duration::seconds(60),
+        Duration::seconds(0),
+    );
     subscription.set_ack_deadline(Duration::seconds(120));
     let subscription_meta = SubscriptionMeta::from(&subscription);
     assert_eq!(subscription_meta.name, String::from("subscription"));
@@ -27,9 +32,13 @@ fn pub_sub_create() {
 
 #[test]
 fn pub_sub_basic() {
-    let mut topic = Topic::new("topic", Duration::seconds(60));
-    let mut subscription =
-        Subscription::new_head("subscription", &topic, Duration::milliseconds(10));
+    let mut topic = Topic::new("topic", Duration::seconds(60), Duration::seconds(0));
+    let mut subscription = Subscription::new_head(
+        "subscription",
+        &topic,
+        Duration::milliseconds(10),
+        Duration::seconds(0),
+    );
     topic.publish(Message::new(String::from("a")));
     topic.publish(Message::new(String::from("b")));
     assert_eq!(2, topic.len());
@@ -44,8 +53,12 @@ fn pub_sub_basic() {
     thread::sleep(time::Duration::from_millis(20));
     assert_eq!(None, subscription.pull());
 
-    let mut subscription =
-        Subscription::new_tail("subscription", &topic, Duration::milliseconds(10));
+    let mut subscription = Subscription::new_tail(
+        "subscription",
+        &topic,
+        Duration::milliseconds(10),
+        Duration::seconds(0),
+    );
     assert_eq!(None, subscription.pull());
 
     topic.publish(Message::new(String::from("c")));

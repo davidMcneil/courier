@@ -84,7 +84,9 @@ pub struct Subscription {
     pub name: String,
     pub topic: String,
     pub ack_deadline: Duration,
+    pub ttl: Duration,
     pub created: DateTime<Utc>,
+    pub updated: DateTime<Utc>,
     cursor: Cursor<Message>,
     pending: VecDeque<PendingMessage>,
     pending_ids: HashSet<Uuid>,
@@ -92,12 +94,15 @@ pub struct Subscription {
 }
 
 impl Subscription {
-    pub fn new_head(name: &str, topic: &Topic, ack_deadline: Duration) -> Self {
+    pub fn new_head(name: &str, topic: &Topic, ack_deadline: Duration, ttl: Duration) -> Self {
+        let now = Utc::now();
         Self {
             name: String::from(name),
-            ack_deadline,
             topic: topic.name.clone(),
-            created: Utc::now(),
+            ack_deadline,
+            ttl,
+            created: now,
+            updated: now,
             cursor: Cursor::new_head(&topic.log),
             pending: VecDeque::new(),
             pending_ids: HashSet::new(),
@@ -105,12 +110,15 @@ impl Subscription {
         }
     }
 
-    pub fn new_tail(name: &str, topic: &Topic, ack_deadline: Duration) -> Self {
+    pub fn new_tail(name: &str, topic: &Topic, ack_deadline: Duration, ttl: Duration) -> Self {
+        let now = Utc::now();
         Self {
             name: String::from(name),
-            ack_deadline,
             topic: topic.name.clone(),
-            created: Utc::now(),
+            ack_deadline,
+            ttl,
+            created: now,
+            updated: now,
             cursor: Cursor::new_tail(&topic.log),
             pending: VecDeque::new(),
             pending_ids: HashSet::new(),
@@ -119,6 +127,9 @@ impl Subscription {
     }
 
     pub fn pull(&mut self) -> Option<Message> {
+        // Update updated time
+        self.update();
+
         let (message, index) = self
             .check_pending()
             .unwrap_or_else(|| (self.cursor.next(), Index::new(&self.cursor)));
@@ -130,6 +141,9 @@ impl Subscription {
     }
 
     pub fn ack(&mut self, id: Uuid) -> bool {
+        // Update updated time
+        self.update();
+
         if self.pending_ids.remove(&id) {
             self.acked.insert(id);
             return true;
@@ -148,7 +162,22 @@ impl Subscription {
     }
 
     pub fn set_ack_deadline(&mut self, ack_deadline: Duration) {
+        // Update updated time
+        self.update();
+
         self.ack_deadline = ack_deadline;
+    }
+
+    pub fn set_ttl(&mut self, ttl: Duration) {
+        // Update updated time
+        self.update();
+
+        self.ttl = ttl;
+    }
+
+    pub fn update(&mut self) {
+        // Update updated time
+        self.updated = Utc::now();
     }
 
     pub fn next_index(&self) -> usize {
@@ -195,7 +224,9 @@ pub struct SubscriptionMeta {
     pub name: String,
     pub topic: String,
     pub ack_deadline: i64,
+    pub ttl: i64,
     pub created: DateTime<Utc>,
+    pub updated: DateTime<Utc>,
 }
 
 impl<'a> From<&'a Subscription> for SubscriptionMeta {
@@ -204,7 +235,9 @@ impl<'a> From<&'a Subscription> for SubscriptionMeta {
             name: subscription.name.clone(),
             topic: subscription.topic.clone(),
             ack_deadline: subscription.ack_deadline.num_seconds(),
+            ttl: subscription.ttl.num_seconds(),
             created: subscription.created,
+            updated: subscription.updated,
         }
     }
 }
@@ -213,16 +246,21 @@ impl<'a> From<&'a Subscription> for SubscriptionMeta {
 pub struct Topic {
     pub name: String,
     pub message_ttl: Duration,
+    pub ttl: Duration,
     pub created: DateTime<Utc>,
+    pub updated: DateTime<Utc>,
     log: CommitLog<Message>,
 }
 
 impl Topic {
-    pub fn new(name: &str, message_ttl: Duration) -> Topic {
+    pub fn new(name: &str, message_ttl: Duration, ttl: Duration) -> Topic {
+        let now = Utc::now();
         Topic {
             name: String::from(name),
             message_ttl,
-            created: Utc::now(),
+            ttl,
+            created: now,
+            updated: now,
             log: CommitLog::new(),
         }
     }
@@ -232,17 +270,39 @@ impl Topic {
     }
 
     pub fn publish(&mut self, message: Message) {
+        // Update updated time
+        self.update();
+
         self.log.append(message);
     }
 
     pub fn cleanup(&mut self) -> usize {
         let ttl = self.message_ttl;
-        self.log
-            .cleanup(&|m| Utc::now().signed_duration_since(m.time) > ttl)
+        if ttl != Duration::seconds(0) {
+            self.log
+                .cleanup(&|m| Utc::now().signed_duration_since(m.time) > ttl)
+        } else {
+            0
+        }
     }
 
     pub fn set_message_ttl(&mut self, message_ttl: Duration) {
+        // Update updated time
+        self.update();
+
         self.message_ttl = message_ttl;
+    }
+
+    pub fn set_ttl(&mut self, ttl: Duration) {
+        // Update updated time
+        self.update();
+
+        self.ttl = ttl;
+    }
+
+    pub fn update(&mut self) {
+        // Update updated time
+        self.updated = Utc::now();
     }
 }
 
@@ -250,7 +310,9 @@ impl Topic {
 pub struct TopicMeta {
     pub name: String,
     pub message_ttl: i64,
+    pub ttl: i64,
     pub created: DateTime<Utc>,
+    pub updated: DateTime<Utc>,
 }
 
 impl<'a> From<&'a Topic> for TopicMeta {
@@ -258,7 +320,9 @@ impl<'a> From<&'a Topic> for TopicMeta {
         Self {
             name: topic.name.clone(),
             message_ttl: topic.message_ttl.num_seconds(),
+            ttl: topic.ttl.num_seconds(),
             created: topic.created,
+            updated: topic.updated,
         }
     }
 }

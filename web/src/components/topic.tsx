@@ -1,10 +1,18 @@
 import { Component } from "inferno";
-import { TopicMetrics } from "../utils/data_parsers";
+import { SubscriptionMetrics, TopicMetrics } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
-import { fetchError2message, HEADERS, numberAsTimeStr, topicsUrl } from "../utils/util";
+import {
+  fetchError2message,
+  HEADERS,
+  numberAsPercentage,
+  numberAsTimeStr,
+  topicsUrl,
+} from "../utils/util";
+import { SubscriptionsTable } from "./subscriptions_table";
 
 interface Props {
   metrics: TopicMetrics;
+  subscriptions: SubscriptionMetrics[];
   setNotification: (type: NotificationType, message: string) => void;
   setDeleteConfirmation: (message: string, action: () => void) => void;
 }
@@ -26,8 +34,14 @@ export class Topic extends Component<Props, State> {
 
   public render() {
     const m = this.props.metrics;
+    const subscriptions = this.props.subscriptions;
     const expanded = this.state.expanded;
     const age = (new Date().getTime() - m.created.getTime()) / 1000;
+    let expires: string | number = "n/a";
+    if (m.ttl !== 0) {
+      const updatedAgo = (new Date().getTime() - m.updated.getTime()) / 1000;
+      expires = Math.ceil(m.ttl - updatedAgo);
+    }
     return (
       <tbody key={m.name} class={`${expanded ? "no-bottom-border" : ""}`}>
         <tr>
@@ -38,8 +52,8 @@ export class Topic extends Component<Props, State> {
           </td>
           <td>{m.name}</td>
           <td>{m.numMessages}</td>
-          <td>0</td>
-          <td>{m.percentageProcessed}</td>
+          <td>{subscriptions.length}</td>
+          <td>{numberAsPercentage(m.percentageProcessed)}</td>
           <td>{numberAsTimeStr(age)}</td>
           <td class={"is-table-icon has-text-centered"}>
             <a class="delete is-small" onClick={this.tryDelete} />
@@ -50,27 +64,33 @@ export class Topic extends Component<Props, State> {
           <td colSpan={5}>
             <table class="table is-bordered is-narrow is-fullwidth">
               <thead>
-                <td>Messages Interval</td>
-                <td>Messages All Time</td>
-                <td>Expired Interval</td>
-                <td>Expired All Time</td>
-                <td>TTL (s)</td>
-                <td>Message TTL (s)</td>
-                <td>Updated</td>
-                <td>Created</td>
+                <th>Messages Interval</th>
+                <th>Expired Interval</th>
+                <th>Messages All Time</th>
+                <th>Expired All Time</th>
+                <th>Message TTL (s)</th>
+                <th>TTL (s)</th>
+                <th>Expires (s)</th>
+                <th>Updated</th>
+                <th>Created</th>
               </thead>
               <tr>
                 <td>{m.numMessagesInterval}</td>
-                <td>{m.numMessagesAllTime}</td>
                 <td>{m.numExpiredInterval}</td>
+                <td>{m.numMessagesAllTime}</td>
                 <td>{m.numExpiredAllTime}</td>
-                <td>0</td>
                 <td>{m.messageTtl}</td>
-                <td>yyyy-mm-ddThh:mm::ss</td>
+                <td>{m.ttl}</td>
+                <td>{expires} </td>
+                <td>{m.updated.toISOString()}</td>
                 <td>{m.created.toISOString()}</td>
               </tr>
             </table>
-            <table>Subscriptions Table</table>
+            <SubscriptionsTable
+              subscriptions={subscriptions}
+              setNotification={this.props.setNotification}
+              setDeleteConfirmation={this.props.setDeleteConfirmation}
+            />
           </td>
           <td />
         </tr>

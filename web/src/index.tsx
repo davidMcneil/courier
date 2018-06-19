@@ -115,6 +115,7 @@ class App extends Component<null, State> {
           visible={ui.tab === Tabs.Subscriptions}
           courierState={c}
           setNotification={this.setNotification}
+          setDeleteConfirmation={this.setDeleteConfirmation}
         />
 
         <DeleteConfirmation

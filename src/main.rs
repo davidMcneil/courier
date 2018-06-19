@@ -69,6 +69,8 @@ pub fn main() {
             let config = http_protocol::Config {
                 host: opt.host.clone(),
                 port: opt.port,
+                default_topic_ttl: Duration::seconds(0),
+                default_subscription_ttl: Duration::seconds(0),
                 default_message_ttl: Duration::seconds(default_message_ttl),
                 default_ack_deadline: Duration::seconds(default_ack_deadline),
                 default_max_messages,

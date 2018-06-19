@@ -29,7 +29,6 @@ where
         .json(json)
         .unwrap();
     let response = server.execute(request.send()).unwrap();
-    println!("{:?}", response);
     response.status()
 }
 
@@ -56,7 +55,6 @@ where
         .json(json)
         .unwrap();
     let response = server.execute(request.send()).unwrap();
-    println!("{:?}", response);
     (response.status(), response.json::<R>().wait().unwrap())
 }
 
@@ -64,6 +62,8 @@ fn get_server() -> (Config, test::TestServer) {
     let config = Config {
         host: String::from("localhost"),
         port: 3140,
+        default_topic_ttl: Duration::seconds(0),
+        default_subscription_ttl: Duration::seconds(0),
         default_message_ttl: Duration::seconds(3600),
         default_ack_deadline: Duration::seconds(60),
         default_max_messages: 1,
@@ -77,18 +77,26 @@ fn get_server() -> (Config, test::TestServer) {
 fn http_protocol_create_topic() {
     let (config, mut server) = get_server();
 
+    // Create a new topic
+    let topic_config = TopicCreateConfig {
+        message_ttl: None,
+        ttl: None,
+    };
+    let (status, body): (_, TopicMeta) =
+        get_response(&mut server, "topics/test", Method::PUT, topic_config);
     let expected = TopicMeta {
         name: String::from("test"),
         message_ttl: config.default_message_ttl.num_seconds(),
+        ttl: 0,
+        created: body.created,
+        updated: body.updated,
     };
-    // Create a new topic
-    let topic_config = TopicCreateConfig { message_ttl: None };
-    let (status, body) = get_response(&mut server, "topics/test", Method::PUT, topic_config);
     assert_eq!(StatusCode::CREATED, status);
     assert_eq!(expected, body);
     // Try and create a topic that already exists
     let topic_config = TopicCreateConfig {
         message_ttl: Some(30),
+        ttl: None,
     };
     let (status, body) = get_response(&mut server, "topics/test", Method::PUT, topic_config);
     assert_eq!(StatusCode::CONFLICT, status);
@@ -96,12 +104,16 @@ fn http_protocol_create_topic() {
     // Create a topic with no name
     let topic_config = TopicCreateConfig {
         message_ttl: Some(12),
+        ttl: None,
     };
     let (status, body): (_, TopicMeta) =
         get_response(&mut server, "topics/", Method::PUT, topic_config);
     let expected = TopicMeta {
         name: body.name.clone(),
         message_ttl: 12,
+        ttl: 0,
+        created: body.created,
+        updated: body.updated,
     };
     assert_eq!(StatusCode::CREATED, status);
     assert_eq!(expected, body);
@@ -112,32 +124,43 @@ fn http_protocol_update_topic() {
     let (_, mut server) = get_server();
 
     // Create a new topic
-    let topic_config = TopicCreateConfig { message_ttl: None };
+    let topic_config = TopicCreateConfig {
+        message_ttl: None,
+        ttl: None,
+    };
     get_status(&mut server, "topics/test_topic", Method::PUT, topic_config);
     // Update the topic
     let topic_config = TopicUpdateConfig {
         message_ttl: Some(60),
+        ttl: Some(73),
     };
-    let (status, body) = get_response(
+    let (status, body): (_, TopicMeta) = get_response(
         &mut server,
         "topics/test_topic",
         Method::PATCH,
         topic_config,
     );
-    let expected = TopicMeta {
+    let mut expected = TopicMeta {
         name: String::from("test_topic"),
         message_ttl: 60,
+        ttl: 73,
+        created: body.created,
+        updated: body.updated,
     };
     assert_eq!(StatusCode::OK, status);
     assert_eq!(expected, body);
-    // Update the topic with no ttl
-    let topic_config = TopicUpdateConfig { message_ttl: None };
-    let (status, body) = get_response(
+    // Update the topic with no values
+    let topic_config = TopicUpdateConfig {
+        message_ttl: None,
+        ttl: None,
+    };
+    let (status, body): (_, TopicMeta) = get_response(
         &mut server,
         "topics/test_topic",
         Method::PATCH,
         topic_config.clone(),
     );
+    expected.updated = body.updated;
     assert_eq!(StatusCode::OK, status);
     assert_eq!(expected, body);
     // Update a non existent topic
@@ -154,15 +177,21 @@ fn http_protocol_update_topic() {
 fn http_protocol_delete_and_get_topic() {
     let (config, mut server) = get_server();
 
+    // Create a new topic
+    let topic_config = TopicCreateConfig {
+        message_ttl: None,
+        ttl: None,
+    };
+    get_status(&mut server, "topics/test", Method::PUT, topic_config);
+    // Get the topic
+    let (status, body): (_, TopicMeta) = get_response(&mut server, "topics/test", Method::GET, ());
     let expected = TopicMeta {
         name: String::from("test"),
         message_ttl: config.default_message_ttl.num_seconds(),
+        ttl: 0,
+        created: body.created,
+        updated: body.updated,
     };
-    // Create a new topic
-    let topic_config = TopicCreateConfig { message_ttl: None };
-    get_status(&mut server, "topics/test", Method::PUT, topic_config);
-    // Get the topic
-    let (status, body) = get_response(&mut server, "topics/test", Method::GET, ());
     assert_eq!(StatusCode::OK, status);
     assert_eq!(expected, body);
     // Delete the topic
@@ -181,32 +210,40 @@ fn http_protocol_create_subscription() {
     let (config, mut server) = get_server();
 
     // Create a new topic
-    let topic_config = TopicCreateConfig { message_ttl: None };
+    let topic_config = TopicCreateConfig {
+        message_ttl: None,
+        ttl: None,
+    };
     get_status(&mut server, "topics/test_topic", Method::PUT, topic_config);
 
-    let expected = SubscriptionMeta {
-        name: String::from("test"),
-        topic: String::from("test_topic"),
-        ack_deadline: config.default_ack_deadline.num_seconds(),
-    };
     // Create a new subscription
     let subscription_config = SubscriptionCreateConfig {
         topic: String::from("test_topic"),
         ack_deadline: None,
+        ttl: None,
         historical: Some(false),
     };
-    let (status, body) = get_response(
+    let (status, body): (_, SubscriptionMeta) = get_response(
         &mut server,
         "subscriptions/test",
         Method::PUT,
         subscription_config,
     );
+    let expected = SubscriptionMeta {
+        name: String::from("test"),
+        topic: String::from("test_topic"),
+        ack_deadline: config.default_ack_deadline.num_seconds(),
+        ttl: 0,
+        created: body.created,
+        updated: body.updated,
+    };
     assert_eq!(status, StatusCode::CREATED);
     assert_eq!(expected, body);
     // Try and create a subscription that already exists
     let subscription_config = SubscriptionCreateConfig {
         topic: String::from("test_topic"),
         ack_deadline: Some(45),
+        ttl: None,
         historical: None,
     };
     let (status, body) = get_response(
@@ -221,6 +258,7 @@ fn http_protocol_create_subscription() {
     let subscription_config = SubscriptionCreateConfig {
         topic: String::from("test_topic"),
         ack_deadline: Some(67),
+        ttl: None,
         historical: Some(false),
     };
     let (status, body): (_, SubscriptionMeta) = get_response(
@@ -233,6 +271,9 @@ fn http_protocol_create_subscription() {
         name: body.name.clone(),
         topic: String::from("test_topic"),
         ack_deadline: 67,
+        ttl: 0,
+        created: body.created,
+        updated: body.updated,
     };
     assert_eq!(StatusCode::CREATED, status);
     assert_eq!(expected, body);
@@ -243,13 +284,17 @@ fn http_protocol_update_subscription() {
     let (_, mut server) = get_server();
 
     // Create a new topic
-    let topic_config = TopicCreateConfig { message_ttl: None };
+    let topic_config = TopicCreateConfig {
+        message_ttl: None,
+        ttl: None,
+    };
     get_status(&mut server, "topics/test_topic", Method::PUT, topic_config);
 
     // Create a new subscription
     let subscription_config = SubscriptionCreateConfig {
         topic: String::from("test_topic"),
         ack_deadline: None,
+        ttl: None,
         historical: Some(true),
     };
     get_status(
@@ -261,28 +306,36 @@ fn http_protocol_update_subscription() {
     // Update the subscription
     let subscription_config = SubscriptionUpdateConfig {
         ack_deadline: Some(60),
+        ttl: Some(73),
     };
-    let (status, body) = get_response(
+    let (status, body): (_, SubscriptionMeta) = get_response(
         &mut server,
         "subscriptions/test_subscription",
         Method::PATCH,
         subscription_config,
     );
-    let expected = SubscriptionMeta {
+    let mut expected = SubscriptionMeta {
         name: String::from("test_subscription"),
         topic: String::from("test_topic"),
         ack_deadline: 60,
+        ttl: 73,
+        created: body.created,
+        updated: body.updated,
     };
     assert_eq!(status, StatusCode::OK);
     assert_eq!(expected, body);
     // Update the subscription with no deadline
-    let subscription_config = SubscriptionUpdateConfig { ack_deadline: None };
-    let (status, body) = get_response(
+    let subscription_config = SubscriptionUpdateConfig {
+        ack_deadline: None,
+        ttl: None,
+    };
+    let (status, body): (_, SubscriptionMeta) = get_response(
         &mut server,
         "subscriptions/test_subscription",
         Method::PATCH,
         subscription_config.clone(),
     );
+    expected.updated = body.updated;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(expected, body);
     // Update a non existent topic
@@ -300,18 +353,17 @@ fn http_protocol_delete_and_get_subscription() {
     let (config, mut server) = get_server();
 
     // Create a new topic
-    let topic_config = TopicCreateConfig { message_ttl: None };
+    let topic_config = TopicCreateConfig {
+        message_ttl: None,
+        ttl: None,
+    };
     get_status(&mut server, "topics/test_topic", Method::PUT, topic_config);
 
-    let expected = SubscriptionMeta {
-        name: String::from("test"),
-        topic: String::from("test_topic"),
-        ack_deadline: config.default_ack_deadline.num_seconds(),
-    };
     // Create a new subscription
     let subscription_config = SubscriptionCreateConfig {
         topic: String::from("test_topic"),
         ack_deadline: None,
+        ttl: None,
         historical: Some(true),
     };
     get_status(
@@ -321,7 +373,16 @@ fn http_protocol_delete_and_get_subscription() {
         subscription_config,
     );
     // Get the subscription
-    let (status, body) = get_response(&mut server, "subscriptions/test", Method::GET, ());
+    let (status, body): (_, SubscriptionMeta) =
+        get_response(&mut server, "subscriptions/test", Method::GET, ());
+    let expected = SubscriptionMeta {
+        name: String::from("test"),
+        topic: String::from("test_topic"),
+        ack_deadline: config.default_ack_deadline.num_seconds(),
+        ttl: 0,
+        created: body.created,
+        updated: body.updated,
+    };
     assert_eq!(StatusCode::OK, status);
     assert_eq!(expected, body);
     // Delete the subscription
@@ -345,7 +406,10 @@ fn http_protocol_lists() {
     let (config, mut server) = get_server();
 
     // Create a new topics
-    let topic_config = TopicCreateConfig { message_ttl: None };
+    let topic_config = TopicCreateConfig {
+        message_ttl: None,
+        ttl: None,
+    };
     get_status(
         &mut server,
         "topics/topic0",
@@ -358,6 +422,7 @@ fn http_protocol_lists() {
     let subscription_config = SubscriptionCreateConfig {
         topic: String::from("topic0"),
         ack_deadline: None,
+        ttl: None,
         historical: Some(true),
     };
     get_status(
@@ -375,6 +440,7 @@ fn http_protocol_lists() {
     let subscription_config = SubscriptionCreateConfig {
         topic: String::from("topic1"),
         ack_deadline: None,
+        ttl: None,
         historical: Some(false),
     };
     get_status(
@@ -385,44 +451,59 @@ fn http_protocol_lists() {
     );
 
     // List the topics
+    let (status, mut body): (_, TopicList) = get_response(&mut server, "topics/", Method::GET, ());
+    assert_eq!(StatusCode::OK, status);
+    assert_eq!(2, body.topics.len());
+    body.topics.sort();
     let expected = TopicList::new(vec![
         TopicMeta {
             name: String::from("topic0"),
             message_ttl: config.default_message_ttl.num_seconds(),
+            ttl: 0,
+            created: body.topics[0].created,
+            updated: body.topics[0].updated,
         },
         TopicMeta {
             name: String::from("topic1"),
             message_ttl: config.default_message_ttl.num_seconds(),
+            ttl: 0,
+            created: body.topics[1].created,
+            updated: body.topics[1].updated,
         },
     ]);
-    let (status, mut body): (_, TopicList) = get_response(&mut server, "topics/", Method::GET, ());
-    assert_eq!(StatusCode::OK, status);
-    body.topics.sort();
     assert_eq!(expected, body);
     // List the subscriptions
+    let (status, mut body): (_, SubscriptionList) =
+        get_response(&mut server, "subscriptions/", Method::GET, ());
+    assert_eq!(StatusCode::OK, status);
+    assert_eq!(3, body.subscriptions.len());
+    body.subscriptions.sort();
     let expected = SubscriptionList::new(vec![
         SubscriptionMeta {
             name: String::from("subscription0"),
             topic: String::from("topic0"),
             ack_deadline: config.default_ack_deadline.num_seconds(),
+            ttl: 0,
+            created: body.subscriptions[0].created,
+            updated: body.subscriptions[0].updated,
         },
         SubscriptionMeta {
             name: String::from("subscription1"),
             topic: String::from("topic0"),
             ack_deadline: config.default_ack_deadline.num_seconds(),
+            ttl: 0,
+            created: body.subscriptions[1].created,
+            updated: body.subscriptions[1].updated,
         },
         SubscriptionMeta {
             name: String::from("subscription2"),
             topic: String::from("topic1"),
             ack_deadline: config.default_ack_deadline.num_seconds(),
+            ttl: 0,
+            created: body.subscriptions[2].created,
+            updated: body.subscriptions[2].updated,
         },
     ]);
-    println!("test1");
-    let (status, mut body): (_, SubscriptionList) =
-        get_response(&mut server, "subscriptions/", Method::GET, ());
-    println!("test2");
-    assert_eq!(StatusCode::OK, status);
-    body.subscriptions.sort();
     assert_eq!(expected, body);
     // List the topic subscriptions
     let expected = SubscriptionNameList::new(vec![
@@ -451,12 +532,59 @@ fn http_protocol_lists() {
 }
 
 #[test]
+fn http_protocol_ttls() {
+    let (_, mut server) = get_server();
+
+    // Create topics
+    let topic_config = TopicCreateConfig {
+        message_ttl: Some(2),
+        ttl: Some(0),
+    };
+    get_status(&mut server, "topics/topic0", Method::PUT, topic_config);
+    let topic_config = TopicCreateConfig {
+        message_ttl: Some(2),
+        ttl: Some(1),
+    };
+    get_status(&mut server, "topics/topic1", Method::PUT, topic_config);
+
+    // Create subscriptions
+    let topic_config = SubscriptionCreateConfig {
+        topic: String::from("topic0"),
+        ack_deadline: Some(1),
+        ttl: None,
+        historical: Some(true),
+    };
+    get_status(&mut server, "subscriptions/sub0", Method::PUT, topic_config);
+    let topic_config = SubscriptionCreateConfig {
+        topic: String::from("topic0"),
+        ack_deadline: Some(1),
+        ttl: Some(1),
+        historical: Some(true),
+    };
+    get_status(&mut server, "subscriptions/sub1", Method::PUT, topic_config);
+
+    // Wait for ttls to expire
+    thread::sleep(time::Duration::from_millis(2000));
+
+    let status = get_status(&mut server, "topics/topic0", Method::GET, ());
+    assert_eq!(StatusCode::OK, status);
+    let status = get_status(&mut server, "topics/topic1", Method::GET, ());
+    assert_eq!(StatusCode::NOT_FOUND, status);
+
+    let status = get_status(&mut server, "subscriptions/sub0", Method::GET, ());
+    assert_eq!(StatusCode::OK, status);
+    let status = get_status(&mut server, "subscriptions/sub1", Method::GET, ());
+    assert_eq!(StatusCode::NOT_FOUND, status);
+}
+
+#[test]
 fn http_protocol_basic() {
     let (_, mut server) = get_server();
 
     // Create a new topics
     let topic_config = TopicCreateConfig {
         message_ttl: Some(2),
+        ttl: None,
     };
     get_status(&mut server, "topics/topic0", Method::PUT, topic_config);
     // Publish messages
@@ -478,6 +606,7 @@ fn http_protocol_basic() {
     let mut subscription_config = SubscriptionCreateConfig {
         topic: String::from("topic0"),
         ack_deadline: Some(1),
+        ttl: None,
         historical: Some(true),
     };
     get_status(

@@ -1,5 +1,3 @@
-import { Component } from "inferno";
-
 import { Tabs } from "../utils/types";
 import { numberAsTimeStr, str2number } from "../utils/util";
 

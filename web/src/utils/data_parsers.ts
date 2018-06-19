@@ -1,10 +1,9 @@
-import { createRenderer } from "inferno";
-
-import { assertNotUndefined, isArray, isNumber, isObject, isString, isUndefined } from "./util";
+import { isNumber, isObject, isString, isUndefined } from "./util";
 
 export interface TopicMetrics {
   name: string;
   messageTtl: number;
+  ttl: number;
   numMessagesAllTime: number;
   numExpiredAllTime: number;
   numMessagesInterval: number;
@@ -12,12 +11,14 @@ export interface TopicMetrics {
   numMessages: number;
   percentageProcessed: number;
   created: Date;
+  updated: Date;
 }
 
 function newTopicMetrics(name: string): TopicMetrics {
   return {
     name,
     messageTtl: 0,
+    ttl: 0,
     numMessagesAllTime: 0,
     numExpiredAllTime: 0,
     numMessagesInterval: 0,
@@ -25,6 +26,7 @@ function newTopicMetrics(name: string): TopicMetrics {
     numMessages: 0,
     percentageProcessed: 0,
     created: new Date(),
+    updated: new Date(),
   };
 }
 
@@ -43,9 +45,16 @@ function topicMetricsFromAny(name: string, blob: any): TopicMetrics {
     if (isNumber(blob.message_ttl)) {
       topicMetrics.messageTtl = blob.message_ttl;
     }
+    if (isNumber(blob.ttl)) {
+      topicMetrics.ttl = blob.ttl;
+    }
     const created = new Date(blob.created);
     if (isNumber(created.getTime())) {
       topicMetrics.created = created;
+    }
+    const updated = new Date(blob.updated);
+    if (isNumber(updated.getTime())) {
+      topicMetrics.updated = updated;
     }
   }
   return topicMetrics;
@@ -55,7 +64,10 @@ export interface SubscriptionMetrics {
   name: string;
   topic: string;
   ackDeadline: number;
+  ttl: number;
+  topicNumMessages: number;
   topicMessageIndex: number;
+  normalizedTopicMessageIndex: number;
   numPulledAllTime: number;
   numAckedAllTime: number;
   numPulledInterval: number;
@@ -64,6 +76,7 @@ export interface SubscriptionMetrics {
   percentageProcessed: number;
   orphaned: boolean;
   created: Date;
+  updated: Date;
 }
 
 function newSubscriptionMetrics(name: string): SubscriptionMetrics {
@@ -71,7 +84,10 @@ function newSubscriptionMetrics(name: string): SubscriptionMetrics {
     name,
     topic: "",
     ackDeadline: 0,
+    ttl: 0,
+    topicNumMessages: 0,
     topicMessageIndex: 0,
+    normalizedTopicMessageIndex: 0,
     numPulledAllTime: 0,
     numAckedAllTime: 0,
     numPulledInterval: 0,
@@ -80,6 +96,7 @@ function newSubscriptionMetrics(name: string): SubscriptionMetrics {
     percentageProcessed: 0,
     orphaned: false,
     created: new Date(),
+    updated: new Date(),
   };
 }
 
@@ -101,12 +118,19 @@ function subscriptionMetricsFromAny(name: string, blob: any): SubscriptionMetric
     if (isNumber(blob.ack_deadline)) {
       subscriptionMetrics.ackDeadline = blob.ack_deadline;
     }
+    if (isNumber(blob.ttl)) {
+      subscriptionMetrics.ttl = blob.ttl;
+    }
     if (isString(blob.topic)) {
       subscriptionMetrics.topic = blob.topic;
     }
     const created = new Date(blob.created);
     if (isNumber(created.getTime())) {
       subscriptionMetrics.created = created;
+    }
+    const updated = new Date(blob.updated);
+    if (isNumber(updated.getTime())) {
+      subscriptionMetrics.updated = updated;
     }
   }
   return subscriptionMetrics;
@@ -176,7 +200,7 @@ function computeState(
 
   // Topic metrics
   c.numTopics = c.topics.size;
-  for (const [name, metrics] of Array.from(current.topics.entries())) {
+  for (const [, metrics] of Array.from(current.topics.entries())) {
     c.numMessagesAllTime += metrics.numMessagesAllTime;
     c.numExpiredAllTime += metrics.numExpiredAllTime;
     c.numMessages += metrics.numMessages;
@@ -212,6 +236,9 @@ function computeState(
     }
 
     // Update subscription specific metrics
+    metrics.normalizedTopicMessageIndex =
+      topicMetrics.numMessages - (topicMetrics.numMessagesAllTime - metrics.topicMessageIndex);
+    metrics.topicNumMessages = topicMetrics.numMessages;
     const numUnprocessed =
       topicMetrics.numMessagesAllTime - metrics.topicMessageIndex + metrics.numPending;
     totalNumUnprocessed += numUnprocessed;
@@ -237,6 +264,27 @@ function computeState(
     totalPercentageUnprocessed = totalNumUnprocessed / totalNumSubscriptionMessages;
   }
   c.percentageProcessed = Math.max(0, 1 - totalPercentageUnprocessed);
+  // Update topic percentage processed
+  for (const [topicName, subscriptions] of Array.from(c.topic2subscriptions.entries())) {
+    const topicMetrics = c.topics.get(topicName);
+
+    if (isUndefined(topicMetrics)) {
+      continue;
+    }
+
+    let totalMessages = 0;
+    let numUnprocessed = 0;
+    for (const subscription of subscriptions) {
+      totalMessages += subscription.topicNumMessages;
+      numUnprocessed +=
+        topicMetrics.numMessagesAllTime - subscription.topicMessageIndex + subscription.numPending;
+    }
+    const percentageUnprocessed = 0;
+    if (totalMessages > 0) {
+      totalPercentageUnprocessed = numUnprocessed / totalMessages;
+    }
+    topicMetrics.percentageProcessed = Math.max(0, 1 - totalPercentageUnprocessed);
+  }
   return current;
 }
 
@@ -313,13 +361,15 @@ export function messageFromMessagesBlob(blob: any): Message | null {
 export interface Topic {
   name: string;
   messageTtl: number;
+  ttl: number;
 }
 
 export function topicFromAny(blob: any): Topic | null {
-  if (isObject(blob) && isString(blob.name) && isNumber(blob.message_ttl)) {
+  if (isObject(blob) && isString(blob.name) && isNumber(blob.message_ttl) && isNumber(blob.ttl)) {
     return {
       name: blob.name,
       messageTtl: blob.message_ttl,
+      ttl: blob.ttl,
     };
   }
   return null;

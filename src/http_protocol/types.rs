@@ -5,11 +5,13 @@ use courier::{Message, RawMessage, SubscriptionMeta, TopicMeta};
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct TopicCreateConfig {
     pub message_ttl: Option<u32>,
+    pub ttl: Option<u32>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct TopicUpdateConfig {
     pub message_ttl: Option<u32>,
+    pub ttl: Option<u32>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -61,12 +63,14 @@ impl SubscriptionNameList {
 pub struct SubscriptionCreateConfig {
     pub topic: String,
     pub ack_deadline: Option<u32>,
+    pub ttl: Option<u32>,
     pub historical: Option<bool>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct SubscriptionUpdateConfig {
     pub ack_deadline: Option<u32>,
+    pub ttl: Option<u32>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

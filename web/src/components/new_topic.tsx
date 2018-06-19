@@ -9,12 +9,14 @@ interface Props {
 
 interface State {
   name: string;
+  message_ttl: number;
   ttl: number;
 }
 
 const emptyState: State = {
   name: "",
-  ttl: 3600,
+  message_ttl: 3600,
+  ttl: 0,
 };
 
 export class NewTopic extends Component<Props, State> {
@@ -24,6 +26,7 @@ export class NewTopic extends Component<Props, State> {
     super(props, context);
 
     this.setName = this.setName.bind(this);
+    this.setMessageTtl = this.setMessageTtl.bind(this);
     this.setTtl = this.setTtl.bind(this);
     this.create = this.create.bind(this);
   }
@@ -40,6 +43,18 @@ export class NewTopic extends Component<Props, State> {
 
         <div class="field">
           <label class="label">Message Time to Live (s)</label>
+          <div class="control">
+            <input
+              class="input"
+              type="number"
+              value={this.state.message_ttl}
+              onInput={this.setMessageTtl}
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Time to Live (s)</label>
           <div class="control">
             <input class="input" type="number" value={this.state.ttl} onInput={this.setTtl} />
           </div>
@@ -58,13 +73,18 @@ export class NewTopic extends Component<Props, State> {
     this.setState({ name: event.currentTarget.value });
   }
 
+  private setMessageTtl(event: FormEvent<HTMLInputElement>) {
+    this.setState({ message_ttl: str2uint(event.currentTarget.value) });
+  }
+
   private setTtl(event: FormEvent<HTMLInputElement>) {
     this.setState({ ttl: str2uint(event.currentTarget.value) });
   }
 
   private create() {
     const body = {
-      message_ttl: this.state.ttl,
+      message_ttl: this.state.message_ttl,
+      ttl: this.state.ttl,
     };
     const init = { method: "PUT", headers: HEADERS, body: JSON.stringify(body) };
     fetch(topicsUrl(this.state.name), init)

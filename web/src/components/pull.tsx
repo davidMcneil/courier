@@ -86,7 +86,7 @@ export class Pull extends Component<Props, State> {
           <div class="control">
             {createElement(
               "textarea",
-              { class: "textarea", placeholder: "Message contents...", rows: 6, readonly: true },
+              { class: "textarea", placeholder: "Message contents...", rows: 10, readonly: true },
               displayData,
             )}
           </div>

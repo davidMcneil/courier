@@ -7,6 +7,8 @@ use registry::SharedRegistry;
 pub struct Config {
     pub host: String,
     pub port: u16,
+    pub default_topic_ttl: Duration,
+    pub default_subscription_ttl: Duration,
     pub default_message_ttl: Duration,
     pub default_ack_deadline: Duration,
     pub default_max_messages: usize,
