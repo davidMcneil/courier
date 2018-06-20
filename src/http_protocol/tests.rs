@@ -734,12 +734,11 @@ fn http_protocol_basic() {
 fn http_protocol_general_handlers() {
     let (_, mut server) = get_server();
 
-    // let status = get_status_with_prefix(&mut server, "", "", Method::GET, ());
-    // assert_eq!(StatusCode::OK, status);
-    // let status = get_status_with_prefix(&mut server, "", "ui", Method::GET, ());
-    // assert_eq!(StatusCode::OK, status);
     let status = get_status(&mut server, "heartbeat", Method::GET, ());
     assert_eq!(StatusCode::OK, status);
     let status = get_status(&mut server, "metrics", Method::GET, ());
+    assert_eq!(StatusCode::OK, status);
+
+    let status = get_status_with_prefix(&mut server, "web", "ui", Method::GET, ());
     assert_eq!(StatusCode::OK, status);
 }

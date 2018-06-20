@@ -1,33 +1,33 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
-use actix_web::{FromRequest, HttpRequest, HttpResponse, State};
+use actix_web::{http, FromRequest, HttpRequest, HttpResponse, State};
 use serde_json;
 use std::clone::Clone;
 use std::sync::Arc;
 
 use http_protocol::HttpState;
 
-// // static BULMA_CSS: &'static str = include_str!("../../web/css/bulma.css");
-// // static DOCUMENTATION_HTML: &'static str = include_str!("../../web/documentation.html");
+static HTML: &'static str = include_str!("../../web/dist/index.html");
+static CSS: &'static str = include_str!("../../web/dist/src.036c3682.css");
+static JS: &'static str = include_str!("../../web/dist/src.b423b4bf.js");
 
-// pub fn documentation() -> Response<'static> {
-//     Response::build()
-//         .header(ContentType::HTML)
-//         .sized_body(Cursor::new(""))
-//         .finalize()
-// }
+pub fn html(_: HttpRequest) -> HttpResponse {
+    HttpResponse::Ok()
+        .header(http::header::CONTENT_TYPE, "text/html")
+        .body(HTML)
+}
 
-// // #[get("/bulma.css")]
-// // pub fn bulma() -> Response<'static> {
-// //     Response::build()
-// //         .header(ContentType::CSS)
-// //         .sized_body(Cursor::new(""))
-// //         .finalize()
-// // }
+pub fn css(_: HttpRequest) -> HttpResponse {
+    HttpResponse::Ok()
+        .header(http::header::CONTENT_TYPE, "text/css")
+        .body(CSS)
+}
 
-// pub fn ui(_: HttpRequest) -> String {
-//     String::from("ui")
-// }
+pub fn js(_: HttpRequest) -> HttpResponse {
+    HttpResponse::Ok()
+        .header(http::header::CONTENT_TYPE, "application/javascript")
+        .body(JS)
+}
 
 pub fn heartbeat(_: HttpRequest<HttpState>) -> &'static str {
     "heartbeat"

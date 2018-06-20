@@ -8,9 +8,9 @@
   "license": "(MIT OR Apache-2.0)",
   "browserslist": "defaults",
   "scripts": {
-    "start": "parcel index.html",
-    "build": "parcel build --detailed-report index.html",
-    "clean": "rm -rf dist/",
+    "start": "parcel --out-dir=dev index.html",
+    "build": "parcel build --detailed-report --no-source-maps --public-url=./ index.html",
+    "clean": "rm -rf dist/ && rm -rf dev/",
     "size": "du -sh dist/* && du -sh dist/"
   },
   "dependencies": {
