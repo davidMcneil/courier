@@ -205,7 +205,7 @@ function computeState(
     c.numExpiredAllTime += metrics.numExpiredAllTime;
     c.numMessages += metrics.numMessages;
   }
-  c.numTopicsInterval = c.numTopicsAllTime - p.numTopicsAllTime;
+  c.numTopicsInterval = c.numTopics - p.numTopics;
   c.numMessagesInterval = c.numMessagesAllTime - p.numMessagesAllTime;
   c.numExpiredInterval = c.numExpiredAllTime - p.numExpiredAllTime;
 
@@ -256,7 +256,7 @@ function computeState(
     c.numAckedAllTime += metrics.numAckedAllTime;
     c.numPending += metrics.numPending;
   }
-  c.numSubscriptionsInterval = c.numSubscriptionsAllTime - p.numSubscriptionsAllTime;
+  c.numSubscriptionsInterval = c.numSubscriptions - p.numSubscriptions;
   c.numPulledInterval = c.numPulledAllTime - p.numPulledAllTime;
   c.numAckedInterval = c.numAckedAllTime - p.numAckedAllTime;
   let totalPercentageUnprocessed = 0;

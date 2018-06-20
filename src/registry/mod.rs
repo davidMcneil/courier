@@ -162,6 +162,7 @@ impl Registry {
             if let Some(m) = metrics.topics.get_mut(topic_name) {
                 m.message_ttl = t.topic.message_ttl.num_seconds();
                 m.ttl = t.topic.ttl.num_seconds();
+                m.updated = t.topic.updated;
             };
 
             TopicMeta::from(&t.topic)
@@ -203,6 +204,7 @@ impl Registry {
             if let Some(m) = metrics.topics.get_mut(topic_name) {
                 m.messages = topic.len();
                 m.messages_all_time += count as u64;
+                m.updated = topic.updated;
             }
 
             ids
@@ -279,6 +281,7 @@ impl Registry {
             if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
                 m.ack_deadline = s.ack_deadline.num_seconds();
                 m.ttl = s.ttl.num_seconds();
+                m.updated = s.updated;
             }
 
             SubscriptionMeta::from(&*s)
@@ -333,6 +336,7 @@ impl Registry {
                 m.pending = s.num_pending();
                 m.pulled_all_time += messages.len() as u64;
                 m.topic_message_index = s.next_index();
+                m.updated = s.updated;
             }
 
             messages
@@ -351,6 +355,7 @@ impl Registry {
                 if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
                     m.pending = s.num_pending();
                     m.acked_all_time += count as u64;
+                    m.updated = s.updated;
                 };
 
                 true
