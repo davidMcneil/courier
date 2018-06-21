@@ -4,6 +4,7 @@ extern crate chrono;
 extern crate env_logger;
 extern crate futures;
 extern crate open;
+extern crate parking_lot;
 extern crate psutil;
 #[macro_use]
 extern crate serde_derive;

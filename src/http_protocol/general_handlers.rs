@@ -37,7 +37,7 @@ pub fn metrics(req: HttpRequest<HttpState>) -> HttpResponse {
     let state = State::extract(&req);
     let reg = Arc::clone(&state.registry);
     let metrics_wrapper = reg.metrics();
-    let metrics = metrics_wrapper.read().unwrap();
+    let metrics = metrics_wrapper.read();
     let json = serde_json::to_string(&*metrics).unwrap_or_else(|_| String::from("{}"));
     HttpResponse::Ok().body(json)
 }

@@ -4,7 +4,9 @@ mod tests;
 use std::fmt;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, RwLock, Weak};
+use std::sync::{Arc, Weak};
+
+use parking_lot::RwLock;
 
 type Shared<T> = Arc<RwLock<T>>;
 
@@ -41,9 +43,7 @@ impl<T> Index<T> {
 
 impl<T: Clone> Index<T> {
     pub fn get(&self) -> Option<T> {
-        self.index
-            .upgrade()
-            .map(|i| i.read().unwrap().value.clone())
+        self.index.upgrade().map(|i| i.read().value.clone())
     }
 }
 
@@ -90,10 +90,10 @@ impl<T> Cursor<T> {
 impl<T: Clone> Cursor<T> {
     pub fn next(&mut self) -> Option<T> {
         match self.cursor.upgrade() {
-            Some(cursor) => cursor.read().unwrap().next.as_ref().map(|next| {
+            Some(cursor) => cursor.read().next.as_ref().map(|next| {
                 self.next_index += 1;
                 self.cursor = Arc::downgrade(next);
-                next.read().unwrap().value.clone()
+                next.read().value.clone()
             }),
             None => {
                 if let Some(_) = self.to_head.upgrade() {
@@ -111,10 +111,9 @@ impl<T: Clone> Cursor<T> {
         match self.cursor.upgrade() {
             Some(cursor) => cursor
                 .read()
-                .unwrap()
                 .next
                 .as_ref()
-                .map(|next| next.read().unwrap().value.clone()),
+                .map(|next| next.read().value.clone()),
             None => None,
         }
     }
@@ -159,11 +158,11 @@ impl<T> CommitLog<T> {
         let new_tail = Some(Arc::clone(&element));
         match self.tail.take() {
             Some(old_tail) => {
-                let mut old_tail = old_tail.write().unwrap();
+                let mut old_tail = old_tail.write();
                 old_tail.next = new_tail;
             }
             None => {
-                let mut to_head = self.to_head.write().unwrap();
+                let mut to_head = self.to_head.write();
                 to_head.next = new_tail;
             }
         };
@@ -175,9 +174,9 @@ impl<T> CommitLog<T> {
         let mut count = 0;
         loop {
             let did_expire;
-            match self.to_head.read().unwrap().next.as_ref() {
+            match self.to_head.read().next.as_ref() {
                 Some(next) => {
-                    did_expire = expired(&next.read().unwrap().value);
+                    did_expire = expired(&next.read().value);
                     if !did_expire {
                         return count;
                     }
@@ -195,9 +194,9 @@ impl<T> CommitLog<T> {
     }
 
     fn remove_head(&mut self) {
-        let mut to_head = self.to_head.write().unwrap();
+        let mut to_head = self.to_head.write();
         match to_head.next.take() {
-            Some(old_head) => match old_head.write().unwrap().next.take() {
+            Some(old_head) => match old_head.write().next.take() {
                 Some(new_head) => {
                     to_head.next = Some(new_head);
                 }
@@ -213,9 +212,9 @@ impl<T> CommitLog<T> {
 
 impl<T> Drop for CommitLog<T> {
     fn drop(&mut self) {
-        let mut node = self.to_head.write().unwrap().next.take();
+        let mut node = self.to_head.write().next.take();
         while let Some(link) = node {
-            node = link.write().unwrap().next.take();
+            node = link.write().next.take();
         }
     }
 }

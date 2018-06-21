@@ -1,5 +1,6 @@
 extern crate chrono;
 extern crate core;
+extern crate parking_lot;
 extern crate rand;
 extern crate serde;
 #[macro_use]
