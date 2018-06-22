@@ -27,13 +27,24 @@ export function SubscriptionsTable(props: Props) {
             <th />
           </tr>
         </thead>,
-        ...props.subscriptions.map(s => (
-          <Subscription
-            metrics={s}
-            setNotification={props.setNotification}
-            setDeleteConfirmation={props.setDeleteConfirmation}
-          />
-        )),
+        ...props.subscriptions
+          .sort((a, b) => {
+            if (a.name < b.name) {
+              return -1;
+            }
+            if (a.name > b.name) {
+              return 1;
+            }
+            return 0;
+          })
+          .map(s => (
+            <Subscription
+              key={`row_${s.name}`}
+              metrics={s}
+              setNotification={props.setNotification}
+              setDeleteConfirmation={props.setDeleteConfirmation}
+            />
+          )),
       ]}
     </table>
   );

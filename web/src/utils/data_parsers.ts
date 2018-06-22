@@ -200,10 +200,13 @@ function computeState(
 
   // Topic metrics
   c.numTopics = c.topics.size;
-  for (const [, metrics] of Array.from(current.topics.entries())) {
+  for (const [topicName, metrics] of Array.from(current.topics.entries())) {
     c.numMessagesAllTime += metrics.numMessagesAllTime;
     c.numExpiredAllTime += metrics.numExpiredAllTime;
     c.numMessages += metrics.numMessages;
+
+    // Initialize a topic to subscription lookup
+    c.topic2subscriptions.set(topicName, []);
   }
   c.numTopicsInterval = c.numTopics - p.numTopics;
   c.numMessagesInterval = c.numMessagesAllTime - p.numMessagesAllTime;
@@ -223,10 +226,6 @@ function computeState(
       continue;
     }
 
-    // Create a topic to subscriptions lookup
-    if (!c.topic2subscriptions.has(topicName)) {
-      c.topic2subscriptions.set(topicName, []);
-    }
     c.topic2subscriptions.get(topicName).push(metrics);
 
     // Get the previous metrics subscription metrics
@@ -279,11 +278,11 @@ function computeState(
       numUnprocessed +=
         topicMetrics.numMessagesAllTime - subscription.topicMessageIndex + subscription.numPending;
     }
-    const percentageUnprocessed = 0;
+    let percentageUnprocessed = 0;
     if (totalMessages > 0) {
-      totalPercentageUnprocessed = numUnprocessed / totalMessages;
+      percentageUnprocessed = numUnprocessed / totalMessages;
     }
-    topicMetrics.percentageProcessed = Math.max(0, 1 - totalPercentageUnprocessed);
+    topicMetrics.percentageProcessed = Math.max(0, 1 - percentageUnprocessed);
   }
   return current;
 }

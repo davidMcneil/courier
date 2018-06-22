@@ -52,6 +52,7 @@ export class Publish extends Component<Props, State> {
               class="textarea"
               placeholder="Message to publish..."
               rows={8}
+              value={this.state.message}
               onInput={this.setMessage}
             />
           </div>

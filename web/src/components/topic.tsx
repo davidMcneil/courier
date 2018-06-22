@@ -43,7 +43,7 @@ export class Topic extends Component<Props, State> {
       expires = Math.ceil(m.ttl - updatedAgo);
     }
     return (
-      <tbody key={m.name} class={`${expanded ? "no-bottom-border" : ""}`}>
+      <tbody class={`${expanded ? "no-bottom-border" : ""}`}>
         <tr>
           <td class={"is-table-icon has-text-centered"}>
             <a onClick={this.toggleExpanded}>

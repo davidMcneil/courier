@@ -46,20 +46,31 @@ export function TopicsTab(props: Props) {
                 <th>Age</th>
                 <th />
               </thead>,
-              ...Array.from(c.topics.values()).map(t => {
-                let subscriptions = [];
-                if (c.topic2subscriptions.has(t.name)) {
-                  subscriptions = c.topic2subscriptions.get(t.name);
-                }
-                return (
-                  <Topic
-                    metrics={t}
-                    subscriptions={subscriptions}
-                    setNotification={props.setNotification}
-                    setDeleteConfirmation={props.setDeleteConfirmation}
-                  />
-                );
-              }),
+              ...Array.from(c.topics.values())
+                .sort((a, b) => {
+                  if (a.name < b.name) {
+                    return -1;
+                  }
+                  if (a.name > b.name) {
+                    return 1;
+                  }
+                  return 0;
+                })
+                .map(t => {
+                  let subscriptions = [];
+                  if (c.topic2subscriptions.has(t.name)) {
+                    subscriptions = c.topic2subscriptions.get(t.name);
+                  }
+                  return (
+                    <Topic
+                      key={`row_${t.name}`}
+                      metrics={t}
+                      subscriptions={subscriptions}
+                      setNotification={props.setNotification}
+                      setDeleteConfirmation={props.setDeleteConfirmation}
+                    />
+                  );
+                }),
             ]}
           </table>
         </div>

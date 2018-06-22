@@ -73,7 +73,9 @@ class App extends Component<null, State> {
     this.setDeleteConfirmation = this.setDeleteConfirmation.bind(this);
     this.clearDeleteConfirmation = this.clearDeleteConfirmation.bind(this);
     this.setUpdateInterval = this.setUpdateInterval.bind(this);
+  }
 
+  public componentDidMount() {
     this.updater();
   }
 
