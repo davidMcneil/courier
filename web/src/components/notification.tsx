@@ -1,6 +1,3 @@
-import { Component } from "inferno";
-
-import { CourierState } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
 
 interface Props {

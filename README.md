@@ -14,28 +14,30 @@ Courier provides an in-memory, non-distributed pub/sub service with an http, jso
 
 **Linux** - Simply grab the [latest release](https://github.com/davidMcneil/courier/releases/latest). It is 100% statically linked and _should_ run on any x86, unix-like system.
 
+**macOS** - Currently Courier is not distributed for macOS.
+
 **Windows** - Currently Courier is not distributed for Windows.
 
-## HTTP JSON API
+## HTTP JSON API <a name="http_json_api"></a>
 
 **Table of Contents**
 
-* [Topic End Points](#topic_end_points)
-  * [Create](#topic_create)
-  * [Update](#topic_update)
-  * [Delete](#topic_delete)
-  * [Get](#topic_get)
-  * [List](#topic_list)
-  * [Subscriptions](#topic_subscriptions)
-  * [Publish](#topic_publish)
-* [Subscription End Points](#subscription_end_points)
-  * [Create](#subscription_create)
-  * [Update](#subscription_update)
-  * [Delete](#subscription_delete)
-  * [Get](#subscription_get)
-  * [List](#subscription_list)
-  * [Pull](#subscription_pull)
-  * [Ack](#subscription_ack)
+- [Topic End Points](#topic_end_points)
+  - [Create](#topic_create)
+  - [Update](#topic_update)
+  - [Delete](#topic_delete)
+  - [Get](#topic_get)
+  - [List](#topic_list)
+  - [Subscriptions](#topic_subscriptions)
+  - [Publish](#topic_publish)
+- [Subscription End Points](#subscription_end_points)
+  - [Create](#subscription_create)
+  - [Update](#subscription_update)
+  - [Delete](#subscription_delete)
+  - [Get](#subscription_get)
+  - [List](#subscription_list)
+  - [Pull](#subscription_pull)
+  - [Ack](#subscription_ack)
 
 All messages require the following HTTP headers to be set:
 
@@ -50,7 +52,10 @@ All messages require the following HTTP headers to be set:
 ```json
 {
   "name": "string",
-  "message_ttl": "u32"
+  "message_ttl": "i64",
+  "ttl": "i64",
+  "created": "string",
+  "updated": "string"
 }
 ```
 
@@ -68,7 +73,10 @@ All messages require the following HTTP headers to be set:
 {
   "name": "string",
   "topic": "string",
-  "ack_deadline": "u32"
+  "ack_deadline": "i64",
+  "ttl": "i64",
+  "created": "string",
+  "updated": "string"
 }
 ```
 
@@ -124,14 +132,16 @@ Create a new topic.
 
 ```json
 {
-  "message_ttl": "u32"
+  "message_ttl": "u32",
+  "ttl": "u32"
 }
 ```
 
 | Parameter   | Description                                                            | Units   | Format | Required |
 | ----------- | ---------------------------------------------------------------------- | ------- | ------ | -------- |
 | topic       | The unique name of the topic, a random name will be generated if empty | n/a     | path   | false    |
-| message_ttl | The time to live (ttl) applied to all messages                         | seconds | body   | false    |
+| message_ttl | The time to live (ttl) applied to all messages, use 0 for no ttl       | seconds | body   | false    |
+| ttl         | The time to live (ttl) of the topic, use 0 for no ttl                  | seconds | body   | false    |
 
 ##### Response
 
@@ -142,20 +152,22 @@ Create a new topic.
 
 #### Update - (PATCH) /api/v0/topics/&lt;topic&gt; <a name="topic_update"></a>
 
-Update a topic.
+Update a topic. Updates the topic's `updated` field regardless of if a value is actually updated.
 
 ##### Request
 
 ```json
 {
-  "message_ttl": "u32"
+  "message_ttl": "u32",
+  "ttl": "u32"
 }
 ```
 
-| Parameter   | Description                                    | Units   | Format | Required |
-| ----------- | ---------------------------------------------- | ------- | ------ | -------- |
-| topic       | The name of the topic                          | n/a     | path   | true     |
-| message_ttl | The time to live (ttl) applied to all messages | seconds | body   | false    |
+| Parameter   | Description                                                      | Units   | Format | Required |
+| ----------- | ---------------------------------------------------------------- | ------- | ------ | -------- |
+| topic       | The name of the topic                                            | n/a     | path   | true     |
+| message_ttl | The time to live (ttl) applied to all messages, use 0 for no ttl | seconds | body   | false    |
+| ttl         | The time to live (ttl) of the topic, use 0 for no ttl            | seconds | body   | false    |
 
 ##### Response
 
@@ -166,7 +178,7 @@ Update a topic.
 
 #### Delete - (DELETE) /api/v0/topics/&lt;topic&gt; <a name="topic_delete"></a>
 
-Delete a topic.
+Delete a topic. This will also delete all the subscriptions subscribed to this topic.
 
 ##### Request
 
@@ -233,7 +245,7 @@ List all of the subscription names which are subscribed to this topic.
 
 #### Publish - (POST) /api/v0/topics/&lt;topic&gt;/publish <a name="topic_publish"></a>
 
-Add messages to a topic.
+Add messages to a topic. Updates the topics `updated` fields
 
 ```json
 {
@@ -267,6 +279,7 @@ Create a new subscription.
 {
   "topic": "string",
   "ack_deadline": "u32",
+  "ttl": "u32",
   "historical": "bool"
 }
 ```
@@ -276,6 +289,7 @@ Create a new subscription.
 | subscription | The unique name of the subscription, a random name will be generated if empty                                                                                                    |         | path   | false    |
 | topic        | The name of the topic to subscribe                                                                                                                                               |         | body   | true     |
 | ack_deadline | The amount of time given to ack a message before it is resent                                                                                                                    | seconds | body   | false    |
+| ttl          | The time to live (ttl) of the subscription, use 0 for no ttl                                                                                                                     | seconds | body   | false    |
 | historical   | Should this subscription start pulling from the first message that is part of the subscribed topic, otherwise it will only pull messages added after the subscription is created |         | body   | false    |
 
 ##### Response
@@ -287,13 +301,14 @@ Create a new subscription.
 
 #### Update - (PATCH) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_update"></a>
 
-Update a subscription.
+Update a subscription. Update the subscriptions `updated` field regardless of if a value is actually updated.
 
 ##### Request
 
 ```json
 {
-  "ack_deadline": "u32"
+  "ack_deadline": "u32",
+  "ttl": "u32"
 }
 ```
 
@@ -301,6 +316,7 @@ Update a subscription.
 | ------------ | ------------------------------------------------------------- | ------- | ------ | -------- |
 | subscription | The name of the subscription                                  | n/a     | path   | true     |
 | ack_deadline | The amount of time given to ack a message before it is resent | seconds | body   | false    |
+| ttl          | The time to live (ttl) of the subscription, use 0 for no ttl  | seconds | body   | false    |
 
 ##### Response
 
@@ -361,7 +377,7 @@ List all of the subscriptions.
 
 #### Pull - (POST) /api/v0/subscriptions/&lt;subscription&gt;/pull <a name="subscription_pull"></a>
 
-Pull messages from a subscription.
+Pull messages from a subscription. Updates the subscriptions `updated` field.
 
 ```json
 {
@@ -385,7 +401,7 @@ Pull messages from a subscription.
 
 #### Ack - (POST) /api/v0/subscriptions/&lt;subscription&gt;/ack <a name="subscription_ack"></a>
 
-Acknowledged that messages have been processed.
+Acknowledged that messages have been processed. Updates the subscriptions `updated` field.
 
 ```json
 {
@@ -416,8 +432,17 @@ For the time being, Courier uses a nightly version of the rust compiler due to i
     > rustup install nightly-2018-03-29
     > rustup default nightly-2018-03-29
 
-Courier also uses [tarpaulin](https://github.com/xd009642/tarpaulin) and [cross](https://github.com/japaric/cross) for doing code coverage and cross compilation respectively. They can be installed with:
+Courier also uses:
 
+- [clippy](https://github.com/rust-lang-nursery/rust-clippy) - for linting
+- [rustfmt](https://github.com/xd009642/tarpaulin) - for code formatting
+- [tarpaulin](https://github.com/xd009642/tarpaulin) - for code coverage
+- [cross](https://github.com/japaric/cross) - for cross compilation
+
+These can be installed with:
+
+    > cargo +nightly install clippy
+    > rustup component add rustfmt-preview
     > cargo install cargo-tarpaulin
     > cargo install cross
 
@@ -429,27 +454,41 @@ Run the test suite
 
     > cargo test
 
+Format the code
+
+    > cargo fmt
+
+Lint with clippy
+
+    > cargo clippy --lib --bins
+
 Check test coverage
 
     > cargo tarpaulin --ignore-tests --line --no-count
 
-Perform a cross release build with the [msul](https://www.musl-libc.org/) target
+Perform a cross release build with the [musl](https://www.musl-libc.org/) target
 
     > cross build --release --target=x86_64-unknown-linux-musl
 
-## Road Map
+## Web Development
 
-* [x] Add metrics and an api to retrieve them
-* [ ] Add management ui page
-* [ ] Benchmark performance
-* [ ] Use a concurrent hashmap instead of having the state of the app behind a single mutex
-* [ ] Add other protocols
-  * TCP Binary
-  * gRPC
-  * ...
-* [ ] Write drivers for a variety of languages
-* [ ] Add durability (write to disk)
-* [ ] Make distributed and fault tolerant
+Courier uses [yarn](https://yarnpkg.com/) for web development, but the commands should work equally well with npm.
+
+Install dependencies
+
+    > yarn install
+
+Start the development server
+
+    > yarn start
+
+Create a production build
+
+    > yarn build
+
+Clean
+
+    > yarn clean
 
 ## Example Commands
 

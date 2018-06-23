@@ -1,5 +1,3 @@
-import { Component } from "inferno";
-
 import { abbreviateNumber, numberAsPercentage, numberAsSize } from "../utils/util";
 
 interface Props {

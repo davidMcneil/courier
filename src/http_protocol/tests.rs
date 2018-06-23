@@ -578,6 +578,53 @@ fn http_protocol_ttls() {
 }
 
 #[test]
+fn http_protocol_delete_topic_subscriptions() {
+    let (_, mut server) = get_server();
+
+    // Create topics
+    let topic_config = TopicCreateConfig {
+        message_ttl: Some(2),
+        ttl: Some(0),
+    };
+    get_status(&mut server, "topics/topic0", Method::PUT, topic_config);
+
+    // Create subscriptions
+    let subscription_config = SubscriptionCreateConfig {
+        topic: String::from("topic0"),
+        ack_deadline: Some(1),
+        ttl: None,
+        historical: Some(true),
+    };
+    get_status(
+        &mut server,
+        "subscriptions/sub0",
+        Method::PUT,
+        subscription_config,
+    );
+    let subscription_config = SubscriptionCreateConfig {
+        topic: String::from("topic0"),
+        ack_deadline: Some(1),
+        ttl: Some(1),
+        historical: Some(true),
+    };
+    get_status(
+        &mut server,
+        "subscriptions/sub1",
+        Method::PUT,
+        subscription_config,
+    );
+
+    // Delete the topic
+    get_status(&mut server, "topics/topic0", Method::DELETE, ());
+
+    // Try and get the subscriptions
+    let status = get_status(&mut server, "subscriptions/sub0", Method::GET, ());
+    assert_eq!(StatusCode::NOT_FOUND, status);
+    let status = get_status(&mut server, "subscriptions/sub1", Method::GET, ());
+    assert_eq!(StatusCode::NOT_FOUND, status);
+}
+
+#[test]
 fn http_protocol_basic() {
     let (_, mut server) = get_server();
 

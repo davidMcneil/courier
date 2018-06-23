@@ -1,6 +1,6 @@
 import "./index.scss";
 
-import { Component, render, version } from "inferno";
+import { Component, render } from "inferno";
 import { AllSingleStats } from "./components/all_single_stats";
 import { DeleteConfirmation } from "./components/delete_confirmation";
 import { Notification } from "./components/notification";

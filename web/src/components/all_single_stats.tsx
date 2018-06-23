@@ -1,12 +1,5 @@
-import { Component } from "inferno";
-
 import { CourierState } from "../utils/data_parsers";
-import {
-  AbbreviatedSingleStat,
-  PercentageSingleStat,
-  SingleStat,
-  SizeSingleStat,
-} from "./single_stat";
+import { AbbreviatedSingleStat, PercentageSingleStat, SizeSingleStat } from "./single_stat";
 
 interface Props {
   courierState: CourierState;

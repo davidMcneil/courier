@@ -1,5 +1,3 @@
-import { Component } from "inferno";
-
 interface Props {
   message: string;
   action: () => void;

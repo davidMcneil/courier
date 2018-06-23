@@ -173,10 +173,25 @@ impl Registry {
 
     pub fn delete_topic(&self, topic_name: &str) -> bool {
         // Update metrics
-        let mut metrics = self.metrics.write();
-        metrics.topics.remove(topic_name);
+        {
+            let mut metrics = self.metrics.write();
+            metrics.topics.remove(topic_name);
+        }
 
-        self.topics.write().remove(topic_name).is_some()
+        let topic_store = {
+            let mut topics = self.topics.write();
+            topics.remove(topic_name)
+        };
+
+        // Delete all subscriptions
+        if let Some(ts) = topic_store {
+            for sub in &ts.subscriptions {
+                self.delete_subscription(&sub);
+            }
+            true
+        } else {
+            false
+        }
     }
 
     pub fn get_topic(&self, topic_name: &str) -> Option<TopicMeta> {

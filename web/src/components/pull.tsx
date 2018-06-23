@@ -1,5 +1,4 @@
 import { ChangeEvent, Component, FormEvent } from "inferno";
-import { createElement } from "inferno-create-element";
 
 import { messageFromMessagesBlob } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
