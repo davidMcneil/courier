@@ -10,14 +10,11 @@ rust:
   - stable
   - beta
   - nightly
-before_script:
-  - rustup component add rustfmt-preview
 cache: cargo
 matrix:
   allow_failures:
     - rust: nightly
 script:
-  - cargo fmt --all -- -v --check
   - cargo clean
   - cargo build
   - cargo test
