@@ -17,7 +17,7 @@ matrix:
   allow_failures:
     - rust: nightly
 script:
-  - cargo fmt --all -- --check
+  - cargo fmt --all -- -v --check
   - cargo clean
   - cargo build
   - cargo test

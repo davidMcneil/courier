@@ -427,22 +427,19 @@ Acknowledged that messages have been processed. Updates the subscriptions `updat
 
 This project makes heavy use of the [rust](https://www.rust-lang.org/en-US/) ecosystem. It is highly recommended to use [rustup](https://rustup.rs/) and [cargo](https://github.com/rust-lang/cargo) when working on Courier.
 
-For the time being, Courier uses a nightly version of the rust compiler due to its dependency on [rocket](https://rocket.rs). Courier has been tested against the 2018-03-29 nightly release. To install and use with nightly:
-
-    > rustup install nightly-2018-03-29
-    > rustup default nightly-2018-03-29
+Courier is developed with rust version 1.27.
 
 Courier also uses:
 
-- [clippy](https://github.com/rust-lang-nursery/rust-clippy) - for linting
 - [rustfmt](https://github.com/xd009642/tarpaulin) - for code formatting
+- [clippy](https://github.com/rust-lang-nursery/rust-clippy) - for linting
 - [tarpaulin](https://github.com/xd009642/tarpaulin) - for code coverage
 - [cross](https://github.com/japaric/cross) - for cross compilation
 
 These can be installed with:
 
-    > cargo +nightly install clippy
     > rustup component add rustfmt-preview
+    > cargo +nightly install clippy
     > cargo install cargo-tarpaulin
     > cargo install cross
 
@@ -460,7 +457,7 @@ Format the code
 
 Lint with clippy
 
-    > cargo clippy --lib --bins
+    > cargo +nightly clippy --lib --bins
 
 Check test coverage
 
