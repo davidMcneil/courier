@@ -8,7 +8,7 @@ license = "(MIT OR Apache-2.0)"
 [dependencies]
 actix = "0.5.8"
 actix-web = { git = "https://github.com/davidMcneil/actix-web", branch = "0.6" }
-chrono = {version = "0.4.3",features = ["serde"]}
+chrono = {version = "0.4.4",features = ["serde"]}
 env_logger = "0.5.10"
 futures = "0.1"
 open = "1.2.1"
