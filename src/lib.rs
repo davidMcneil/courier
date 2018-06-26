@@ -19,27 +19,16 @@ mod commit_log;
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct RawMessage {
-    pub data: String,
+#[derive(Clone, Debug)]
+struct InternalMessage {
+    id: Uuid,
+    time: DateTime<Utc>,
+    data: String,
 }
 
-impl RawMessage {
-    pub fn new(data: String) -> Self {
-        Self { data }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
-pub struct Message {
-    pub id: Uuid,
-    pub time: DateTime<Utc>,
-    pub data: String,
-}
-
-impl Message {
-    pub fn new(data: String) -> Self {
-        Self {
+impl InternalMessage {
+    fn new(data: String) -> Self {
+        InternalMessage {
             id: Uuid::new_v4(),
             time: Utc::now(),
             data,
@@ -47,15 +36,15 @@ impl Message {
     }
 }
 
-impl From<RawMessage> for Message {
-    fn from(raw: RawMessage) -> Self {
-        Self::new(raw.data)
+impl From<String> for InternalMessage {
+    fn from(data: String) -> Self {
+        Self::new(data)
     }
 }
 
-impl Default for Message {
+impl Default for InternalMessage {
     fn default() -> Self {
-        Self {
+        InternalMessage {
             id: Default::default(),
             time: Utc::now(),
             data: Default::default(),
@@ -67,15 +56,36 @@ impl Default for Message {
 struct PendingMessage {
     time_sent: DateTime<Utc>,
     message_id: Uuid,
-    index: Index<Message>,
+    tries: u32,
+    index: Index<InternalMessage>,
 }
 
 impl PendingMessage {
-    fn new(message_id: Uuid, index: Index<Message>) -> Self {
+    fn new(message_id: Uuid, tries: u32, index: Index<InternalMessage>) -> Self {
         Self {
             time_sent: Utc::now(),
             message_id,
+            tries,
             index,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+pub struct Message {
+    pub id: Uuid,
+    pub time: DateTime<Utc>,
+    pub tries: u32,
+    pub data: String,
+}
+
+impl Message {
+    pub fn new(data: String) -> Self {
+        Message {
+            id: Uuid::new_v4(),
+            time: Utc::now(),
+            tries: 0,
+            data,
         }
     }
 }
@@ -88,7 +98,7 @@ pub struct Subscription {
     pub ttl: Duration,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
-    cursor: Cursor<Message>,
+    cursor: Cursor<InternalMessage>,
     pending: VecDeque<PendingMessage>,
     pending_ids: HashSet<Uuid>,
     acked: HashSet<Uuid>,
@@ -131,14 +141,23 @@ impl Subscription {
         // Update updated time
         self.update();
 
-        let (message, index) = self
+        // Check if there are any pending messages. If not, try and pull a new one from the cursor
+        let (internal_message, index, tries) = self
             .check_pending()
-            .unwrap_or_else(|| (self.cursor.next(), Index::new(&self.cursor)));
-        if let Some(m) = message.as_ref() {
+            .unwrap_or_else(|| (self.cursor.next(), Index::new(&self.cursor), 1));
+
+        if let Some(m) = internal_message.as_ref() {
             self.pending_ids.insert(m.id);
-            self.pending.push_back(PendingMessage::new(m.id, index));
+            self.pending
+                .push_back(PendingMessage::new(m.id, tries, index));
         }
-        message
+
+        internal_message.map(|m| Message {
+            id: m.id,
+            time: m.time,
+            tries,
+            data: m.data,
+        })
     }
 
     pub fn ack(&mut self, id: Uuid) -> bool {
@@ -152,14 +171,14 @@ impl Subscription {
         false
     }
 
-    pub fn ack_many(&mut self, ids: &[Uuid]) -> usize {
-        let mut count = 0;
+    pub fn ack_many(&mut self, ids: &[Uuid]) -> Vec<Uuid> {
+        let mut acked = Vec::with_capacity(ids.len());
         for id in ids {
             if self.ack(*id) {
-                count += 1;
+                acked.push(*id);
             }
         }
-        count
+        acked
     }
 
     pub fn set_ack_deadline(&mut self, ack_deadline: Duration) {
@@ -189,7 +208,7 @@ impl Subscription {
         self.pending_ids.len()
     }
 
-    fn check_pending(&mut self) -> Option<(Option<Message>, Index<Message>)> {
+    fn check_pending(&mut self) -> Option<(Option<InternalMessage>, Index<InternalMessage>, u32)> {
         while let Some(pending) = self.pending.pop_front() {
             match pending.index.get() {
                 Some(message) => {
@@ -204,7 +223,7 @@ impl Subscription {
                         return None;
                     }
                     // The message ack deadline timed out so return that message to be resent
-                    return Some((Some(message), pending.index));
+                    return Some((Some(message), pending.index, pending.tries + 1));
                 }
                 // The message has timed out in the topic
                 None => {
@@ -250,7 +269,7 @@ pub struct Topic {
     pub ttl: Duration,
     pub created: DateTime<Utc>,
     pub updated: DateTime<Utc>,
-    log: CommitLog<Message>,
+    log: CommitLog<InternalMessage>,
 }
 
 impl Topic {
@@ -270,11 +289,14 @@ impl Topic {
         self.log.len()
     }
 
-    pub fn publish(&mut self, message: Message) {
+    pub fn publish(&mut self, data: String) -> Uuid {
         // Update updated time
         self.update();
 
-        self.log.append(message);
+        let internal_message = InternalMessage::new(data);
+        let id = internal_message.id;
+        self.log.append(internal_message);
+        id
     }
 
     pub fn cleanup(&mut self) -> usize {

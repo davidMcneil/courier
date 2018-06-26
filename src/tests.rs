@@ -4,13 +4,7 @@ use std::time;
 
 #[test]
 fn pub_sub_create() {
-    let raw_message = RawMessage::new(String::from("abc"));
-    assert_eq!(raw_message.data, String::from("abc"));
-    let message = Message::new(String::from("123"));
-    assert_eq!(message.data, String::from("123"));
-    let message = Message::from(raw_message);
-    assert_eq!(message.data, String::from("abc"));
-    let message = Message::default();
+    let message = Message::new(String::from(""));
     assert_eq!(message.data, String::from(""));
     let mut topic = Topic::new("topic", Duration::seconds(60), Duration::seconds(0));
     topic.set_message_ttl(Duration::seconds(120));
@@ -39,8 +33,8 @@ fn pub_sub_basic() {
         Duration::milliseconds(10),
         Duration::seconds(0),
     );
-    topic.publish(Message::new(String::from("a")));
-    topic.publish(Message::new(String::from("b")));
+    topic.publish(String::from("a"));
+    topic.publish(String::from("b"));
     assert_eq!(2, topic.len());
     let message = subscription.pull().unwrap();
     assert_eq!(String::from("a"), message.data);
@@ -61,7 +55,7 @@ fn pub_sub_basic() {
     );
     assert_eq!(None, subscription.pull());
 
-    topic.publish(Message::new(String::from("c")));
+    topic.publish(String::from("c"));
     let message = subscription.pull().unwrap();
     assert_eq!(String::from("c"), message.data);
     thread::sleep(time::Duration::from_millis(20));
@@ -71,7 +65,7 @@ fn pub_sub_basic() {
     thread::sleep(time::Duration::from_millis(20));
     assert_eq!(None, subscription.pull());
 
-    topic.publish(Message::new(String::from("d")));
+    topic.publish(String::from("d"));
     topic.set_message_ttl(Duration::milliseconds(10));
     thread::sleep(time::Duration::from_millis(20));
     topic.cleanup();

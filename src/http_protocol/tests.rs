@@ -5,7 +5,6 @@ use futures::Future;
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 
-use courier::RawMessage;
 use courier::{SubscriptionMeta, TopicMeta};
 
 use http_protocol::types::*;
@@ -695,13 +694,14 @@ fn http_protocol_basic() {
     assert_eq!(0, body.messages.len());
     // Ack the second one
     let message_ids = MessageIdList::new(vec![saved_messages.messages[1].id]);
-    let status = get_status(
+    let (status, body): (_, MessageIdList) = get_response(
         &mut server,
         "subscriptions/subscription0/ack",
         Method::POST,
-        message_ids,
+        message_ids.clone(),
     );
     assert_eq!(StatusCode::OK, status);
+    assert_eq!(message_ids, body);
     // Wait for the ack deadline to expire
     thread::sleep(time::Duration::from_millis(1100));
     // Try and pull 5 more message
@@ -715,7 +715,9 @@ fn http_protocol_basic() {
     assert_eq!(StatusCode::OK, status);
     assert_eq!(2, body.messages.len());
     assert_eq!(String::from("first"), body.messages[0].data);
+    assert_eq!(2, body.messages[0].tries);
     assert_eq!(String::from("third"), body.messages[1].data);
+    assert_eq!(1, body.messages[1].tries);
 
     // Publish more messages
     let messages = RawMessageList::new(vec![

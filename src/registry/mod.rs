@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use parking_lot::RwLock;
 
-use courier::{Message, RawMessage, Subscription, SubscriptionMeta, Topic, TopicMeta};
+use courier::{Message, Subscription, SubscriptionMeta, Topic, TopicMeta};
 
 struct TopicStore {
     topic: Topic,
@@ -204,16 +204,14 @@ impl Registry {
         topics.values().map(|t| TopicMeta::from(&t.topic)).collect()
     }
 
-    pub fn publish(&self, topic_name: &str, raw_messages: Vec<RawMessage>) -> Option<Vec<Uuid>> {
+    pub fn publish(&self, topic_name: &str, data: Vec<String>) -> Option<Vec<Uuid>> {
         let mut topics = self.topics.write();
         topics.get_mut(topic_name).map(|topic_store| {
             let topic = &mut topic_store.topic;
-            let count = raw_messages.len();
+            let count = data.len();
             let mut ids = Vec::with_capacity(count);
-            for raw_message in raw_messages {
-                let message = Message::from(raw_message);
-                ids.push(message.id);
-                topic.publish(message)
+            for datum in data {
+                ids.push(topic.publish(datum));
             }
 
             // Update metrics
@@ -360,24 +358,21 @@ impl Registry {
         })
     }
 
-    pub fn ack(&self, subscription_name: &str, ids: &[Uuid]) -> bool {
+    pub fn ack(&self, subscription_name: &str, ids: &[Uuid]) -> Option<Vec<Uuid>> {
         let mut subscriptions = self.subscriptions.write();
-        subscriptions
-            .get_mut(subscription_name)
-            .map(|s| {
-                let count = s.ack_many(ids);
+        subscriptions.get_mut(subscription_name).map(|s| {
+            let acked = s.ack_many(ids);
 
-                // Update metrics
-                let mut metrics = self.metrics.write();
-                if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
-                    m.pending = s.num_pending();
-                    m.acked_all_time += count as u64;
-                    m.updated = s.updated;
-                };
+            // Update metrics
+            let mut metrics = self.metrics.write();
+            if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
+                m.pending = s.num_pending();
+                m.acked_all_time += acked.len() as u64;
+                m.updated = s.updated;
+            };
 
-                true
-            })
-            .unwrap_or(false)
+            acked
+        })
     }
 
     pub fn metrics(&self) -> Arc<RwLock<Metrics>> {

@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use courier::{Message, RawMessage, SubscriptionMeta, TopicMeta};
+use courier::{Message, SubscriptionMeta, TopicMeta};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct TopicCreateConfig {
@@ -22,6 +22,18 @@ pub struct TopicList {
 impl TopicList {
     pub fn new(topics: Vec<TopicMeta>) -> Self {
         Self { topics }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct RawMessage {
+    pub data: String,
+}
+
+impl RawMessage {
+    #[allow(dead_code)]
+    pub fn new(data: String) -> Self {
+        Self { data }
     }
 }
 

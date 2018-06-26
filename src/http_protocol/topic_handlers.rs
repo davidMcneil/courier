@@ -107,6 +107,12 @@ pub fn publish(
     (name, messages, state): (Path<String>, Json<types::RawMessageList>, State<HttpState>),
 ) -> Option<Json<types::MessageIdList>> {
     let reg = &state.registry;
-    reg.publish(&name, messages.into_inner().messages)
+    let data = messages
+        .into_inner()
+        .messages
+        .into_iter()
+        .map(|m| m.data)
+        .collect();
+    reg.publish(&name, data)
         .map(|m| Json(types::MessageIdList::new(m)))
 }

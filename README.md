@@ -109,7 +109,8 @@ All messages require the following HTTP headers to be set:
 ```json
 {
   "id": "string",
-  "time": "string",
+  "time": "string", // The time the message was published
+  "tries": "u32", // The number of times the message has been pulled
   "data": "string"
 }
 ```
@@ -119,6 +120,14 @@ All messages require the following HTTP headers to be set:
 ```json
 {
   "messages": "Message[]"
+}
+```
+
+### MessageIdList <a name="message_id_list_type"></a>
+
+```json
+{
+  "message_ids": "string[]"
 }
 ```
 
@@ -401,7 +410,8 @@ Pull messages from a subscription. Updates the subscriptions `updated` field.
 
 #### Ack - (POST) /api/v0/subscriptions/&lt;subscription&gt;/ack <a name="subscription_ack"></a>
 
-Acknowledged that messages have been processed. Updates the subscriptions `updated` field.
+Acknowledged that messages have been processed. Updates the subscriptions `updated` field. Returns only the ids which
+where successfully acked.
 
 ```json
 {
@@ -418,10 +428,10 @@ Acknowledged that messages have been processed. Updates the subscriptions `updat
 
 ##### Response
 
-| Status Code     | Response Body | Description                                               |
-| --------------- | ------------- | --------------------------------------------------------- |
-| 200 (Ok)        | &lt;empty&gt; | Successfully acknowledged the messages                    |
-| 404 (Not Found) | &lt;empty&gt; | A subscription with the specified name could not be found |
+| Status Code     | Response Body                          | Description                                               |
+| --------------- | -------------------------------------- | --------------------------------------------------------- |
+| 200 (Ok)        | [MessageIdList](#message_id_list_type) | Successfully acknowledged the messages                    |
+| 404 (Not Found) | &lt;empty&gt;                          | A subscription with the specified name could not be found |
 
 ## Develop
 

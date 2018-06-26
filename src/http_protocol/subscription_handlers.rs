@@ -116,11 +116,8 @@ pub fn pull(
 
 pub fn ack(
     (name, ids, state): (Path<String>, Json<types::MessageIdList>, State<HttpState>),
-) -> HttpResponseBuilder {
+) -> Option<Json<types::MessageIdList>> {
     let reg = &state.registry;
-    if reg.ack(&name, &ids.into_inner().message_ids) {
-        HttpResponse::Ok()
-    } else {
-        HttpResponse::NotFound()
-    }
+    reg.ack(&name, &ids.into_inner().message_ids)
+        .map(|ids| Json(types::MessageIdList::new(ids)))
 }
