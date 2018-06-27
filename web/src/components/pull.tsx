@@ -2,7 +2,7 @@ import { ChangeEvent, Component, FormEvent } from "inferno";
 
 import { messageFromMessagesBlob } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
-import { ackUrl, fetchError2message, HEADERS, isJson, pullUrl } from "../utils/util";
+import { ackUrl, fetchError2message, HEADERS, isArray, isJson, pullUrl } from "../utils/util";
 
 interface Props {
   setNotification: (type: NotificationType, message: string) => void;
@@ -14,12 +14,14 @@ interface State {
   format: boolean;
   id: string;
   time: Date | null;
+  tries: number | null;
   data: string;
 }
 
 const emptyMessage = {
   id: "",
   time: null,
+  tries: null,
   data: "",
 };
 
@@ -75,6 +77,12 @@ export class Pull extends Component<Props, State> {
             <span class="has-text-weight-bold">ID:&nbsp;</span>{" "}
             {this.state.id === "" ? "<no message>" : this.state.id}
           </div>
+        </div>
+        <div class="level is-marginless">
+          <div class="level-left">
+            <span class="has-text-weight-bold">Tries:&nbsp;</span>{" "}
+            {this.state.tries === null ? "<no message>" : this.state.tries}
+          </div>
           <div class="level-right">
             <span class="has-text-weight-bold">Time:&nbsp;</span>
             {this.state.time === null ? "<no message>" : this.state.time.toISOString()}
@@ -86,7 +94,7 @@ export class Pull extends Component<Props, State> {
             <textarea
               class="textarea"
               placeholder="Message contents..."
-              rows={10}
+              rows={9}
               readOnly={true}
               value={displayData}
             />
@@ -181,10 +189,20 @@ export class Pull extends Component<Props, State> {
     const init = { method: "POST", headers: HEADERS, body: JSON.stringify(body) };
     fetch(ackUrl(this.state.subscription), init)
       .then(response => {
-        if (!response.ok) {
-          throw response;
+        if (response.ok) {
+          return response.json();
         }
-        this.props.setNotification(NotificationType.Success, `Acked message '${id}'.`);
+        throw response;
+      })
+      .then(json => {
+        if (isArray(json.message_ids) && json.message_ids.length === 1) {
+          this.props.setNotification(
+            NotificationType.Success,
+            `Acked message '${json.message_ids[0]}'.`,
+          );
+        } else {
+          throw new Error(`could not parse '${json}' as message ids`);
+        }
       })
       .catch(error => {
         const message = `Unable to ack message! (${fetchError2message(error)})`;

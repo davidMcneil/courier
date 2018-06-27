@@ -327,6 +327,7 @@ export function courierStateFromAny(
 export interface Message {
   id: string;
   time: Date;
+  tries: number;
   data: string;
 }
 
@@ -334,6 +335,7 @@ export function newMessage(): Message {
   return {
     id: "",
     time: new Date(),
+    tries: 0,
     data: "",
   };
 }
@@ -348,6 +350,9 @@ export function messageFromMessagesBlob(blob: any): Message | null {
     const time = new Date(message.time);
     if (isNumber(time.getTime())) {
       created.time = new Date();
+    }
+    if (isNumber(message.tries)) {
+      created.tries = message.tries;
     }
     if (isString(message.data)) {
       created.data = message.data;
