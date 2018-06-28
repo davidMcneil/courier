@@ -17,7 +17,6 @@ extern crate uuid;
 extern crate courier;
 
 mod http_protocol;
-mod registry;
 
 use chrono::Duration;
 use structopt::StructOpt;

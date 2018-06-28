@@ -1,20 +1,19 @@
 //! A commit log like data structure.
 //!
-//! The [CommitLog](commit_log::CommitLog) is essentially a singly linked list. It allows appending
-//! things to its tail and then running a cleanup function that removes things from its head. It
-//! allows creating [Cursor](commit_log::Cursor)s which can be used to walk along the
-//! elements of the commit log as well as an [Index](commit_log::Index) which points to a single
-//! element of the [CommitLog](commit_log::CommitLog).
+//! The [CommitLog](struct.CommitLog.html) is essentially a singly linked list. It allows appending
+//! elements to its tail and then running a cleanup function that removes elements from its head.
+//! This module provides a [Cursor](struct.Cursor.html)s which can be used to walk along the
+//! elements of the commit log as well as an [Index](struct.Index.html) which points to a single
+//! element of the [CommitLog](struct.CommitLog.html).
 
 #[cfg(test)]
 mod tests;
 
+use parking_lot::RwLock;
 use std::fmt;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Weak};
-
-use parking_lot::RwLock;
 
 type Shared<T> = Arc<RwLock<T>>;
 
@@ -37,13 +36,13 @@ type Pointer<T> = WeakShared<Element<T>>;
 
 type Node<T> = Option<Link<T>>;
 
-/// An index into an element of a [CommitLog]().
+/// An index into an element of a [CommitLog](struct.CommitLog.html).
 pub struct Index<T> {
     index: Pointer<T>,
 }
 
 impl<T> Index<T> {
-    /// Create a new index at the element the [Cursor]() is currently pointing.
+    /// Create a new index at the element the [Cursor](struct.Cursor.html) is currently pointing.
     pub fn new(cursor: &Cursor<T>) -> Self {
         Self {
             index: Weak::clone(&cursor.cursor),
@@ -54,7 +53,8 @@ impl<T> Index<T> {
 impl<T: Clone> Index<T> {
     /// Try and get the value of the element at the index.
     ///
-    /// If it returns None it means the element has been cleaned up.
+    /// If it returns None, it means the element has been cleaned up by the underlying
+    /// [CommitLog](struct.CommitLog.html).
     pub fn get(&self) -> Option<T> {
         self.index.upgrade().map(|i| i.read().value.clone())
     }
@@ -66,7 +66,7 @@ impl<T: Clone + Debug> Debug for Index<T> {
     }
 }
 
-/// A cursor which can be used to walk the elements of a [CommitLog]().
+/// A cursor which can be used to walk the elements of a [CommitLog](struct.CommitLog.html).
 pub struct Cursor<T> {
     cursor: Pointer<T>,
     next_index: usize,
@@ -75,7 +75,7 @@ pub struct Cursor<T> {
 }
 
 impl<T> Cursor<T> {
-    /// Create a new cursor at the head (beginning) of the [CommitLog]().
+    /// Create a new cursor at the head (beginning) of the [CommitLog](struct.CommitLog.html).
     pub fn new_head(log: &CommitLog<T>) -> Self {
         Cursor {
             cursor: Arc::downgrade(&log.to_head),
@@ -85,7 +85,7 @@ impl<T> Cursor<T> {
         }
     }
 
-    /// Create a new cursor at the tail (end) of the [CommitLog]().
+    /// Create a new cursor at the tail (end) of the [CommitLog](struct.CommitLog.html).
     pub fn new_tail(log: &CommitLog<T>) -> Self {
         match log.tail.as_ref() {
             Some(tail) => Cursor {
@@ -99,7 +99,10 @@ impl<T> Cursor<T> {
         }
     }
 
-    /// Get the index of the next element the cursor will get.
+    /// Get the index of the element the cursor will retrieve with next.
+    ///
+    /// This assumes the cursor is pointing to a valid element if it is not the index may be much
+    /// larger as the cursor is moved to the [CommitLog](struct.CommitLog.html)'s head.
     pub fn next_index(&self) -> usize {
         self.next_index
     }
@@ -108,7 +111,8 @@ impl<T> Cursor<T> {
 impl<T: Clone> Cursor<T> {
     /// Get the value of the next element of the cursor.
     ///
-    /// If it returns None it means the cursor has reached the tail of the [CommitLog]().
+    /// If it returns None it means the cursor has reached the tail of the
+    /// [CommitLog](struct.CommitLog.html).
     pub fn next(&mut self) -> Option<T> {
         match self.cursor.upgrade() {
             // If the cursor is pointing to a valid element, see if it has a next element and if it
@@ -137,7 +141,8 @@ impl<T: Clone> Cursor<T> {
 
     /// Peek at the value of the next element of the cursor without progressing the cursor.
     ///
-    /// If it returns None it means the cursor has reached the tail of the [CommitLog]().
+    /// If it returns None it means the cursor has reached the tail of the
+    /// [CommitLog](struct.CommitLog.html).
     pub fn peek(&self) -> Option<T> {
         match self.cursor.upgrade() {
             Some(cursor) => cursor
@@ -179,8 +184,7 @@ impl<T: Default> CommitLog<T> {
 }
 
 impl<T> CommitLog<T> {
-    /// Check if there are not elements
-    #[allow(dead_code)]
+    /// Returns `true` if there are no elements
     pub fn empty(&self) -> bool {
         self.length == 0
     }

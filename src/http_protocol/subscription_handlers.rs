@@ -3,14 +3,13 @@
 use actix_web::dev::HttpResponseBuilder;
 use actix_web::{HttpResponse, Json, Path, State};
 use chrono::Duration;
-use uuid::Uuid;
-
-use courier::SubscriptionMeta;
-
 use http_protocol::state::HttpState;
 use http_protocol::types;
 use http_protocol::Config;
-use registry::SharedRegistry;
+use uuid::Uuid;
+
+use courier::SharedRegistry;
+use courier::SubscriptionMeta;
 
 fn create(
     name: &str,

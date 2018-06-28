@@ -1,7 +1,7 @@
 use chrono::Duration;
 use std::sync::Arc;
 
-use registry::SharedRegistry;
+use courier::SharedRegistry;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Config {

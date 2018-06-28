@@ -24,7 +24,7 @@ uuid = {version = "0.6.5",features = ["serde","v4"]}
 
 [lib]
 name = "courier"
-path = "src/lib.rs"
+path = "src/lib/lib.rs"
 
 [[bin]]
 name = "courier"

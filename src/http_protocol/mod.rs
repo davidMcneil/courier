@@ -15,7 +15,7 @@ use std::thread;
 use std::time;
 
 pub use self::state::{Config, HttpState};
-use registry::Registry;
+use courier::Registry;
 
 static LOGGER_FORMAT: &'static str = "%t %Ts \"%r\" (%s %bB)";
 

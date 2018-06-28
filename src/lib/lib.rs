@@ -1,13 +1,24 @@
+extern crate chrono;
+extern crate parking_lot;
+extern crate psutil;
+extern crate rand;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate uuid;
+
+pub mod commit_log;
+mod core;
+
 use chrono::prelude::*;
 use chrono::Duration;
-use psutil;
+use parking_lot::RwLock;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use parking_lot::RwLock;
-
-use courier::{Message, Subscription, SubscriptionMeta, Topic, TopicMeta};
+pub use core::{Message, Subscription, SubscriptionMeta, Topic, TopicMeta};
 
 struct TopicStore {
     topic: Topic,
