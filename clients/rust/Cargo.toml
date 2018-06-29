@@ -1,0 +1,9 @@
+[package]
+name = "courier-client"
+version = "0.1.0"
+authors = ["David McNeil <mcneil.david2@gmail.com>"]
+description = "A rust client for the Courier pub/sub service."
+license = "(MIT OR Apache-2.0)"
+
+[dependencies]
+reqwest = "0.8.6"

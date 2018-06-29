@@ -29,6 +29,7 @@
     "paddingless",
     "psutil",
     "pubsub",
+    "reqwest",
     "rocket",
     "rustfmt",
     "rustup",

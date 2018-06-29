@@ -7,9 +7,9 @@ use std::sync::Arc;
 
 use http_protocol::HttpState;
 
-static HTML: &'static str = include_str!("../../web/dist/index.html");
-static CSS: &'static str = include_str!("../../web/dist/src.71107acb.css");
-static JS: &'static str = include_str!("../../web/dist/src.d29a4435.js");
+static HTML: &'static str = include_str!("../../../web/dist/index.html");
+static CSS: &'static str = include_str!("../../../web/dist/src.71107acb.css");
+static JS: &'static str = include_str!("../../../web/dist/src.d29a4435.js");
 
 pub fn html(_: HttpRequest) -> HttpResponse {
     HttpResponse::Ok()
