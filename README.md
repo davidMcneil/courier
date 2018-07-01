@@ -439,8 +439,9 @@ This project makes heavy use of the [rust](https://www.rust-lang.org/en-US/) eco
 
 Courier is developed with rust version 1.27.
 
-Courier also uses:
+Courier also depends on:
 
+- [uber-dev](https://github.com/davidMcneil/uber-dev) - for offline builds
 - [rustfmt](https://github.com/xd009642/tarpaulin) - for code formatting
 - [clippy](https://github.com/rust-lang-nursery/rust-clippy) - for linting
 - [tarpaulin](https://github.com/xd009642/tarpaulin) - for code coverage
