@@ -2,7 +2,7 @@ import { CourierState } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
 import { NewTopic } from "./new_topic";
 import { Publish } from "./publish";
-import { Topic } from "./topic";
+import { TopicsTable } from "./topics_table";
 
 interface Props {
   visible: boolean;
@@ -30,47 +30,12 @@ export function TopicsTab(props: Props) {
 
       <section class="section">
         <div class="container">
-          <table
-            class="table table-with-bottom-border is-hoverable is-narrow is-fullwidth"
-            $HasKeyedChildren
-          >
-            {[
-              <thead key="header">
-                <th />
-                <th>Name</th>
-                <th>Messages</th>
-                <th>Subscriptions</th>
-                <th>Processed</th>
-                <th>Age</th>
-                <th />
-              </thead>,
-              ...Array.from(c.topics.values())
-                .sort((a, b) => {
-                  if (a.name < b.name) {
-                    return -1;
-                  }
-                  if (a.name > b.name) {
-                    return 1;
-                  }
-                  return 0;
-                })
-                .map(t => {
-                  let subscriptions = [];
-                  if (c.topic2subscriptions.has(t.name)) {
-                    subscriptions = c.topic2subscriptions.get(t.name);
-                  }
-                  return (
-                    <Topic
-                      key={`row_${t.name}`}
-                      metrics={t}
-                      subscriptions={subscriptions}
-                      setNotification={props.setNotification}
-                      setDeleteConfirmation={props.setDeleteConfirmation}
-                    />
-                  );
-                }),
-            ]}
-          </table>
+          <TopicsTable
+            topics={Array.from(props.courierState.topics.values())}
+            topic2subscriptions={props.courierState.topic2subscriptions}
+            setNotification={props.setNotification}
+            setDeleteConfirmation={props.setDeleteConfirmation}
+          />
         </div>
       </section>
     </div>

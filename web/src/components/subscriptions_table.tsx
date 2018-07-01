@@ -9,6 +9,33 @@ interface Props {
 }
 
 export function SubscriptionsTable(props: Props) {
+  let subscriptions: JSX.Element[] = props.subscriptions
+    .sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+      if (a.name > b.name) {
+        return 1;
+      }
+      return 0;
+    })
+    .map(s => (
+      <Subscription
+        key={`row_${s.name}`}
+        metrics={s}
+        setNotification={props.setNotification}
+        setDeleteConfirmation={props.setDeleteConfirmation}
+      />
+    ));
+  if (subscriptions.length === 0) {
+    subscriptions = [
+      <tr>
+        <td colSpan={8} class={"has-text-centered has-text-weight-bold"}>
+          No Subscriptions
+        </td>
+      </tr>,
+    ];
+  }
   return (
     <table
       class="table table-with-bottom-border is-hoverable is-narrow is-fullwidth"
@@ -27,24 +54,7 @@ export function SubscriptionsTable(props: Props) {
             <th />
           </tr>
         </thead>,
-        ...props.subscriptions
-          .sort((a, b) => {
-            if (a.name < b.name) {
-              return -1;
-            }
-            if (a.name > b.name) {
-              return 1;
-            }
-            return 0;
-          })
-          .map(s => (
-            <Subscription
-              key={`row_${s.name}`}
-              metrics={s}
-              setNotification={props.setNotification}
-              setDeleteConfirmation={props.setDeleteConfirmation}
-            />
-          )),
+        ...subscriptions,
       ]}
     </table>
   );

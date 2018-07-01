@@ -88,7 +88,6 @@ export class Subscription extends Component<Props, State> {
               </tr>
             </table>
           </td>
-          <td />
         </tr>
       </tbody>
     );
