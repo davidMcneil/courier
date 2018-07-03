@@ -6,4 +6,10 @@ description = "A rust client for the Courier pub/sub service."
 license = "(MIT OR Apache-2.0)"
 
 [dependencies]
+chrono = {version = "0.4.4",features = ["serde"]}
 reqwest = "0.8.6"
+serde = "1.0.68"
+serde_derive = "1.0.68"
+serde_json = "1.0.22"
+url = "1.7.0"
+uuid = {version = "0.6.5",features = ["serde","v4"]}
