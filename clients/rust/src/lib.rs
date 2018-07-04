@@ -14,10 +14,10 @@ use std::error::Error;
 use url::Url;
 use uuid::Uuid;
 
-use types::{
+pub use types::{
     MessageIdList, MessageList, PullConfig, RawMessage, RawMessageList, Subscription,
-    SubscriptionCreateConfig, SubscriptionList, SubscriptionUpdateConfig, Topic, TopicCreateConfig,
-    TopicList, TopicUpdateConfig,
+    SubscriptionCreateConfig, SubscriptionList, SubscriptionNameList, SubscriptionUpdateConfig,
+    Topic, TopicCreateConfig, TopicList, TopicUpdateConfig,
 };
 
 static TOPICS_PATH: &'static str = "/api/v0/topics";
@@ -94,17 +94,27 @@ impl Client {
     }
 
     pub fn publish(&self, topic: &str, data: Vec<String>) -> Result<MessageIdList, Box<dyn Error>> {
-        let url = self.base_url.join(&format!("{}/{}", TOPICS_PATH, topic))?;
+        let url = self.base_url
+            .join(&format!("{}/{}/publish", TOPICS_PATH, topic))?;
         let mut raw_messages = Vec::with_capacity(data.len());
         for datum in data.into_iter() {
             raw_messages.push(RawMessage::new(datum));
         }
         Ok(self.http
-            .get(url)
+            .post(url)
             .json(&RawMessageList::new(raw_messages))
             .send()?
             .error_for_status()?
             .json()?)
+    }
+
+    pub fn get_topic_subscriptions(
+        &self,
+        topic: &str,
+    ) -> Result<SubscriptionNameList, Box<dyn Error>> {
+        let url = self.base_url
+            .join(&format!("{}/{}/subscriptions", TOPICS_PATH, topic))?;
+        Ok(self.http.get(url).send()?.error_for_status()?.json()?)
     }
 
     pub fn create_subscription(

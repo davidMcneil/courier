@@ -1,4 +1,4 @@
-import { abbreviateNumber, numberAsPercentage, numberAsSize } from "../utils/util";
+import { abbreviateInteger, numberAsPercentage, numberAsSize } from "../utils/util";
 
 interface Props {
   title: string;
@@ -23,7 +23,7 @@ export function SingleStat(props: Props) {
 }
 
 export function AbbreviatedSingleStat(props: NumericProps) {
-  return <SingleStat title={props.title} value={abbreviateNumber(props.value, props.digits)} />;
+  return <SingleStat title={props.title} value={abbreviateInteger(props.value, props.digits)} />;
 }
 
 export function PercentageSingleStat(props: NumericProps) {

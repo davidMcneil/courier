@@ -11,10 +11,10 @@ export function assertNotUndefined(value: any, message: string = "Undefined!") {
   assert(value !== undefined, message);
 }
 
-export function abbreviateNumber(value: number, decimalDigits: number = 1): string {
+export function abbreviateInteger(value: number, decimalDigits: number = 1): string {
   const digits = Math.floor(value).toString().length;
   if (digits <= 3) {
-    return value.toFixed(decimalDigits);
+    return value.toFixed(0);
   } else if (digits >= 4 && digits <= 6) {
     return (value / 1000).toFixed(decimalDigits) + "k";
   } else if (digits >= 7 && digits <= 9) {
@@ -24,7 +24,7 @@ export function abbreviateNumber(value: number, decimalDigits: number = 1): stri
   } else if (digits >= 13) {
     return (value / 1000000000000).toFixed(decimalDigits) + "t";
   } else {
-    return value.toFixed(decimalDigits);
+    return value.toFixed(0);
   }
 }
 

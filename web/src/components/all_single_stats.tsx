@@ -13,42 +13,42 @@ export function AllSingleStats(props: Props) {
         {/* Current Stats */}
         <div class="level">
           <h1 class="is-size-5">Current</h1>
-          <AbbreviatedSingleStat title="Topics" value={s.numTopics} digits={0} />
-          <AbbreviatedSingleStat title="Messages" value={s.numMessages} digits={0} />
-          <AbbreviatedSingleStat title="Subscriptions" value={s.numSubscriptions} digits={0} />
-          <AbbreviatedSingleStat title="Pending" value={s.numPending} digits={0} />
-          <PercentageSingleStat title="Processed" value={s.percentageProcessed} digits={0} />
+          <AbbreviatedSingleStat title="Topics" value={s.numTopics} digits={1} />
+          <AbbreviatedSingleStat title="Messages" value={s.numMessages} digits={1} />
+          <AbbreviatedSingleStat title="Subscriptions" value={s.numSubscriptions} digits={1} />
+          <AbbreviatedSingleStat title="Pending" value={s.numPending} digits={1} />
+          <PercentageSingleStat title="Processed" value={s.percentageProcessed} digits={1} />
           <SizeSingleStat title="Memory RSS" value={s.memoryResidentSetSize} digits={1} />
         </div>
 
         {/* Interval Stats */}
         <div class="level">
           <h1 class="level-left">Interval</h1>
-          <AbbreviatedSingleStat title="Topics" value={s.numTopicsInterval} digits={0} />
-          <AbbreviatedSingleStat title="Messages" value={s.numMessagesInterval} digits={0} />
-          <AbbreviatedSingleStat title="Expired" value={s.numExpiredInterval} digits={0} />
+          <AbbreviatedSingleStat title="Topics" value={s.numTopicsInterval} digits={1} />
+          <AbbreviatedSingleStat title="Messages" value={s.numMessagesInterval} digits={1} />
+          <AbbreviatedSingleStat title="Expired" value={s.numExpiredInterval} digits={1} />
           <AbbreviatedSingleStat
             title="Subscriptions"
             value={s.numSubscriptionsInterval}
-            digits={0}
+            digits={1}
           />
-          <AbbreviatedSingleStat title="Pulled" value={s.numPulledInterval} digits={0} />
-          <AbbreviatedSingleStat title="Acked" value={s.numAckedInterval} digits={0} />
+          <AbbreviatedSingleStat title="Pulled" value={s.numPulledInterval} digits={1} />
+          <AbbreviatedSingleStat title="Acked" value={s.numAckedInterval} digits={1} />
           <SizeSingleStat title="Memory RSS" value={s.memoryResidentSetSizeInterval} digits={1} />
         </div>
         {/* All Time Stats */}
         <div class="level">
           <h1 class="level-left">All Time</h1>
-          <AbbreviatedSingleStat title="Topics" value={s.numTopicsAllTime} digits={0} />
-          <AbbreviatedSingleStat title="Messages" value={s.numMessagesAllTime} digits={0} />
-          <AbbreviatedSingleStat title="Expired" value={s.numExpiredAllTime} digits={0} />
+          <AbbreviatedSingleStat title="Topics" value={s.numTopicsAllTime} digits={1} />
+          <AbbreviatedSingleStat title="Messages" value={s.numMessagesAllTime} digits={1} />
+          <AbbreviatedSingleStat title="Expired" value={s.numExpiredAllTime} digits={1} />
           <AbbreviatedSingleStat
             title="Subscriptions"
             value={s.numSubscriptionsAllTime}
-            digits={0}
+            digits={1}
           />
-          <AbbreviatedSingleStat title="Pulled" value={s.numPulledAllTime} digits={0} />
-          <AbbreviatedSingleStat title="Acked" value={s.numAckedAllTime} digits={0} />
+          <AbbreviatedSingleStat title="Pulled" value={s.numPulledAllTime} digits={1} />
+          <AbbreviatedSingleStat title="Acked" value={s.numAckedAllTime} digits={1} />
         </div>
       </div>
     </section>
