@@ -512,7 +512,7 @@ fn http_protocol_lists() {
     let (status, mut body): (_, SubscriptionNameList) =
         get_response(&mut server, "topics/topic0/subscriptions", Method::GET, ());
     assert_eq!(StatusCode::OK, status);
-    body.subscriptions.sort();
+    body.subscription_names.sort();
     assert_eq!(expected, body);
     // Delete a subscription
     get_status(
@@ -526,7 +526,7 @@ fn http_protocol_lists() {
     let (status, mut body): (_, SubscriptionNameList) =
         get_response(&mut server, "topics/topic0/subscriptions", Method::GET, ());
     assert_eq!(StatusCode::OK, status);
-    body.subscriptions.sort();
+    body.subscription_names.sort();
     assert_eq!(expected, body);
 }
 
@@ -646,7 +646,7 @@ fn http_protocol_basic() {
         messages.clone(),
     );
     assert_eq!(StatusCode::OK, status);
-    assert_eq!(messages.messages.len(), body.message_ids.len());
+    assert_eq!(messages.raw_messages.len(), body.message_ids.len());
 
     // Create a new subscriptions
     let mut subscription_config = SubscriptionCreateConfig {
@@ -731,7 +731,7 @@ fn http_protocol_basic() {
         messages.clone(),
     );
     assert_eq!(StatusCode::OK, status);
-    assert_eq!(messages.messages.len(), body.message_ids.len());
+    assert_eq!(messages.raw_messages.len(), body.message_ids.len());
     // Sleep so the first messages expire
     thread::sleep(time::Duration::from_millis(1100));
 

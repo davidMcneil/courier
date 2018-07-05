@@ -67,7 +67,7 @@ impl Client {
     ) -> Result<Topic, Box<dyn Error>> {
         let url = self.base_url.join(&format!("{}/{}", TOPICS_PATH, name))?;
         Ok(self.http
-            .post(url)
+            .patch(url)
             .json(&config)
             .send()?
             .error_for_status()?
@@ -147,7 +147,7 @@ impl Client {
         let url = self.base_url
             .join(&format!("{}/{}", SUBSCRIPTIONS_PATH, name))?;
         Ok(self.http
-            .post(url)
+            .patch(url)
             .json(&config)
             .send()?
             .error_for_status()?

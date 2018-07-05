@@ -13,6 +13,7 @@
     "codegen",
     "contrib",
     "cors",
+    "datas",
     "derive",
     "deserialize",
     "dropdown",
@@ -41,6 +42,7 @@
     "toml",
     "ttls",
     "uuid",
+    "uuids",
     "vcentered"
   ]
 }

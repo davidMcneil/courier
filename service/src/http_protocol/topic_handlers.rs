@@ -108,7 +108,7 @@ pub fn publish(
     let reg = &state.registry;
     let data = messages
         .into_inner()
-        .messages
+        .raw_messages
         .into_iter()
         .map(|m| m.data)
         .collect();

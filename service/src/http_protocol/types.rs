@@ -39,13 +39,13 @@ impl RawMessage {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct RawMessageList {
-    pub messages: Vec<RawMessage>,
+    pub raw_messages: Vec<RawMessage>,
 }
 
 impl RawMessageList {
     #[allow(dead_code)]
-    pub fn new(messages: Vec<RawMessage>) -> Self {
-        Self { messages }
+    pub fn new(raw_messages: Vec<RawMessage>) -> Self {
+        Self { raw_messages }
     }
 }
 
@@ -62,12 +62,12 @@ impl MessageIdList {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct SubscriptionNameList {
-    pub subscriptions: Vec<String>,
+    pub subscription_names: Vec<String>,
 }
 
 impl SubscriptionNameList {
-    pub fn new(subscriptions: Vec<String>) -> Self {
-        Self { subscriptions }
+    pub fn new(subscription_names: Vec<String>) -> Self {
+        Self { subscription_names }
     }
 }
 

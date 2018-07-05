@@ -92,7 +92,7 @@ All messages require the following HTTP headers to be set:
 
 ```json
 {
-  "subscriptions": "string[]"
+  "subscription_names": "string[]"
 }
 ```
 
@@ -258,7 +258,7 @@ Add messages to a topic. Updates the topics `updated` fields
 
 ```json
 {
-  "messages": "RawMessage[]"
+  "raw_messages": "RawMessage[]"
 }
 ```
 

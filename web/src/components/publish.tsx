@@ -71,7 +71,7 @@ export class Publish extends Component<Props, State> {
 
   private publish() {
     const body = {
-      messages: [{ data: this.state.message }],
+      raw_messages: [{ data: this.state.message }],
     };
     const init = { method: "POST", headers: HEADERS, body: JSON.stringify(body) };
     fetch(publishUrl(this.state.topic), init)
