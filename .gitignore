@@ -6,3 +6,4 @@ Cargo.lock
 web/.cache/
 web/dev/
 web/node_modules/
+*.pyc
