@@ -17,14 +17,25 @@ use std::time;
 pub use self::state::{Config, HttpState};
 use courier::Registry;
 
-static LOGGER_FORMAT: &'static str = "%t %Ts \"%r\" (%s %bB)";
+static LOGGER_FORMAT: &'static str = "%a \"%r\" (%s %Ts %bB)";
 
 pub fn create(config: Config) -> impl Fn() -> Vec<Box<server::HttpHandler>> {
     let registry = Registry::new();
     let registry_cleanup = Arc::clone(&registry);
+
+    let cleanup_interval = match config.cleanup_interval.to_std() {
+        Ok(duration) => duration,
+        _ => time::Duration::from_secs(0),
+    };
+
     thread::spawn(move || loop {
-        registry_cleanup.cleanup();
-        thread::sleep(time::Duration::from_secs(1));
+        let (topics_removed, subscriptions_removed, messages_removed) = registry_cleanup.cleanup();
+        debug!(
+            "Removed '{}' topics, '{}' subscriptions, '{}' messages ",
+            topics_removed, subscriptions_removed, messages_removed
+        );
+
+        thread::sleep(cleanup_interval)
     });
 
     move || {

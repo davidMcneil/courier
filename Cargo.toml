@@ -12,6 +12,7 @@ chrono = {version = "0.4.4",features = ["serde"]}
 env_logger = "0.5.10"
 futures = "0.1"
 open = "1.2.1"
+log = "0.4.3"
 parking_lot = "0.6.2"
 psutil = "1.1.1"
 serde = "1.0.68"

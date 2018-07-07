@@ -3,6 +3,8 @@ extern crate actix_web;
 extern crate chrono;
 extern crate env_logger;
 extern crate futures;
+#[macro_use]
+extern crate log;
 extern crate open;
 extern crate parking_lot;
 extern crate psutil;
@@ -19,6 +21,9 @@ extern crate courier;
 mod http_protocol;
 
 use chrono::Duration;
+use env_logger::fmt::WriteStyle;
+use env_logger::Builder;
+use log::LevelFilter;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -30,6 +35,16 @@ struct Opt {
     /// A port number to listen on
     #[structopt(default_value = "3140", env = "COURIER_PORT", long = "port", short = "P")]
     port: u16,
+    /// Log level
+    #[structopt(
+        default_value = "info",
+        long = "log-level",
+        raw(possible_values = r#"&["trace", "debug", "info", "warn", "error"]"#)
+    )]
+    log_level: LevelFilter,
+    /// Uncolored log
+    #[structopt(long = "uncolored-log")]
+    uncolored_log: bool,
     #[structopt(subcommand)]
     cmd: Command,
 }
@@ -40,22 +55,22 @@ enum Command {
     /// Run the service
     #[structopt(name = "run")]
     Run {
-        /// The default time to live (ttl) of a topic (seconds)
+        /// Default time to live (ttl) of a topic (seconds)
         #[structopt(default_value = "0", long = "default-topic-ttl")]
         default_topic_ttl: i64,
-        /// The default time to live (ttl) of a subscription (seconds)
+        /// Default time to live (ttl) of a subscription (seconds)
         #[structopt(default_value = "0", long = "default-subscription-ttl")]
         default_subscription_ttl: i64,
-        /// The default time to live (ttl) of a messages (seconds)
+        /// Default time to live (ttl) of a messages (seconds)
         #[structopt(default_value = "3600", long = "default-message-ttl")]
         default_message_ttl: i64,
-        /// The default duration a subscription has to acknowledge a message (seconds)
+        /// Default duration a subscription has to acknowledge a message (seconds)
         #[structopt(default_value = "60", long = "default-ack-deadline")]
         default_ack_deadline: i64,
-        /// The default max number of messages pulled by a subscription
+        /// Default max number of messages pulled by a subscription
         #[structopt(default_value = "1", long = "default-max-messages")]
         default_max_messages: usize,
-        /// The duration between running the cleanup thread (seconds)
+        /// Duration between running the cleanup thread (seconds)
         #[structopt(default_value = "1", long = "cleanup-interval")]
         cleanup_interval: i64,
     },
@@ -65,10 +80,23 @@ enum Command {
 }
 
 pub fn main() {
-    std::env::set_var("RUST_LOG", "actix_web=info");
-    env_logger::init();
-
     let opt = Opt::from_args();
+
+    Builder::new()
+        .filter_level(opt.log_level)
+        .filter(Some("mio::poll"), LevelFilter::Warn)
+        .filter(Some("tokio_core::reactor"), LevelFilter::Warn)
+        .filter(Some("tokio_reactor"), LevelFilter::Warn)
+        .filter(Some("tokio_reactor::background"), LevelFilter::Warn)
+        .filter(Some("tokio_threadpool::builder"), LevelFilter::Warn)
+        .filter(Some("tokio_threadpool::pool"), LevelFilter::Warn)
+        .write_style(if opt.uncolored_log {
+            WriteStyle::Never
+        } else {
+            WriteStyle::Always
+        })
+        .init();
+
     match opt.cmd {
         Command::Run {
             default_topic_ttl,
@@ -95,20 +123,20 @@ pub fn main() {
             match open::that(url.clone()) {
                 Ok(exit_status) => {
                     if exit_status.success() {
-                        println!("Opened the ui at '{}'.", url);
+                        info!("Opened the ui at '{}'.", url);
                     } else if let Some(code) = exit_status.code() {
-                        println!(
+                        error!(
                             "Opining the ui at '{}' returned a non-zero exit status {}.",
                             url, code
                         );
                     } else {
-                        println!(
+                        error!(
                             "Opening the ui at '{}' returned an unknown exit status.",
                             url
                         );
                     }
                 }
-                Err(why) => println!("Failed to open the ui at '{}': {}", url, why),
+                Err(why) => error!("Failed to open the ui at '{}': {}", url, why),
             }
         }
     }

@@ -34,18 +34,27 @@ impl TopicStore {
     }
 }
 
+/// Metrics on a topic.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TopicMetrics {
-    messages: usize,
-    messages_all_time: u64,
-    expired_all_time: u64,
-    message_ttl: i64,
-    ttl: i64,
-    created: DateTime<Utc>,
-    updated: DateTime<Utc>,
+    /// Number of messages in the topic.
+    pub messages: usize,
+    /// Number of messages published all time.
+    pub messages_all_time: u64,
+    /// Number of messages expired all time.
+    pub expired_all_time: u64,
+    /// Message time to live.
+    pub message_ttl: i64,
+    /// Time to live.
+    pub ttl: i64,
+    /// When the topic was created.
+    pub created: DateTime<Utc>,
+    /// When the topic was last updated.
+    pub updated: DateTime<Utc>,
 }
 
 impl TopicMetrics {
+    /// Create a new topic metrics.
     pub fn new(topic: &Topic) -> Self {
         Self {
             messages: 0,
@@ -59,25 +68,42 @@ impl TopicMetrics {
     }
 }
 
+/// Metrics on a subscription.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SubscriptionMetrics {
-    pending: usize,
-    pulled_all_time: u64,
-    acked_all_time: u64,
-    topic: String,
-    topic_message_index: usize,
-    ack_deadline: i64,
-    ttl: i64,
-    created: DateTime<Utc>,
+    /// Number of currently pending messages.
+    pub pending: usize,
+    /// Number of messages pulled all time.
+    pub pulls_all_time: u64,
+    /// Number of pulls of an already pulled message all time.
+    pub retry_pulls_all_time: u64,
+    /// Number of messages tried to ack all time.
+    pub acked_all_time: u64,
+    /// Number of messages successfully acked all time.
+    pub acks_all_time: u64,
+    /// Topic name.
+    pub topic: String,
+    /// Index into a topic.
+    pub topic_message_index: usize,
+    /// Ack deadline.
+    pub ack_deadline: i64,
+    /// Time to live.
+    pub ttl: i64,
+    /// When the subscription was created.
+    pub created: DateTime<Utc>,
+    /// When the subscription was last updated.
     updated: DateTime<Utc>,
 }
 
 impl SubscriptionMetrics {
+    /// Create a new subscription metrics.
     pub fn new(subscription: &Subscription) -> Self {
         Self {
             pending: 0,
-            pulled_all_time: 0,
+            pulls_all_time: 0,
+            retry_pulls_all_time: 0,
             acked_all_time: 0,
+            acks_all_time: 0,
             topic: subscription.topic.clone(),
             topic_message_index: subscription.next_index(),
             ack_deadline: subscription.ack_deadline.num_seconds(),
@@ -88,17 +114,25 @@ impl SubscriptionMetrics {
     }
 }
 
+/// Courier metrics.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Metrics {
-    topics_all_time: u64,
-    subscriptions_all_time: u64,
-    memory_resident_set_size: i64,
-    start_time: DateTime<Utc>,
-    topics: HashMap<String, TopicMetrics>,
-    subscriptions: HashMap<String, SubscriptionMetrics>,
+    /// Number of topics all time.
+    pub topics_all_time: u64,
+    /// Number of subscriptions all time.
+    pub subscriptions_all_time: u64,
+    /// The memory resident set size usage.
+    pub memory_resident_set_size: i64,
+    /// When the service was started.
+    pub start_time: DateTime<Utc>,
+    /// Topic metrics.
+    pub topics: HashMap<String, TopicMetrics>,
+    /// Subscription metrics.
+    pub subscriptions: HashMap<String, SubscriptionMetrics>,
 }
 
 impl Metrics {
+    /// Create a new metrics.
     pub fn new() -> Self {
         Self {
             topics_all_time: 0,
@@ -111,15 +145,18 @@ impl Metrics {
     }
 }
 
+/// A registry mapping names to topics and subscriptions and the relevant metrics.
 pub struct Registry {
     topics: RwLock<HashMap<String, TopicStore>>,
     subscriptions: RwLock<HashMap<String, Subscription>>,
     metrics: Arc<RwLock<Metrics>>,
 }
 
+/// A [Registry](struct.Registry.html) which can be shared between threads.
 pub type SharedRegistry = Arc<Registry>;
 
 impl Registry {
+    /// Create a new shared registry.
     pub fn new() -> SharedRegistry {
         Arc::new(Self {
             topics: RwLock::new(HashMap::new()),
@@ -128,6 +165,7 @@ impl Registry {
         })
     }
 
+    /// Create a new topic returning true if the operation resulted in a new topic and the topic meta data.
     pub fn create_topic(
         &self,
         topic_name: &str,
@@ -135,8 +173,9 @@ impl Registry {
         ttl: Duration,
     ) -> (bool, TopicMeta) {
         let mut topics = self.topics.write();
+
         let created = !topics.contains_key(topic_name);
-        let topic = topics
+        let topic_store = topics
             .entry(String::from(topic_name))
             .or_insert_with(|| TopicStore::new(topic_name, message_ttl, ttl));
 
@@ -144,14 +183,16 @@ impl Registry {
         if created {
             let mut metrics = self.metrics.write();
             metrics.topics_all_time += 1;
-            metrics
-                .topics
-                .insert(String::from(topic_name), TopicMetrics::new(&topic.topic));
+            metrics.topics.insert(
+                String::from(topic_name),
+                TopicMetrics::new(&topic_store.topic),
+            );
         }
 
-        (created, TopicMeta::from(&topic.topic))
+        (created, TopicMeta::from(&topic_store.topic))
     }
 
+    /// Update a topic and return the topic meta or None if the topic does not exist.
     pub fn update_topic(
         &self,
         topic_name: &str,
@@ -159,29 +200,33 @@ impl Registry {
         ttl: Option<Duration>,
     ) -> Option<TopicMeta> {
         let mut topics = self.topics.write();
-        topics.get_mut(topic_name).map(|t| {
+
+        topics.get_mut(topic_name).map(|topic_store| {
+            let topic = &mut topic_store.topic;
+
             if let Some(v) = message_ttl {
-                t.topic.set_message_ttl(v);
+                topic.set_message_ttl(v);
             }
             if let Some(v) = ttl {
-                t.topic.set_ttl(v);
+                topic.set_ttl(v);
             }
 
             // Ensure that updated was updated
-            t.topic.update();
+            topic.update();
 
             // Update metrics
             let mut metrics = self.metrics.write();
             if let Some(m) = metrics.topics.get_mut(topic_name) {
-                m.message_ttl = t.topic.message_ttl.num_seconds();
-                m.ttl = t.topic.ttl.num_seconds();
-                m.updated = t.topic.updated;
+                m.message_ttl = topic.message_ttl.num_seconds();
+                m.ttl = topic.ttl.num_seconds();
+                m.updated = topic.updated;
             };
 
-            TopicMeta::from(&t.topic)
+            TopicMeta::from(&*topic)
         })
     }
 
+    /// Delete a topic return false if the topic does not exist.
     pub fn delete_topic(&self, topic_name: &str) -> bool {
         // Update metrics
         {
@@ -196,8 +241,8 @@ impl Registry {
 
         // Delete all subscriptions
         if let Some(ts) = topic_store {
-            for sub in &ts.subscriptions {
-                self.delete_subscription(&sub);
+            for subscription in &ts.subscriptions {
+                self.delete_subscription(&subscription);
             }
             true
         } else {
@@ -205,24 +250,32 @@ impl Registry {
         }
     }
 
+    /// Get the topic meta data or None if the topic does not exist.
     pub fn get_topic(&self, topic_name: &str) -> Option<TopicMeta> {
         let topics = self.topics.read();
-        topics.get(topic_name).map(|t| TopicMeta::from(&t.topic))
+        topics.get(topic_name).map(|ts| TopicMeta::from(&ts.topic))
     }
 
+    /// Get a list of all topic meta data.
     pub fn list_topics(&self) -> Vec<TopicMeta> {
         let topics = self.topics.read();
-        topics.values().map(|t| TopicMeta::from(&t.topic)).collect()
+        topics
+            .values()
+            .map(|ts| TopicMeta::from(&ts.topic))
+            .collect()
     }
 
+    /// Publish a list of data as messages to a topic return a list of published message ids or None
+    /// if the topic does not exist.
     pub fn publish(&self, topic_name: &str, data: Vec<String>) -> Option<Vec<Uuid>> {
         let mut topics = self.topics.write();
+
         topics.get_mut(topic_name).map(|topic_store| {
             let topic = &mut topic_store.topic;
             let count = data.len();
             let mut ids = Vec::with_capacity(count);
-            for datum in data {
-                ids.push(topic.publish(datum));
+            for d in data {
+                ids.push(topic.publish(d));
             }
 
             // Update metrics
@@ -237,6 +290,8 @@ impl Registry {
         })
     }
 
+    /// Return a list of subscription names that are subscribed to this topic or None if the topic
+    /// does not exist.
     pub fn list_topic_subscriptions(&self, topic_name: &str) -> Option<Vec<String>> {
         let mut topics = self.topics.write();
         topics.get_mut(topic_name).map(|topic_store| {
@@ -245,6 +300,8 @@ impl Registry {
         })
     }
 
+    /// Create a new subscription returning true if the operation resulted in a new subscription and
+    /// the subscription meta data or None if the topic does not exist.
     pub fn create_subscription(
         &self,
         subscription_name: &str,
@@ -256,6 +313,7 @@ impl Registry {
         let mut topics = self.topics.write();
         let topic_store = topics.get_mut(topic_name)?;
         let topic = &topic_store.topic;
+
         let mut subscriptions = self.subscriptions.write();
         let created = !subscriptions.contains_key(subscription_name);
         let subscription = subscriptions
@@ -267,6 +325,7 @@ impl Registry {
                     Subscription::new_tail(subscription_name, topic, ack_deadline, ttl)
                 }
             });
+
         topic_store
             .subscriptions
             .insert(String::from(subscription_name));
@@ -284,6 +343,8 @@ impl Registry {
         Some((created, SubscriptionMeta::from(&*subscription)))
     }
 
+    /// Update a subscription and return the subscription meta data or None if the subscription does
+    /// not exist.
     pub fn update_subscription(
         &self,
         subscription_name: &str,
@@ -291,29 +352,32 @@ impl Registry {
         ttl: Option<Duration>,
     ) -> Option<SubscriptionMeta> {
         let mut subscriptions = self.subscriptions.write();
-        subscriptions.get_mut(subscription_name).map(|s| {
-            if let Some(v) = ack_deadline {
-                s.set_ack_deadline(v);
-            }
-            if let Some(v) = ttl {
-                s.set_ttl(v);
-            }
+        subscriptions
+            .get_mut(subscription_name)
+            .map(|subscription| {
+                if let Some(v) = ack_deadline {
+                    subscription.set_ack_deadline(v);
+                }
+                if let Some(v) = ttl {
+                    subscription.set_ttl(v);
+                }
 
-            // Ensure that updated was updated
-            s.update();
+                // Ensure that updated was updated
+                subscription.update();
 
-            // Update metrics
-            let mut metrics = self.metrics.write();
-            if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
-                m.ack_deadline = s.ack_deadline.num_seconds();
-                m.ttl = s.ttl.num_seconds();
-                m.updated = s.updated;
-            }
+                // Update metrics
+                let mut metrics = self.metrics.write();
+                if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
+                    m.ack_deadline = subscription.ack_deadline.num_seconds();
+                    m.ttl = subscription.ttl.num_seconds();
+                    m.updated = subscription.updated;
+                }
 
-            SubscriptionMeta::from(&*s)
-        })
+                SubscriptionMeta::from(&*subscription)
+            })
     }
 
+    /// Delete a subscription return false if the subscription does not exist.
     pub fn delete_subscription(&self, subscription_name: &str) -> bool {
         // Update metrics
         let mut metrics = self.metrics.write();
@@ -321,18 +385,20 @@ impl Registry {
 
         let mut subscriptions = self.subscriptions.write();
         let subscription = subscriptions.remove(subscription_name);
-        match subscription {
-            Some(sub) => {
-                let mut topics = self.topics.write();
-                if let Some(topic_store) = topics.get_mut(&sub.topic) {
-                    topic_store.subscriptions.remove(&sub.name);
-                }
-                true
+
+        if let Some(s) = subscription {
+            // Remove the subscription from the topic if it exists
+            let mut topics = self.topics.write();
+            if let Some(topic_store) = topics.get_mut(&s.topic) {
+                topic_store.subscriptions.remove(&s.name);
             }
-            None => false,
+            true
+        } else {
+            false
         }
     }
 
+    /// Get the subscription meta data or None if the subscription does not exist.
     pub fn get_subscription(&self, subscription_name: &str) -> Option<SubscriptionMeta> {
         let subscriptions = self.subscriptions.read();
         subscriptions
@@ -340,35 +406,47 @@ impl Registry {
             .map(SubscriptionMeta::from)
     }
 
+    /// Get a list of all subscription meta data.
     pub fn list_subscriptions(&self) -> Vec<SubscriptionMeta> {
         let subscriptions = self.subscriptions.read();
         subscriptions.values().map(SubscriptionMeta::from).collect()
     }
 
+    /// Retrieve messages from a subscription return the list of messages or None if the
+    /// subscription does not exist.
     pub fn pull(&self, subscription_name: &str, max_messages: usize) -> Option<Vec<Message>> {
         let mut subscriptions = self.subscriptions.write();
-        subscriptions.get_mut(subscription_name).map(|s| {
-            let mut messages = Vec::with_capacity(max_messages);
-            while let Some(message) = s.pull() {
-                messages.push(message);
-                if messages.len() >= max_messages {
-                    break;
+        subscriptions
+            .get_mut(subscription_name)
+            .map(|subscription| {
+                let mut retry_count = 0;
+                let mut messages = Vec::with_capacity(max_messages);
+                while let Some(message) = subscription.pull() {
+                    if message.tries > 1 {
+                        retry_count += 1;
+                    }
+                    messages.push(message);
+                    if messages.len() >= max_messages {
+                        break;
+                    }
                 }
-            }
 
-            // Update metrics
-            let mut metrics = self.metrics.write();
-            if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
-                m.pending = s.num_pending();
-                m.pulled_all_time += messages.len() as u64;
-                m.topic_message_index = s.next_index();
-                m.updated = s.updated;
-            }
+                // Update metrics
+                let mut metrics = self.metrics.write();
+                if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
+                    m.pending = subscription.num_pending();
+                    m.pulls_all_time += messages.len() as u64;
+                    m.retry_pulls_all_time += retry_count;
+                    m.topic_message_index = subscription.next_index();
+                    m.updated = subscription.updated;
+                }
 
-            messages
-        })
+                messages
+            })
     }
 
+    /// Ack message ids returning the list of successfully acked ids or None if the subscription
+    /// does not exist.
     pub fn ack(&self, subscription_name: &str, ids: &[Uuid]) -> Option<Vec<Uuid>> {
         let mut subscriptions = self.subscriptions.write();
         subscriptions.get_mut(subscription_name).map(|s| {
@@ -378,6 +456,7 @@ impl Registry {
             let mut metrics = self.metrics.write();
             if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
                 m.pending = s.num_pending();
+                m.acks_all_time += ids.len() as u64;
                 m.acked_all_time += acked.len() as u64;
                 m.updated = s.updated;
             };
@@ -386,14 +465,18 @@ impl Registry {
         })
     }
 
+    /// Get a copy of the metrics.
     pub fn metrics(&self) -> Arc<RwLock<Metrics>> {
         Arc::clone(&self.metrics)
     }
 
-    pub fn cleanup(&self) {
+    /// Cleanup the registry removing messages, topics, and subscriptions that meet their ttl.
+    pub fn cleanup(&self) -> (usize, usize, usize) {
         let mut metrics = self.metrics.write();
 
+        // Remove timed out subscriptions
         let mut subscriptions = self.subscriptions.write();
+        let original_subscriptions_count = subscriptions.len();
         subscriptions.retain(|_, s| {
             if s.ttl == Duration::seconds(0) {
                 true
@@ -401,13 +484,16 @@ impl Registry {
                 Utc::now().signed_duration_since(s.updated) <= s.ttl
             }
         });
+        let subscriptions_removed = original_subscriptions_count - subscriptions.len();
 
-        // Update metrics
+        // Update metrics to match the removed subscriptions
         metrics
             .subscriptions
             .retain(|name, _| subscriptions.contains_key(name));
 
+        // Remove timed out topics
         let mut topics = self.topics.write();
+        let original_topics_count = topics.len();
         topics.retain(|_, ts| {
             if ts.topic.ttl == Duration::seconds(0) {
                 true
@@ -415,12 +501,16 @@ impl Registry {
                 Utc::now().signed_duration_since(ts.topic.updated) <= ts.topic.ttl
             }
         });
+        let topics_removed = original_topics_count - topics.len();
 
-        // Update metrics
+        // Update metrics to match the removed subscriptions
         metrics.topics.retain(|name, _| topics.contains_key(name));
 
+        // Cleanup the messages of each topic
+        let mut messages_removed = 0;
         for (topic_name, mut topic_store) in topics.iter_mut() {
             let count = topic_store.topic.cleanup();
+            messages_removed += count;
 
             // Update metrics
             if let Some(m) = metrics.topics.get_mut(topic_name) {
@@ -429,12 +519,14 @@ impl Registry {
             }
         }
 
-        //Update metrics
+        // Update metrics used memory
         let process = psutil::process::Process::new(psutil::getpid());
         metrics.memory_resident_set_size = if let Ok(process) = process {
             process.rss
         } else {
-            -1
+            0
         };
+
+        (topics_removed, subscriptions_removed, messages_removed)
     }
 }
