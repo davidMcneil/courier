@@ -442,7 +442,7 @@ Courier is developed with rust version 1.27.
 Courier also depends on:
 
 - [uber-dev](https://github.com/davidMcneil/uber-dev) - for offline builds
-- [rustfmt](https://github.com/xd009642/tarpaulin) - for code formatting
+- [rustfmt](https://github.com/rust-lang-nursery/rustfmt) - for code formatting
 - [clippy](https://github.com/rust-lang-nursery/rust-clippy) - for linting
 - [tarpaulin](https://github.com/xd009642/tarpaulin) - for code coverage
 - [cross](https://github.com/japaric/cross) - for cross compilation
@@ -462,17 +462,17 @@ Run the test suite
 
     > cargo test
 
-Format the code
+Check test coverage
 
-    > cargo fmt
+    > cargo tarpaulin --ignore-tests --line --no-count
+
+Check the code formating
+
+    > cargo fmt --all -- --check
 
 Lint with clippy
 
     > cargo +nightly clippy --lib --bins
-
-Check test coverage
-
-    > cargo tarpaulin --ignore-tests --line --no-count
 
 Perform a cross release build with the [musl](https://www.musl-libc.org/) target
 

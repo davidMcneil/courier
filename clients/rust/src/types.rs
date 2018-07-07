@@ -46,7 +46,7 @@ pub struct Topic {
     pub updated: DateTime<Utc>,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct TopicCreateConfig {
     pub message_ttl: Option<u32>,
     pub ttl: Option<u32>,
@@ -54,10 +54,7 @@ pub struct TopicCreateConfig {
 
 impl TopicCreateConfig {
     pub fn new() -> Self {
-        TopicCreateConfig {
-            message_ttl: None,
-            ttl: None,
-        }
+        Default::default()
     }
 }
 

@@ -76,7 +76,8 @@ impl Client {
 
     pub fn delete_topic(&self, name: &str) -> Result<(), Box<dyn Error>> {
         let url = self.base_url.join(&format!("{}/{}", TOPICS_PATH, name))?;
-        Ok(self.http.delete(url).send()?.error_for_status()?.json()?)
+        self.http.delete(url).send()?.error_for_status()?.json()?;
+        Ok(())
     }
 
     pub fn get_topic(&self, name: &str) -> Result<Topic, Box<dyn Error>> {
@@ -97,8 +98,8 @@ impl Client {
         let url = self.base_url
             .join(&format!("{}/{}/publish", TOPICS_PATH, topic))?;
         let mut raw_messages = Vec::with_capacity(data.len());
-        for datum in data.into_iter() {
-            raw_messages.push(RawMessage::new(datum));
+        for d in data {
+            raw_messages.push(RawMessage::new(d));
         }
         Ok(self.http
             .post(url)
@@ -157,7 +158,8 @@ impl Client {
     pub fn delete_subscription(&self, name: &str) -> Result<(), Box<dyn Error>> {
         let url = self.base_url
             .join(&format!("{}/{}", SUBSCRIPTIONS_PATH, name))?;
-        Ok(self.http.delete(url).send()?.error_for_status()?.json()?)
+        self.http.delete(url).send()?.error_for_status()?.json()?;
+        Ok(())
     }
 
     pub fn get_subscription(&self, name: &str) -> Result<Subscription, Box<dyn Error>> {

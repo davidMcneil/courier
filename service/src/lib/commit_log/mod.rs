@@ -126,7 +126,7 @@ impl<T: Clone> Cursor<T> {
             // If the cursor has expired it means we are pointing to a cleaned up element.
             // Promote the commit log's head to be the cursor and try calling next again.
             None => {
-                if let Some(_) = self.to_head.upgrade() {
+                if self.to_head.upgrade().is_some() {
                     self.next_index = self.to_head_index.load(Ordering::SeqCst);
                     self.cursor = Weak::clone(&self.to_head);
                     self.next()

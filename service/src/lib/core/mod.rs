@@ -153,7 +153,8 @@ impl Subscription {
         self.update();
 
         // Check if there are any pending messages. If not, try and pull a new one from the cursor.
-        let (internal_message, index, tries) = self.check_pending()
+        let (internal_message, index, tries) = self
+            .check_pending()
             .unwrap_or_else(|| (self.cursor.next(), Index::new(&self.cursor), 1));
 
         // If there is a message to send add it as a pending message
