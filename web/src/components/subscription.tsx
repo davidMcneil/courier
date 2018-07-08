@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import { Component } from "inferno";
 
 import { SubscriptionMetrics } from "../utils/data_parsers";
@@ -41,26 +42,26 @@ export class Subscription extends Component<Props, State> {
       expires = Math.ceil(m.ttl - updatedAgo);
     }
     return (
-      <tbody key={m.name} class={`${expanded ? "no-bottom-border" : ""}`}>
+      <tbody key={m.name} class={classNames({ "no-bottom-boarder": expanded })}>
         <tr>
-          <td class={"is-table-icon has-text-centered"}>
+          <td class="is-table-icon has-text-centered">
             <a onClick={this.toggleExpanded}>
               {expanded ? <span class="arrow-down" /> : <span class="arrow-right" />}
             </a>
           </td>
           <td>{m.name}</td>
-          <td class={m.orphaned ? "has-text-danger" : ""}>{m.topic}</td>
+          <td class={classNames({ "has-text-danger": m.orphaned })}>{m.topic}</td>
           <td>{m.pending}</td>
           <td>
             {m.normalizedMessageIndex}&nbsp;/&nbsp;{m.topicMessages}
           </td>
           <td>{numberAsPercentage(m.percentageProcessed)}</td>
           <td>{numberAsTimeStr(age)}</td>
-          <td class={"is-table-icon has-text-centered"}>
+          <td class="is-table-icon has-text-centered">
             <a class="delete is-small" onClick={this.tryDelete} />
           </td>
         </tr>
-        <tr class={expanded ? "" : "is-hidden"}>
+        <tr class={classNames({ "is-hidden": !expanded })}>
           <td />
           <td colSpan={7}>
             <table class="table is-bordered is-narrow is-fullwidth">

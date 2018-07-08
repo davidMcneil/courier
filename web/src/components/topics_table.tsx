@@ -38,7 +38,7 @@ export function TopicsTable(props: Props) {
   if (topics.length === 0) {
     topics = [
       <tr>
-        <td colSpan={7} class={"has-text-centered has-text-weight-bold"}>
+        <td colSpan={7} class="has-text-centered has-text-weight-bold">
           No Topics
         </td>
       </tr>,

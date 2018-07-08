@@ -30,7 +30,7 @@ export function SubscriptionsTable(props: Props) {
   if (subscriptions.length === 0) {
     subscriptions = [
       <tr>
-        <td colSpan={8} class={"has-text-centered has-text-weight-bold"}>
+        <td colSpan={8} class="has-text-centered has-text-weight-bold">
           No Subscriptions
         </td>
       </tr>,

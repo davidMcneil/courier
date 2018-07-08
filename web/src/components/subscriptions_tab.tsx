@@ -1,3 +1,5 @@
+import classNames from "classnames";
+
 import { CourierState } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
 import { NewSubscription } from "./new_subscription";
@@ -13,7 +15,7 @@ interface Props {
 
 export function SubscriptionsTab(props: Props) {
   return (
-    <div class={props.visible ? "" : "is-hidden"}>
+    <div class={classNames({ "is-hidden": !props.visible })}>
       <section class="section">
         <div class="container">
           <div class="columns">

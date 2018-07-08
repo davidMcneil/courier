@@ -1,3 +1,5 @@
+import classNames from "classnames";
+
 import { Tabs } from "../utils/types";
 import { numberAsTimeStr, str2number } from "../utils/util";
 
@@ -38,13 +40,13 @@ export function TopNavbar(props: Props) {
             </a>
             <div class="navbar-item tabs is-boxed">
               <ul>
-                <li class={props.tab === Tabs.Topics ? "is-active" : ""}>
+                <li class={classNames({ "is-active": props.tab === Tabs.Topics })}>
                   <a onClick={props.handleTopics}>Topics</a>
                 </li>
-                <li class={props.tab === Tabs.Subscriptions ? "is-active" : ""}>
+                <li class={classNames({ "is-active": props.tab === Tabs.Subscriptions })}>
                   <a onClick={props.handleSubscriptions}>Subscriptions</a>
                 </li>
-                <li class={props.tab === Tabs.Docs ? "is-active" : ""}>
+                <li class={classNames({ "is-active": props.tab === Tabs.Docs })}>
                   <a onClick={props.handleDocs}>Docs</a>
                 </li>
               </ul>
@@ -63,7 +65,7 @@ export function TopNavbar(props: Props) {
               />
             </div>
             <div class="navbar-item">
-              <div class={`select is-small ${props.updating ? "is-loading" : ""}`}>
+              <div class={classNames("select", "is-small", { "is-loading": props.updating })}>
                 <select
                   value={String(props.interval)}
                   onChange={event => props.setUpdateInterval(str2number(event.currentTarget.value))}

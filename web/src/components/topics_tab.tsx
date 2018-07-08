@@ -1,3 +1,5 @@
+import classNames from "classnames";
+
 import { CourierState } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
 import { NewTopic } from "./new_topic";
@@ -14,7 +16,7 @@ interface Props {
 export function TopicsTab(props: Props) {
   const c = props.courierState;
   return (
-    <div class={props.visible ? "" : "is-hidden"}>
+    <div class={classNames({ "is-hidden": !props.visible })}>
       <section class="section">
         <div class="container">
           <div class="columns">

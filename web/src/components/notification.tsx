@@ -1,3 +1,5 @@
+import classNames from "classnames";
+
 import { NotificationType } from "../utils/types";
 
 interface Props {
@@ -7,13 +9,13 @@ interface Props {
 }
 
 export function Notification(props: Props) {
-  const type = props.type === NotificationType.Failure ? "is-danger" : "is-primary";
-  const prefix = props.type === NotificationType.Failure ? "Failure:" : "Success:";
+  const fail = props.type === NotificationType.Failure;
+  const prefix = fail ? "Failure:" : "Success:";
   return (
-    <div class={props.message === "" ? "is-hidden" : ""}>
+    <div class={classNames({ "is-hidden": props.message === "" })}>
       <section class="section">
         <div class="container">
-          <div class={`notification ${type}`}>
+          <div class={classNames("notification", { "is-danger": fail, "id-primary": !fail })}>
             <button class="delete" onClick={props.clear} />
             <b>{prefix}</b>&nbsp;
             {props.message}

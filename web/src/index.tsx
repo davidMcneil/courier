@@ -39,7 +39,7 @@ interface State {
 class App extends Component<null, State> {
   public state = {
     uiState: {
-      interval: 5000,
+      interval: 1000,
       updating: false,
       displayStats: false,
       tab: Tabs.Topics,
