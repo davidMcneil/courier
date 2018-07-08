@@ -15,7 +15,7 @@ export function Notification(props: Props) {
     <div class={classNames({ "is-hidden": props.message === "" })}>
       <section class="section">
         <div class="container">
-          <div class={classNames("notification", { "is-danger": fail, "id-primary": !fail })}>
+          <div class={classNames("notification", { "is-danger": fail })}>
             <button class="delete" onClick={props.clear} />
             <b>{prefix}</b>&nbsp;
             {props.message}

@@ -12,7 +12,7 @@ export function AllSingleStats(props: Props) {
       <div class="container">
         {/* Current Stats */}
         <div class="level">
-          <h1 class="is-size-5">Current</h1>
+          <h1>Current</h1>
           <AbbreviatedSingleStat title="Topics" value={s.topics} digits={1} />
           <AbbreviatedSingleStat title="Subscriptions" value={s.subscriptions} digits={1} />
           <AbbreviatedSingleStat title="Messages" value={s.messages} digits={1} />
@@ -23,7 +23,7 @@ export function AllSingleStats(props: Props) {
 
         {/* Interval Stats */}
         <div class="level">
-          <h1 class="level-left">Interval</h1>
+          <h1>Interval</h1>
           <AbbreviatedSingleStat title="Topics" value={s.topicsInterval} digits={1} />
           <AbbreviatedSingleStat title="Subscriptions" value={s.subscriptionsInterval} digits={1} />
           <AbbreviatedSingleStat title="Messages" value={s.messagesInterval} digits={1} />
@@ -36,7 +36,7 @@ export function AllSingleStats(props: Props) {
         </div>
         {/* All Time Stats */}
         <div class="level">
-          <h1 class="level-left">All Time</h1>
+          <h1>All Time</h1>
           <AbbreviatedSingleStat title="Topics" value={s.topicsAllTime} digits={1} />
           <AbbreviatedSingleStat title="Subscriptions" value={s.subscriptionsAllTime} digits={1} />
           <AbbreviatedSingleStat title="Messages" value={s.messagesAllTime} digits={1} />
@@ -44,7 +44,7 @@ export function AllSingleStats(props: Props) {
           <AbbreviatedSingleStat title="Pulled" value={s.pulledAllTime} digits={1} />
           <AbbreviatedSingleStat title="Retries" value={s.pulledRetriesAllTime} digits={1} />
           <AbbreviatedSingleStat title="Acks" value={s.acksAllTime} digits={1} />
-          <AbbreviatedSingleStat title="Acked" value={s.ackedInterval} digits={1} />
+          <AbbreviatedSingleStat title="Acked" value={s.ackedAllTime} digits={1} />
         </div>
       </div>
     </section>

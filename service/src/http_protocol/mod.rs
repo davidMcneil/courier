@@ -95,6 +95,7 @@ pub fn start(config: Config) {
     server::new(create(config))
         .bind(address.clone())
         .expect(&format!("Can not bind to '{}'!", address))
+        .shutdown_timeout(30)
         .start();
     sys.run();
 }
