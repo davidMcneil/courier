@@ -1,5 +1,5 @@
 import { ChangeEvent, Component, FormEvent } from "inferno";
-import { subscriptionFromAny } from "../utils/data_parsers";
+import { subscriptionFromJson } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
 import { fetchError2message, HEADERS, str2uint, subscriptionsUrl } from "../utils/util";
 
@@ -128,7 +128,7 @@ export class NewSubscription extends Component<Props, State> {
         return response.json();
       })
       .then(json => {
-        const subscription = subscriptionFromAny(json);
+        const subscription = subscriptionFromJson(json);
         if (subscription !== null) {
           this.props.setNotification(
             NotificationType.Success,

@@ -1,5 +1,5 @@
 import { Component, FormEvent } from "inferno";
-import { topicFromAny } from "../utils/data_parsers";
+import { topicFromJson } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
 import { fetchError2message, HEADERS, str2uint, topicsUrl } from "../utils/util";
 
@@ -95,7 +95,7 @@ export class NewTopic extends Component<Props, State> {
         return response.json();
       })
       .then(json => {
-        const topic = topicFromAny(json);
+        const topic = topicFromJson(json);
         if (topic !== null) {
           this.props.setNotification(NotificationType.Success, `Created topic '${topic.name}'.`);
         } else {

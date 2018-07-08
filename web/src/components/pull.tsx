@@ -1,6 +1,6 @@
 import { ChangeEvent, Component, FormEvent } from "inferno";
 
-import { messageFromMessagesBlob } from "../utils/data_parsers";
+import { messageFromMessagesJson } from "../utils/data_parsers";
 import { NotificationType } from "../utils/types";
 import { ackUrl, fetchError2message, HEADERS, isArray, isJson, pullUrl } from "../utils/util";
 
@@ -165,7 +165,7 @@ export class Pull extends Component<Props, State> {
         throw response;
       })
       .then(json => {
-        const message = messageFromMessagesBlob(json);
+        const message = messageFromMessagesJson(json);
         if (message !== null) {
           this.setState({ ...message });
           if (this.state.ack) {

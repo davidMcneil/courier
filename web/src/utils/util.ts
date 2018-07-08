@@ -142,9 +142,9 @@ export function ackUrl(subscription: string): string {
   return `${subscriptionsUrl(subscription)}/ack`;
 }
 
-export function logError(message: string, error: any) {
+export function logError(...messages: any[]) {
   // tslint:disable-next-line:no-console
-  console.error(message, error.stack);
+  console.error(...messages);
 }
 
 export function fetchError2message(error: Error | Response): string {

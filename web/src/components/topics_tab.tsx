@@ -31,7 +31,7 @@ export function TopicsTab(props: Props) {
       <section class="section">
         <div class="container">
           <TopicsTable
-            topics={Array.from(props.courierState.topics.values())}
+            topics={Array.from(props.courierState.topicMap.values())}
             topic2subscriptions={props.courierState.topic2subscriptions}
             setNotification={props.setNotification}
             setDeleteConfirmation={props.setDeleteConfirmation}

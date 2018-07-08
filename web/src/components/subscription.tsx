@@ -35,7 +35,7 @@ export class Subscription extends Component<Props, State> {
     const m = this.props.metrics;
     const expanded = this.state.expanded;
     const age = (new Date().getTime() - m.created.getTime()) / 1000;
-    let expires: string | number = "n/a";
+    let expires: string | number = "never";
     if (m.ttl !== 0) {
       const updatedAgo = (new Date().getTime() - m.updated.getTime()) / 1000;
       expires = Math.ceil(m.ttl - updatedAgo);
@@ -50,9 +50,9 @@ export class Subscription extends Component<Props, State> {
           </td>
           <td>{m.name}</td>
           <td class={m.orphaned ? "has-text-danger" : ""}>{m.topic}</td>
-          <td>{m.numPending}</td>
+          <td>{m.pending}</td>
           <td>
-            {m.normalizedTopicMessageIndex}&nbsp;/&nbsp;{m.topicNumMessages}
+            {m.normalizedMessageIndex}&nbsp;/&nbsp;{m.topicMessages}
           </td>
           <td>{numberAsPercentage(m.percentageProcessed)}</td>
           <td>{numberAsTimeStr(age)}</td>
@@ -65,10 +65,10 @@ export class Subscription extends Component<Props, State> {
           <td colSpan={7}>
             <table class="table is-bordered is-narrow is-fullwidth">
               <thead>
-                <th>Num Pulled Interval</th>
-                <th>Num Acked Interval</th>
-                <th>Num Pulled All Time</th>
-                <th>Num Acked All Time</th>
+                <th>Pulled</th>
+                <th>Retries</th>
+                <th>Acks</th>
+                <th>Acked</th>
                 <th>Ack Deadline (s)</th>
                 <th>TTL (s)</th>
                 <th>Expires (s)</th>
@@ -76,10 +76,10 @@ export class Subscription extends Component<Props, State> {
                 <th>Created</th>
               </thead>
               <tr>
-                <td>{m.numPulledInterval}</td>
-                <td>{m.numAckedInterval}</td>
-                <td>{m.numPulledAllTime}</td>
-                <td>{m.numAckedAllTime}</td>
+                <td>{m.pulledAllTime}</td>
+                <td>{m.pulledRetriesAllTime}</td>
+                <td>{m.acksAllTime}</td>
+                <td>{m.ackedAllTime}</td>
                 <td>{m.ackDeadline}</td>
                 <td>{m.ttl}</td>
                 <td>{expires} </td>

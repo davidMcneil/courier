@@ -1,3 +1,5 @@
+import { classNames } from "classnames";
+
 interface Props {
   message: string;
   action: () => void;
@@ -6,7 +8,7 @@ interface Props {
 
 export function DeleteConfirmation(props: Props) {
   return (
-    <div class={`modal ${props.message === "" ? "" : "is-active"}`}>
+    <div class={classNames("modal", { "is-active": props.message !== "" })}>
       <div class="modal-background" />
       <div class="modal-content">
         <div class="box">

@@ -7,7 +7,7 @@ import { Notification } from "./components/notification";
 import { SubscriptionsTab } from "./components/subscriptions_tab";
 import { TopNavbar } from "./components/top_navbar";
 import { TopicsTab } from "./components/topics_tab";
-import { CourierState, courierStateFromAny, newCourierState } from "./utils/data_parsers";
+import { CourierState, courierStateFromJson, newCourierState } from "./utils/data_parsers";
 import { NotificationType, Tabs } from "./utils/types";
 import { fetchError2message, metricsUrl } from "./utils/util";
 
@@ -153,7 +153,7 @@ class App extends Component<null, State> {
       .then(json => {
         this.setState(previousState => {
           const previousCourierState = previousState.courierState;
-          const courierState = courierStateFromAny(json, previousCourierState);
+          const courierState = courierStateFromJson(json, previousCourierState);
           return {
             courierState,
             previousCourierState,
@@ -161,7 +161,7 @@ class App extends Component<null, State> {
         }, helper);
       })
       .catch(error => {
-        this.setState(previousState => {
+        this.setState(() => {
           const courierState = newCourierState();
           return {
             courierState,

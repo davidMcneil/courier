@@ -74,17 +74,17 @@ pub struct SubscriptionMetrics {
     /// Number of currently pending messages.
     pub pending: usize,
     /// Number of messages pulled all time.
-    pub pulls_all_time: u64,
+    pub pulled_all_time: u64,
     /// Number of pulls of an already pulled message all time.
-    pub retry_pulls_all_time: u64,
+    pub pulled_retries_all_time: u64,
     /// Number of messages tried to ack all time.
-    pub acked_all_time: u64,
-    /// Number of messages successfully acked all time.
     pub acks_all_time: u64,
+    /// Number of messages successfully acked all time.
+    pub acked_all_time: u64,
     /// Topic name.
     pub topic: String,
     /// Index into a topic.
-    pub topic_message_index: usize,
+    pub message_index: usize,
     /// Ack deadline.
     pub ack_deadline: i64,
     /// Time to live.
@@ -100,12 +100,12 @@ impl SubscriptionMetrics {
     pub fn new(subscription: &Subscription) -> Self {
         Self {
             pending: 0,
-            pulls_all_time: 0,
-            retry_pulls_all_time: 0,
-            acked_all_time: 0,
+            pulled_all_time: 0,
+            pulled_retries_all_time: 0,
             acks_all_time: 0,
+            acked_all_time: 0,
             topic: subscription.topic.clone(),
-            topic_message_index: subscription.next_index(),
+            message_index: subscription.next_index(),
             ack_deadline: subscription.ack_deadline.num_seconds(),
             ttl: subscription.ttl.num_seconds(),
             created: subscription.created,
@@ -435,9 +435,9 @@ impl Registry {
                 let mut metrics = self.metrics.write();
                 if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
                     m.pending = subscription.num_pending();
-                    m.pulls_all_time += messages.len() as u64;
-                    m.retry_pulls_all_time += retry_count;
-                    m.topic_message_index = subscription.next_index();
+                    m.pulled_all_time += messages.len() as u64;
+                    m.pulled_retries_all_time += retry_count;
+                    m.message_index = subscription.next_index();
                     m.updated = subscription.updated;
                 }
 
@@ -456,8 +456,8 @@ impl Registry {
             let mut metrics = self.metrics.write();
             if let Some(m) = metrics.subscriptions.get_mut(subscription_name) {
                 m.pending = s.num_pending();
-                m.acks_all_time += ids.len() as u64;
-                m.acked_all_time += acked.len() as u64;
+                m.acked_all_time += ids.len() as u64;
+                m.acks_all_time += acked.len() as u64;
                 m.updated = s.updated;
             };
 

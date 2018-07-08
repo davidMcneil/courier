@@ -30,7 +30,7 @@ export function SubscriptionsTab(props: Props) {
       <section class="section">
         <div class="container">
           <SubscriptionsTable
-            subscriptions={Array.from(props.courierState.subscriptions.values())}
+            subscriptions={Array.from(props.courierState.subscriptionMap.values())}
             setNotification={props.setNotification}
             setDeleteConfirmation={props.setDeleteConfirmation}
           />

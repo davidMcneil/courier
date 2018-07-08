@@ -1,327 +1,416 @@
-import { isNumber, isObject, isString, isUndefined } from "./util";
+import { isNumber, isObject, isString, isUndefined, logError } from "./util";
+
+function percentageFromProcessed(processed: number, total: number): number {
+  let percentageProcessed = 1;
+  if (total > 0) {
+    percentageProcessed = processed / total;
+  }
+  return Math.max(0, percentageProcessed);
+}
 
 export interface TopicMetrics {
   name: string;
+  messages: number;
+  messagesAllTime: number;
+  expiredAllTime: number;
   messageTtl: number;
   ttl: number;
-  numMessagesAllTime: number;
-  numExpiredAllTime: number;
-  numMessagesInterval: number;
-  numExpiredInterval: number;
-  numMessages: number;
-  percentageProcessed: number;
   created: Date;
   updated: Date;
+  // Computed fields
+  messagesInterval: number;
+  expiredInterval: number;
+  percentageProcessed: number;
 }
 
 function newTopicMetrics(name: string): TopicMetrics {
   return {
     name,
+    messages: 0,
+    messagesAllTime: 0,
+    expiredAllTime: 0,
     messageTtl: 0,
     ttl: 0,
-    numMessagesAllTime: 0,
-    numExpiredAllTime: 0,
-    numMessagesInterval: 0,
-    numExpiredInterval: 0,
-    numMessages: 0,
-    percentageProcessed: 0,
     created: new Date(),
     updated: new Date(),
+    messagesInterval: 0,
+    expiredInterval: 0,
+    percentageProcessed: 0,
   };
 }
 
-function topicMetricsFromAny(name: string, blob: any): TopicMetrics {
+function topicMetricsFromJson(name: string, json: any): TopicMetrics {
   const topicMetrics = newTopicMetrics(name);
-  if (isObject(blob)) {
-    if (isNumber(blob.messages)) {
-      topicMetrics.numMessages = blob.messages;
+  if (isObject(json)) {
+    if (isNumber(json.messages)) {
+      topicMetrics.messages = json.messages;
+    } else {
+      logError("Failed to parse TopicMetrics 'messages' is not a number", json);
     }
-    if (isNumber(blob.messages_all_time)) {
-      topicMetrics.numMessagesAllTime = blob.messages_all_time;
+    if (isNumber(json.messages_all_time)) {
+      topicMetrics.messagesAllTime = json.messages_all_time;
+    } else {
+      logError("Failed to parse TopicMetrics 'messages_all_time' is not a number", json);
     }
-    if (isNumber(blob.expired_all_time)) {
-      topicMetrics.numExpiredAllTime = blob.expired_all_time;
+    if (isNumber(json.expired_all_time)) {
+      topicMetrics.expiredAllTime = json.expired_all_time;
+    } else {
+      logError("Failed to parse TopicMetrics 'expired_all_time' is not a number", json);
     }
-    if (isNumber(blob.message_ttl)) {
-      topicMetrics.messageTtl = blob.message_ttl;
+    if (isNumber(json.message_ttl)) {
+      topicMetrics.messageTtl = json.message_ttl;
+    } else {
+      logError("Failed to parse TopicMetrics 'message_ttl' is not a number", json);
     }
-    if (isNumber(blob.ttl)) {
-      topicMetrics.ttl = blob.ttl;
+    if (isNumber(json.ttl)) {
+      topicMetrics.ttl = json.ttl;
+    } else {
+      logError("Failed to parse TopicMetrics 'ttl' is not a number", json);
     }
-    const created = new Date(blob.created);
+    const created = new Date(json.created);
     if (isNumber(created.getTime())) {
       topicMetrics.created = created;
+    } else {
+      logError("Failed to parse TopicMetrics 'created' is not a date", json);
     }
-    const updated = new Date(blob.updated);
+    const updated = new Date(json.updated);
     if (isNumber(updated.getTime())) {
       topicMetrics.updated = updated;
+    } else {
+      logError("Failed to parse TopicMetrics 'updated' is not a date", json);
     }
+  } else {
+    logError("Failed to parse TopicMetrics is not an object", json);
   }
   return topicMetrics;
 }
 
+function computeTopicMetrics(
+  metrics: TopicMetrics,
+  subscriptions: SubscriptionMetrics[],
+  previous: TopicMetrics = newTopicMetrics(""),
+) {
+  metrics.messagesInterval = metrics.messagesAllTime - previous.messagesAllTime;
+  metrics.expiredInterval = metrics.expiredAllTime - previous.expiredAllTime;
+
+  // Calculate percentage unprocessed
+  const total = metrics.messages * subscriptions.length;
+  let processed = 0;
+  for (const subscription of subscriptions) {
+    processed += subscription.normalizedMessageIndex - subscription.pending;
+  }
+  metrics.percentageProcessed = percentageFromProcessed(processed, total);
+}
+
 export interface SubscriptionMetrics {
   name: string;
+  pending: number;
+  pulledAllTime: number;
+  pulledRetriesAllTime: number;
+  ackedAllTime: number;
+  acksAllTime: number;
   topic: string;
+  messageIndex: number;
   ackDeadline: number;
   ttl: number;
-  topicNumMessages: number;
-  topicMessageIndex: number;
-  normalizedTopicMessageIndex: number;
-  numPulledAllTime: number;
-  numAckedAllTime: number;
-  numPulledInterval: number;
-  numAckedInterval: number;
-  numPending: number;
-  percentageProcessed: number;
-  orphaned: boolean;
   created: Date;
   updated: Date;
+  // Computed fields
+  topicMessages: number;
+  normalizedMessageIndex: number;
+  pulledInterval: number;
+  pulledRetriesInterval: number;
+  ackedInterval: number;
+  acksInterval: number;
+  percentageProcessed: number;
+  orphaned: boolean;
 }
 
 function newSubscriptionMetrics(name: string): SubscriptionMetrics {
   return {
     name,
+    pending: 0,
+    pulledAllTime: 0,
+    pulledRetriesAllTime: 0,
+    ackedAllTime: 0,
+    acksAllTime: 0,
     topic: "",
+    messageIndex: 0,
     ackDeadline: 0,
     ttl: 0,
-    topicNumMessages: 0,
-    topicMessageIndex: 0,
-    normalizedTopicMessageIndex: 0,
-    numPulledAllTime: 0,
-    numAckedAllTime: 0,
-    numPulledInterval: 0,
-    numAckedInterval: 0,
-    numPending: 0,
-    percentageProcessed: 0,
-    orphaned: false,
     created: new Date(),
     updated: new Date(),
+    topicMessages: 0,
+    normalizedMessageIndex: 0,
+    pulledInterval: 0,
+    pulledRetriesInterval: 0,
+    ackedInterval: 0,
+    acksInterval: 0,
+    percentageProcessed: 0,
+    orphaned: false,
   };
 }
 
-function subscriptionMetricsFromAny(name: string, blob: any): SubscriptionMetrics {
+function subscriptionMetricsFromJson(name: string, json: any): SubscriptionMetrics {
   const subscriptionMetrics = newSubscriptionMetrics(name);
-  if (isObject(blob)) {
-    if (isNumber(blob.pending)) {
-      subscriptionMetrics.numPending = blob.pending;
+  if (isObject(json)) {
+    if (isNumber(json.pending)) {
+      subscriptionMetrics.pending = json.pending;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'pending' is number a date", json);
     }
-    if (isNumber(blob.pulled_all_time)) {
-      subscriptionMetrics.numPulledAllTime = blob.pulled_all_time;
+    if (isNumber(json.pulled_all_time)) {
+      subscriptionMetrics.pulledAllTime = json.pulled_all_time;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'pulled_all_time' not a number", json);
     }
-    if (isNumber(blob.acked_all_time)) {
-      subscriptionMetrics.numAckedAllTime = blob.acked_all_time;
+    if (isNumber(json.pulled_retries_all_time)) {
+      subscriptionMetrics.pulledRetriesAllTime = json.pulled_retries_all_time;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'pulled_retries_all_time' not a number", json);
     }
-    if (isNumber(blob.topic_message_index)) {
-      subscriptionMetrics.topicMessageIndex = blob.topic_message_index;
+    if (isNumber(json.acked_all_time)) {
+      subscriptionMetrics.ackedAllTime = json.acked_all_time;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'acked_all_time' not a number", json);
     }
-    if (isNumber(blob.ack_deadline)) {
-      subscriptionMetrics.ackDeadline = blob.ack_deadline;
+    if (isNumber(json.acks_all_time)) {
+      subscriptionMetrics.acksAllTime = json.acks_all_time;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'acks_all_time' not a number", json);
     }
-    if (isNumber(blob.ttl)) {
-      subscriptionMetrics.ttl = blob.ttl;
+    if (isString(json.topic)) {
+      subscriptionMetrics.topic = json.topic;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'topic' is not a string", json);
     }
-    if (isString(blob.topic)) {
-      subscriptionMetrics.topic = blob.topic;
+    if (isNumber(json.message_index)) {
+      subscriptionMetrics.messageIndex = json.message_index;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'message_index' not a number", json);
     }
-    const created = new Date(blob.created);
+    if (isNumber(json.ack_deadline)) {
+      subscriptionMetrics.ackDeadline = json.ack_deadline;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'ack_deadline' not a number", json);
+    }
+    if (isNumber(json.ttl)) {
+      subscriptionMetrics.ttl = json.ttl;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'ttl' is not a number", json);
+    }
+    const created = new Date(json.created);
     if (isNumber(created.getTime())) {
       subscriptionMetrics.created = created;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'created' is not a date", json);
     }
-    const updated = new Date(blob.updated);
+    const updated = new Date(json.updated);
     if (isNumber(updated.getTime())) {
       subscriptionMetrics.updated = updated;
+    } else {
+      logError("Failed to parse SubscriptionMetrics 'updated' is not a date", json);
     }
+  } else {
+    logError("Failed to parse SubscriptionMetrics is not an object", json);
   }
   return subscriptionMetrics;
 }
 
+function computeSubscriptionMetrics(
+  metrics: SubscriptionMetrics,
+  topic: TopicMetrics | undefined,
+  previous: SubscriptionMetrics = newSubscriptionMetrics(""),
+) {
+  metrics.pulledInterval = metrics.pulledAllTime - previous.pulledAllTime;
+  metrics.pulledRetriesInterval = metrics.pulledRetriesAllTime - previous.pulledRetriesAllTime;
+  metrics.ackedInterval = metrics.ackedAllTime - previous.ackedAllTime;
+  metrics.acksInterval = metrics.acksAllTime - previous.acksAllTime;
+
+  if (isUndefined(topic)) {
+    metrics.orphaned = true;
+    return;
+  }
+
+  metrics.topicMessages = topic.messages;
+  metrics.normalizedMessageIndex = topic.messages - (topic.messagesAllTime - metrics.messageIndex);
+  const processed = metrics.normalizedMessageIndex - metrics.pending;
+  metrics.percentageProcessed = percentageFromProcessed(processed, topic.messages);
+}
+
 export interface CourierState {
-  numTopicsAllTime: number;
-  numMessagesAllTime: number;
-  numExpiredAllTime: number;
-  numTopicsInterval: number;
-  numMessagesInterval: number;
-  numExpiredInterval: number;
-  numTopics: number;
-  numMessages: number;
-  numSubscriptionsAllTime: number;
-  numPulledAllTime: number;
-  numAckedAllTime: number;
-  numSubscriptionsInterval: number;
-  numPulledInterval: number;
-  numAckedInterval: number;
-  numSubscriptions: number;
-  numPending: number;
-  percentageProcessed: number;
-  memoryResidentSetSizeInterval: number;
+  topicsAllTime: number;
+  subscriptionsAllTime: number;
   memoryResidentSetSize: number;
   startTime: Date;
+  topicMap: Map<string, TopicMetrics>;
+  subscriptionMap: Map<string, SubscriptionMetrics>;
   topic2subscriptions: Map<string, SubscriptionMetrics[]>;
-  topics: Map<string, TopicMetrics>;
-  subscriptions: Map<string, SubscriptionMetrics>;
+  // Computed fields
+  topics: number;
+  subscriptions: number;
+  messages: number;
+  pending: number;
+  messagesAllTime: number;
+  expiredAllTime: number;
+  pulledAllTime: number;
+  pulledRetriesAllTime: number;
+  acksAllTime: number;
+  ackedAllTime: number;
+  topicsInterval: number;
+  subscriptionsInterval: number;
+  messagesInterval: number;
+  expiredInterval: number;
+  pulledInterval: number;
+  pulledRetriesInterval: number;
+  ackedInterval: number;
+  acksInterval: number;
+  memoryResidentSetSizeInterval: number;
+  percentageProcessed: number;
 }
 
 export function newCourierState(): CourierState {
   return {
-    numTopicsAllTime: 0,
-    numMessagesAllTime: 0,
-    numExpiredAllTime: 0,
-    numTopicsInterval: 0,
-    numMessagesInterval: 0,
-    numExpiredInterval: 0,
-    numTopics: 0,
-    numMessages: 0,
-    numSubscriptionsAllTime: 0,
-    numPulledAllTime: 0,
-    numAckedAllTime: 0,
-    numSubscriptionsInterval: 0,
-    numPulledInterval: 0,
-    numAckedInterval: 0,
-    numSubscriptions: 0,
-    numPending: 0,
-    percentageProcessed: 0,
-    memoryResidentSetSizeInterval: 0,
+    topicsAllTime: 0,
+    subscriptionsAllTime: 0,
     memoryResidentSetSize: 0,
     startTime: new Date(),
+    topicMap: new Map<string, TopicMetrics>(),
+    subscriptionMap: new Map<string, SubscriptionMetrics>(),
     topic2subscriptions: new Map<string, SubscriptionMetrics[]>(),
-    topics: new Map<string, TopicMetrics>(),
-    subscriptions: new Map<string, SubscriptionMetrics>(),
+    topics: 0,
+    subscriptions: 0,
+    messages: 0,
+    pending: 0,
+    messagesAllTime: 0,
+    expiredAllTime: 0,
+    pulledAllTime: 0,
+    pulledRetriesAllTime: 0,
+    acksAllTime: 0,
+    ackedAllTime: 0,
+    topicsInterval: 0,
+    subscriptionsInterval: 0,
+    messagesInterval: 0,
+    expiredInterval: 0,
+    pulledInterval: 0,
+    pulledRetriesInterval: 0,
+    ackedInterval: 0,
+    acksInterval: 0,
+    memoryResidentSetSizeInterval: 0,
+    percentageProcessed: 0,
   };
 }
 
-function computeState(
-  current: CourierState,
+export function courierStateFromJson(
+  json: any,
   previous: CourierState = newCourierState(),
 ): CourierState {
-  const c = current;
-  const p = previous;
-  c.memoryResidentSetSizeInterval = c.memoryResidentSetSize - p.memoryResidentSetSize;
-
-  // Topic metrics
-  c.numTopics = c.topics.size;
-  for (const [topicName, metrics] of Array.from(current.topics.entries())) {
-    c.numMessagesAllTime += metrics.numMessagesAllTime;
-    c.numExpiredAllTime += metrics.numExpiredAllTime;
-    c.numMessages += metrics.numMessages;
-
-    // Initialize a topic to subscription lookup
-    c.topic2subscriptions.set(topicName, []);
-  }
-  c.numTopicsInterval = c.numTopics - p.numTopics;
-  c.numMessagesInterval = c.numMessagesAllTime - p.numMessagesAllTime;
-  c.numExpiredInterval = c.numExpiredAllTime - p.numExpiredAllTime;
-
-  // Subscription metrics
-  let totalNumUnprocessed = 0;
-  let totalNumSubscriptionMessages = 0;
-  c.numSubscriptions = c.subscriptions.size;
-  for (const [name, metrics] of Array.from(current.subscriptions.entries())) {
-    const topicName = metrics.topic;
-    const topicMetrics = c.topics.get(topicName);
-
-    // Check if the subscription has been orphaned
-    if (isUndefined(topicMetrics)) {
-      metrics.orphaned = true;
-      continue;
+  const c = newCourierState();
+  let pending = 0;
+  let pulledAllTime = 0;
+  let pulledRetriesAllTime = 0;
+  let acksAllTime = 0;
+  let ackedAllTime = 0;
+  let subscriptionTotalMessages = 0;
+  let subscriptionTotalProcessed = 0;
+  if (isObject(json)) {
+    if (isNumber(json.topics_all_time)) {
+      c.topicsAllTime = json.topics_all_time;
+    } else {
+      logError("Failed to parse CourierState 'topics_all_time' is not a number", json);
     }
-
-    c.topic2subscriptions.get(topicName).push(metrics);
-
-    // Get the previous metrics subscription metrics
-    let previousMetrics = p.subscriptions.get(name);
-    if (isUndefined(previousMetrics)) {
-      previousMetrics = newSubscriptionMetrics(name);
+    if (isNumber(json.subscriptions_all_time)) {
+      c.subscriptionsAllTime = json.subscriptions_all_time;
+    } else {
+      logError("Failed to parse CourierState 'subscriptions_all_time' is not a number", json);
     }
-
-    // Update subscription specific metrics
-    metrics.normalizedTopicMessageIndex =
-      topicMetrics.numMessages - (topicMetrics.numMessagesAllTime - metrics.topicMessageIndex);
-    metrics.topicNumMessages = topicMetrics.numMessages;
-    const numUnprocessed =
-      topicMetrics.numMessagesAllTime - metrics.topicMessageIndex + metrics.numPending;
-    totalNumUnprocessed += numUnprocessed;
-    totalNumSubscriptionMessages += topicMetrics.numMessages;
-    let percentageUnprocessed = 0;
-    if (topicMetrics.numMessages > 0) {
-      percentageUnprocessed = numUnprocessed / topicMetrics.numMessages;
+    if (isNumber(json.memory_resident_set_size)) {
+      c.memoryResidentSetSize = json.memory_resident_set_size;
+    } else {
+      logError("Failed to parse CourierState 'memory_resident_set_size' is not a number", json);
     }
-    metrics.percentageProcessed = Math.max(0, 1 - percentageUnprocessed);
-    metrics.numPulledInterval = metrics.numPulledAllTime - previousMetrics.numPulledAllTime;
-    metrics.numAckedInterval = metrics.numAckedAllTime - previousMetrics.numAckedAllTime;
-
-    // Update global metrics
-    c.numPulledAllTime += metrics.numPulledAllTime;
-    c.numAckedAllTime += metrics.numAckedAllTime;
-    c.numPending += metrics.numPending;
-  }
-  c.numSubscriptionsInterval = c.numSubscriptions - p.numSubscriptions;
-  c.numPulledInterval = c.numPulledAllTime - p.numPulledAllTime;
-  c.numAckedInterval = c.numAckedAllTime - p.numAckedAllTime;
-  let totalPercentageUnprocessed = 0;
-  if (totalNumSubscriptionMessages > 0) {
-    totalPercentageUnprocessed = totalNumUnprocessed / totalNumSubscriptionMessages;
-  }
-  c.percentageProcessed = Math.max(0, 1 - totalPercentageUnprocessed);
-  // Update topic percentage processed
-  for (const [topicName, subscriptions] of Array.from(c.topic2subscriptions.entries())) {
-    const topicMetrics = c.topics.get(topicName);
-
-    if (isUndefined(topicMetrics)) {
-      continue;
-    }
-
-    let totalMessages = 0;
-    let numUnprocessed = 0;
-    for (const subscription of subscriptions) {
-      totalMessages += subscription.topicNumMessages;
-      numUnprocessed +=
-        topicMetrics.numMessagesAllTime - subscription.topicMessageIndex + subscription.numPending;
-    }
-    let percentageUnprocessed = 0;
-    if (totalMessages > 0) {
-      percentageUnprocessed = numUnprocessed / totalMessages;
-    }
-    topicMetrics.percentageProcessed = Math.max(0, 1 - percentageUnprocessed);
-  }
-  return current;
-}
-
-export function courierStateFromAny(
-  blob: any,
-  previous: CourierState = newCourierState(),
-): CourierState {
-  const courierState = newCourierState();
-  if (isObject(blob)) {
-    if (isNumber(blob.topics_all_time)) {
-      courierState.numTopicsAllTime = blob.topics_all_time;
-    }
-    if (isNumber(blob.subscriptions_all_time)) {
-      courierState.numSubscriptionsAllTime = blob.subscriptions_all_time;
-    }
-    if (isNumber(blob.memory_resident_set_size)) {
-      courierState.memoryResidentSetSize = blob.memory_resident_set_size;
-    }
-    const startTime = new Date(blob.start_time);
+    const startTime = new Date(json.start_time);
     if (isNumber(startTime.getTime())) {
-      courierState.startTime = startTime;
+      c.startTime = startTime;
+    } else {
+      logError("Failed to parse CourierState 'updated' is not a date", json);
     }
-    if (isObject(blob.topics)) {
-      for (const key of Object.keys(blob.topics)) {
-        courierState.topics.set(key, topicMetricsFromAny(key, blob.topics[key]));
+    if (isObject(json.topics)) {
+      for (const name of Object.keys(json.topics)) {
+        c.topicMap.set(name, topicMetricsFromJson(name, json.topics[name]));
+
+        // Initialize a topic to subscription lookup
+        c.topic2subscriptions.set(name, []);
       }
+    } else {
+      logError("Failed to parse CourierState 'topics' is not an array", json);
     }
-    if (isObject(blob.subscriptions)) {
-      for (const key of Object.keys(blob.subscriptions)) {
-        courierState.subscriptions.set(
-          key,
-          subscriptionMetricsFromAny(key, blob.subscriptions[key]),
-        );
+    if (isObject(json.subscriptions)) {
+      for (const name of Object.keys(json.subscriptions)) {
+        const subscription = subscriptionMetricsFromJson(name, json.subscriptions[name]);
+        c.subscriptionMap.set(name, subscription);
+        const topicName = subscription.topic;
+
+        // Calculate computed fields
+        const topic = c.topicMap.get(topicName);
+        const previousSubscription = previous.subscriptionMap.get(name);
+        computeSubscriptionMetrics(subscription, topic, previousSubscription);
+
+        // Insert the subscription into the topic2subscription lookup
+        c.topic2subscriptions.get(topicName).push(subscription);
+
+        pending += subscription.pending;
+        pulledAllTime += subscription.pulledAllTime;
+        pulledRetriesAllTime += subscription.pulledRetriesAllTime;
+        acksAllTime += subscription.acksAllTime;
+        ackedAllTime += subscription.ackedAllTime;
+        subscriptionTotalMessages += topic.messages;
+        subscriptionTotalProcessed += subscription.messageIndex - subscription.pending;
       }
+    } else {
+      logError("Failed to parse CourierState 'subscriptions' is not an array", json);
     }
+  } else {
+    logError("Failed to parse CourierState is not an object", json);
   }
-  computeState(courierState, previous);
-  return courierState;
+  // Compute topic computed fields
+  let messages = 0;
+  let messagesAllTime = 0;
+  let expiredAllTime = 0;
+  for (const [name, metrics] of Array.from(c.topicMap.entries())) {
+    const subscriptions = c.topic2subscriptions.get(name);
+    const previousTopic = previous.topicMap.get(name);
+    computeTopicMetrics(metrics, subscriptions, previousTopic);
+
+    messages += metrics.messages;
+    messagesAllTime += metrics.messagesAllTime;
+    expiredAllTime += metrics.expiredAllTime;
+  }
+
+  c.topics = c.topicMap.size;
+  c.subscriptions = c.subscriptionMap.size;
+  c.messages = messages;
+  c.pending = pending;
+  c.messagesAllTime = messagesAllTime;
+  c.expiredAllTime = expiredAllTime;
+  c.pulledAllTime = pulledAllTime;
+  c.pulledRetriesAllTime = pulledRetriesAllTime;
+  c.acksAllTime = acksAllTime;
+  c.ackedAllTime = ackedAllTime;
+  c.topicsInterval = c.topicsAllTime - previous.topicsAllTime;
+  c.subscriptionsInterval = c.subscriptionsAllTime - previous.subscriptionsAllTime;
+  c.messagesInterval = c.messagesAllTime - previous.messagesAllTime;
+  c.expiredInterval = c.expiredAllTime - previous.expiredAllTime;
+  c.pulledInterval = c.pulledAllTime - previous.pulledAllTime;
+  c.pulledRetriesInterval = c.pulledRetriesAllTime - previous.pulledRetriesAllTime;
+  c.ackedInterval = c.ackedAllTime - previous.ackedAllTime;
+  c.acksInterval = c.acksAllTime - previous.acksAllTime;
+  c.memoryResidentSetSizeInterval = c.memoryResidentSetSize - previous.memoryResidentSetSize;
+  c.percentageProcessed = percentageFromProcessed(
+    subscriptionTotalProcessed,
+    subscriptionTotalMessages,
+  );
+  return c;
 }
 
 export interface Message {
@@ -340,10 +429,10 @@ export function newMessage(): Message {
   };
 }
 
-export function messageFromMessagesBlob(blob: any): Message | null {
-  if (isObject(blob) && Array.isArray(blob.messages) && blob.messages.length > 0) {
+export function messageFromMessagesJson(json: any): Message | null {
+  if (isObject(json) && Array.isArray(json.messages) && json.messages.length > 0) {
     const created = newMessage();
-    const message = blob.messages[0];
+    const message = json.messages[0];
     if (isString(message.id)) {
       created.id = message.id;
     }
@@ -368,12 +457,12 @@ export interface Topic {
   ttl: number;
 }
 
-export function topicFromAny(blob: any): Topic | null {
-  if (isObject(blob) && isString(blob.name) && isNumber(blob.message_ttl) && isNumber(blob.ttl)) {
+export function topicFromJson(json: any): Topic | null {
+  if (isObject(json) && isString(json.name) && isNumber(json.message_ttl) && isNumber(json.ttl)) {
     return {
-      name: blob.name,
-      messageTtl: blob.message_ttl,
-      ttl: blob.ttl,
+      name: json.name,
+      messageTtl: json.message_ttl,
+      ttl: json.ttl,
     };
   }
   return null;
@@ -385,17 +474,17 @@ export interface Subscription {
   ackDeadline: number;
 }
 
-export function subscriptionFromAny(blob: any): Subscription | null {
+export function subscriptionFromJson(json: any): Subscription | null {
   if (
-    isObject(blob) &&
-    isString(blob.name) &&
-    isString(blob.topic) &&
-    isNumber(blob.ack_deadline)
+    isObject(json) &&
+    isString(json.name) &&
+    isString(json.topic) &&
+    isNumber(json.ack_deadline)
   ) {
     return {
-      name: blob.name,
-      topic: blob.topic,
-      ackDeadline: blob.ack_deadline,
+      name: json.name,
+      topic: json.topic,
+      ackDeadline: json.ack_deadline,
     };
   }
   return null;

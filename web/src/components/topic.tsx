@@ -37,7 +37,7 @@ export class Topic extends Component<Props, State> {
     const subscriptions = this.props.subscriptions;
     const expanded = this.state.expanded;
     const age = (new Date().getTime() - m.created.getTime()) / 1000;
-    let expires: string | number = "n/a";
+    let expires: string | number = "never";
     if (m.ttl !== 0) {
       const updatedAgo = (new Date().getTime() - m.updated.getTime()) / 1000;
       expires = Math.ceil(m.ttl - updatedAgo);
@@ -51,7 +51,7 @@ export class Topic extends Component<Props, State> {
             </a>
           </td>
           <td>{m.name}</td>
-          <td>{m.numMessages}</td>
+          <td>{m.messages}</td>
           <td>{subscriptions.length}</td>
           <td>{numberAsPercentage(m.percentageProcessed)}</td>
           <td>{numberAsTimeStr(age)}</td>
@@ -75,10 +75,10 @@ export class Topic extends Component<Props, State> {
                 <th>Created</th>
               </thead>
               <tr>
-                <td>{m.numMessagesInterval}</td>
-                <td>{m.numExpiredInterval}</td>
-                <td>{m.numMessagesAllTime}</td>
-                <td>{m.numExpiredAllTime}</td>
+                <td>{m.messagesInterval}</td>
+                <td>{m.expiredInterval}</td>
+                <td>{m.messagesAllTime}</td>
+                <td>{m.expiredAllTime}</td>
                 <td>{m.messageTtl}</td>
                 <td>{m.ttl}</td>
                 <td>{expires} </td>
