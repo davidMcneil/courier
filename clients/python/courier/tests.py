@@ -12,8 +12,8 @@ class TestStringMethods(unittest.TestCase):
 
         # Make sure everything we create does not exist
         try:
-            client.delete_topic(topic_name)
             client.delete_subscription(sub_name)
+            client.delete_topic(topic_name)
         except:
             pass
 
@@ -102,6 +102,10 @@ class TestStringMethods(unittest.TestCase):
                                  "id"], message3["id"]])["message_ids"]
         self.assertSetEqual(set([message1["id"], message2[
                                  "id"], message3["id"]]), set(message_ids))
+
+        # Delete what we created
+        client.delete_subscription(sub_name)
+        client.delete_topic(topic_name)
 
 
 if __name__ == '__main__':

@@ -6,19 +6,19 @@ description = "A pubsub service."
 license = "(MIT OR Apache-2.0)"
 
 [dependencies]
-actix = "0.5.8"
-actix-web = { git = "https://github.com/davidMcneil/actix-web", branch = "0.6" }
+actix = "0.7.1"
+actix-web = "0.7.1"
 chrono = {version = "0.4.4",features = ["serde"]}
 env_logger = "0.5.10"
 futures = "0.1"
 log = "0.4.3"
 open = "1.2.1"
-parking_lot = "0.6.2"
+parking_lot = "0.6.3"
 psutil = "1.1.1"
-serde = "1.0.68"
-serde_derive = "1.0.68"
-serde_json = "1.0.22"
-rand = "0.5.3"
+serde = "1.0.70"
+serde_derive = "1.0.70"
+serde_json = "1.0.24"
+rand = "0.5.4"
 reqwest = "0.8.6"
 structopt = "0.2.10"
 uuid = {version = "0.6.5",features = ["serde","v4"]}

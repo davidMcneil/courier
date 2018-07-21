@@ -21,8 +21,8 @@ TEST_CASE("courier") {
     string sub_name = "cpp-sub";
 
     // Make sure everything we create does not exist
-    client.delete_topic(topic_name);
     client.delete_subscription(sub_name);
+    client.delete_topic(topic_name);
 
     // Test create
     TopicCreateConfig topic_create_config;
@@ -141,4 +141,8 @@ TEST_CASE("courier") {
     vector<string> message_ids_truth = {message1.id, message2.id, message3.id};
     CHECK(set<string>(message_ids_truth.begin(), message_ids_truth.end()) ==
           set<string>(message_ids.begin(), message_ids.end()));
+
+    // Delete what we created
+    client.delete_subscription(sub_name);
+    client.delete_topic(topic_name);
 }

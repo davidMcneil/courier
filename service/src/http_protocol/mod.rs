@@ -19,7 +19,9 @@ use courier::Registry;
 
 static LOGGER_FORMAT: &'static str = "%a \"%r\" (%s %Ts %bB)";
 
-pub fn create(config: Config) -> impl Fn() -> Vec<Box<server::HttpHandler>> {
+pub fn create(
+    config: Config,
+) -> impl Fn() -> Vec<Box<server::HttpHandler<Task = Box<server::HttpHandlerTask>>>> {
     let registry = Registry::new();
     let registry_cleanup = Arc::clone(&registry);
 
