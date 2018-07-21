@@ -1,0 +1,6 @@
+[submodule "clients/cpp/cpr"]
+	path = clients/cpp/cpr
+	url = https://github.com/whoshuu/cpr.git
+[submodule "clients/cpp/include"]
+	path = clients/cpp/include
+	url = https://github.com/davidMcneil/header-only.git

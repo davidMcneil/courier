@@ -177,9 +177,13 @@ impl Client {
         self.pull(subscription, 1)
     }
 
-    pub fn pull(&self, name: &str, max_messages: usize) -> Result<MessageList, Box<dyn Error>> {
+    pub fn pull(
+        &self,
+        subscription: &str,
+        max_messages: usize,
+    ) -> Result<MessageList, Box<dyn Error>> {
         let url = self.base_url
-            .join(&format!("{}/{}/pull", SUBSCRIPTIONS_PATH, name))?;
+            .join(&format!("{}/{}/pull", SUBSCRIPTIONS_PATH, subscription))?;
         Ok(self.http
             .post(url)
             .json(&PullConfig::new(max_messages))
@@ -188,13 +192,21 @@ impl Client {
             .json()?)
     }
 
-    pub fn ack_one(&self, name: &str, message_id: Uuid) -> Result<MessageIdList, Box<dyn Error>> {
-        self.ack(name, vec![message_id])
+    pub fn ack_one(
+        &self,
+        subscription: &str,
+        message_id: Uuid,
+    ) -> Result<MessageIdList, Box<dyn Error>> {
+        self.ack(subscription, vec![message_id])
     }
 
-    pub fn ack(&self, name: &str, message_ids: Vec<Uuid>) -> Result<MessageIdList, Box<dyn Error>> {
+    pub fn ack(
+        &self,
+        subscription: &str,
+        message_ids: Vec<Uuid>,
+    ) -> Result<MessageIdList, Box<dyn Error>> {
         let url = self.base_url
-            .join(&format!("{}/{}/ack", SUBSCRIPTIONS_PATH, name))?;
+            .join(&format!("{}/{}/ack", SUBSCRIPTIONS_PATH, subscription))?;
         Ok(self.http
             .post(url)
             .json(&MessageIdList::new(message_ids))

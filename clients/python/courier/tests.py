@@ -13,7 +13,7 @@ class TestStringMethods(unittest.TestCase):
         # Make sure everything we create does not exist
         try:
             client.delete_topic(topic_name)
-            client.delete_subscription("python-sub")
+            client.delete_subscription(sub_name)
         except:
             pass
 

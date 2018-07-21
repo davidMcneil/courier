@@ -2,7 +2,7 @@
 name = "courier"
 version = "0.1.0"
 authors = ["David McNeil <mcneil.david2@gmail.com>"]
-description = "A simple pubsub service."
+description = "A pubsub service."
 license = "(MIT OR Apache-2.0)"
 
 [dependencies]
