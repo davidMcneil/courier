@@ -7,6 +7,8 @@ extern crate serde_json;
 extern crate url;
 extern crate uuid;
 
+#[cfg(test)]
+mod tests;
 mod types;
 
 use reqwest::header::{ContentType, Headers};
@@ -76,7 +78,7 @@ impl Client {
 
     pub fn delete_topic(&self, name: &str) -> Result<(), Box<dyn Error>> {
         let url = self.base_url.join(&format!("{}/{}", TOPICS_PATH, name))?;
-        self.http.delete(url).send()?.error_for_status()?.json()?;
+        self.http.delete(url).send()?.error_for_status()?;
         Ok(())
     }
 
@@ -144,7 +146,7 @@ impl Client {
         &self,
         name: &str,
         config: &SubscriptionUpdateConfig,
-    ) -> Result<Topic, Box<dyn Error>> {
+    ) -> Result<Subscription, Box<dyn Error>> {
         let url = self.base_url
             .join(&format!("{}/{}", SUBSCRIPTIONS_PATH, name))?;
         Ok(self.http
@@ -158,7 +160,7 @@ impl Client {
     pub fn delete_subscription(&self, name: &str) -> Result<(), Box<dyn Error>> {
         let url = self.base_url
             .join(&format!("{}/{}", SUBSCRIPTIONS_PATH, name))?;
-        self.http.delete(url).send()?.error_for_status()?.json()?;
+        self.http.delete(url).send()?.error_for_status()?;
         Ok(())
     }
 
