@@ -34,7 +34,10 @@ func NewClient(baseURLString string) (*Client, error) {
 
 // CreateTopic TODO
 func (c *Client) CreateTopic(name string, config TopicCreateConfig) (*Topic, error) {
-	url := path.Join(c.baseURL.Path, topicsPath, name)
+	url := c.baseURL.String() + path.Join(topicsPath, name)
+	if name == "" {
+		url += "/"
+	}
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -61,7 +64,7 @@ func (c *Client) CreateTopicWithUUID(config TopicCreateConfig) (*Topic, error) {
 
 // UpdateTopic TODO
 func (c *Client) UpdateTopic(name string, config TopicUpdateConfig) (*Topic, error) {
-	url := path.Join(c.baseURL.Path, topicsPath, name)
+	url := c.baseURL.String() + path.Join(topicsPath, name)
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -83,7 +86,7 @@ func (c *Client) UpdateTopic(name string, config TopicUpdateConfig) (*Topic, err
 
 // DeleteTopic TODO
 func (c *Client) DeleteTopic(name string) error {
-	url := path.Join(c.baseURL.Path, topicsPath, name)
+	url := c.baseURL.String() + path.Join(topicsPath, name)
 
 	_, err := c.send(http.MethodDelete, url, nil)
 	if err != nil {
@@ -95,7 +98,7 @@ func (c *Client) DeleteTopic(name string) error {
 
 // GetTopic TODO
 func (c *Client) GetTopic(name string) (*Topic, error) {
-	url := path.Join(c.baseURL.Path, topicsPath, name)
+	url := c.baseURL.String() + path.Join(topicsPath, name)
 
 	responseBody, err := c.send(http.MethodGet, url, nil)
 	if err != nil {
@@ -111,8 +114,8 @@ func (c *Client) GetTopic(name string) (*Topic, error) {
 }
 
 // ListTopics TODO
-func (c *Client) ListTopics(name string) (*TopicList, error) {
-	url := path.Join(c.baseURL.Path, topicsPath, name)
+func (c *Client) ListTopics() (*TopicList, error) {
+	url := c.baseURL.String() + topicsPath + "/"
 
 	responseBody, err := c.send(http.MethodGet, url, nil)
 	if err != nil {
@@ -134,7 +137,7 @@ func (c *Client) PublishOne(topic string, data string) (*MessageIDList, error) {
 
 // Publish TODO
 func (c *Client) Publish(topic string, data []string) (*MessageIDList, error) {
-	url := path.Join(c.baseURL.Path, topicsPath, topic, "publish")
+	url := c.baseURL.String() + path.Join(topicsPath, topic, "publish")
 
 	rawMessages := []*RawMessage{}
 	for _, d := range data {
@@ -162,7 +165,7 @@ func (c *Client) Publish(topic string, data []string) (*MessageIDList, error) {
 
 // GetTopicSubscriptions TODO
 func (c *Client) GetTopicSubscriptions(topic string) (*SubscriptionNameList, error) {
-	url := path.Join(c.baseURL.Path, topicsPath, topic, "subscriptions")
+	url := c.baseURL.String() + path.Join(topicsPath, topic, "subscriptions")
 
 	responseBody, err := c.send(http.MethodGet, url, nil)
 	if err != nil {
@@ -179,7 +182,10 @@ func (c *Client) GetTopicSubscriptions(topic string) (*SubscriptionNameList, err
 
 // CreateSubscription TODO
 func (c *Client) CreateSubscription(name string, config SubscriptionCreateConfig) (*Subscription, error) {
-	url := path.Join(c.baseURL.Path, subscriptionsPath, name)
+	url := c.baseURL.String() + path.Join(subscriptionsPath, name)
+	if name == "" {
+		url += "/"
+	}
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -206,7 +212,7 @@ func (c *Client) CreateSubscriptionWithUUID(config SubscriptionCreateConfig) (*S
 
 // UpdateSubscription TODO
 func (c *Client) UpdateSubscription(name string, config SubscriptionUpdateConfig) (*Subscription, error) {
-	url := path.Join(c.baseURL.Path, subscriptionsPath, name)
+	url := c.baseURL.String() + path.Join(subscriptionsPath, name)
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -228,7 +234,7 @@ func (c *Client) UpdateSubscription(name string, config SubscriptionUpdateConfig
 
 // DeleteSubscription TODO
 func (c *Client) DeleteSubscription(name string) error {
-	url := path.Join(c.baseURL.Path, subscriptionsPath, name)
+	url := c.baseURL.String() + path.Join(subscriptionsPath, name)
 
 	_, err := c.send(http.MethodDelete, url, nil)
 	if err != nil {
@@ -240,7 +246,7 @@ func (c *Client) DeleteSubscription(name string) error {
 
 // GetSubscription TODO
 func (c *Client) GetSubscription(name string) (*Subscription, error) {
-	url := path.Join(c.baseURL.Path, subscriptionsPath, name)
+	url := c.baseURL.String() + path.Join(subscriptionsPath, name)
 
 	responseBody, err := c.send(http.MethodGet, url, nil)
 	if err != nil {
@@ -256,8 +262,8 @@ func (c *Client) GetSubscription(name string) (*Subscription, error) {
 }
 
 // ListSubscriptions TODO
-func (c *Client) ListSubscriptions(name string) (*SubscriptionList, error) {
-	url := path.Join(c.baseURL.Path, subscriptionsPath, name)
+func (c *Client) ListSubscriptions() (*SubscriptionList, error) {
+	url := c.baseURL.String() + subscriptionsPath + "/"
 
 	responseBody, err := c.send(http.MethodGet, url, nil)
 	if err != nil {
@@ -279,14 +285,14 @@ func (c *Client) PullOne(name string) (*MessageList, error) {
 
 // Pull TODO
 func (c *Client) Pull(name string, maxMessages uint) (*MessageList, error) {
-	url := path.Join(c.baseURL.Path, subscriptionsPath, name, "pull")
+	url := c.baseURL.String() + path.Join(subscriptionsPath, name, "pull")
 
 	body, err := json.Marshal(NewPullConfig(maxMessages))
 	if err != nil {
 		return nil, err
 	}
 
-	responseBody, err := c.send(http.MethodGet, url, bytes.NewReader(body))
+	responseBody, err := c.send(http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -306,14 +312,14 @@ func (c *Client) AckOne(name string, messageID string) (*MessageIDList, error) {
 
 // Ack TODO
 func (c *Client) Ack(name string, messageIds []string) (*MessageIDList, error) {
-	url := path.Join(c.baseURL.Path, subscriptionsPath, name, "ack")
+	url := c.baseURL.String() + path.Join(subscriptionsPath, name, "ack")
 
 	body, err := json.Marshal(NewMessageIDList(messageIds))
 	if err != nil {
 		return nil, err
 	}
 
-	responseBody, err := c.send(http.MethodGet, url, bytes.NewReader(body))
+	responseBody, err := c.send(http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -328,6 +334,7 @@ func (c *Client) Ack(name string, messageIds []string) (*MessageIDList, error) {
 
 func (c *Client) send(method string, url string, body io.Reader) ([]byte, error) {
 	request, err := http.NewRequest(method, url, body)
+	request.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
 	}

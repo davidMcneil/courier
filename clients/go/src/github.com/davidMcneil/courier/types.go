@@ -129,8 +129,8 @@ type SubscriptionCreateConfig struct {
 
 // SubscriptionUpdateConfig TODO
 type SubscriptionUpdateConfig struct {
-	AckDeadline uint32 `json:"ack_deadline,omitempty"`
-	TTL         uint32 `json:"ttl,omitempty"`
+	AckDeadline *uint32 `json:"ack_deadline,omitempty"`
+	TTL         *uint32 `json:"ttl,omitempty"`
 }
 
 // SubscriptionList TODO
