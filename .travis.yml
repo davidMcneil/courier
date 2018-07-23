@@ -19,11 +19,9 @@ script:
   - cargo build
   - cargo test
 
-after_script:
-  - cargo run --package courier -- run &
-
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+    cargo run --package courier -- run &
     cargo tarpaulin --ignore-tests --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
   fi
