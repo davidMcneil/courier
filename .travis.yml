@@ -17,7 +17,7 @@ matrix:
 script:
   - cargo clean
   - cargo build
-  - cargo test
+  - cargo test --package courier
 
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
