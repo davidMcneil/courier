@@ -46,9 +46,10 @@ export function TopNavbar(props: Props) {
                 <li class={classNames({ "is-active": props.tab === Tabs.Subscriptions })}>
                   <a onClick={props.handleSubscriptions}>Subscriptions</a>
                 </li>
-                <li class={classNames({ "is-active": props.tab === Tabs.Docs })}>
+                {/* For now do not show the docs tab. */}
+                {/* <li class={classNames({ "is-active": props.tab === Tabs.Docs })}>
                   <a onClick={props.handleDocs}>Docs</a>
-                </li>
+                </li> */}
               </ul>
             </div>
           </div>

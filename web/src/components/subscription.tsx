@@ -42,7 +42,7 @@ export class Subscription extends Component<Props, State> {
       expires = Math.ceil(m.ttl - updatedAgo);
     }
     return (
-      <tbody key={m.name} class={classNames({ "no-bottom-boarder": expanded })}>
+      <tbody class={classNames({ "no-bottom-border": expanded })}>
         <tr>
           <td class="is-table-icon has-text-centered">
             <a onClick={this.toggleExpanded}>
