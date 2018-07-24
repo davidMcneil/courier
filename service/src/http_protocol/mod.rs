@@ -45,8 +45,8 @@ pub fn create(
             App::new()
                 .prefix("/web")
                 .route("/ui", Method::GET, general_handlers::html)
-                .route("/src.71107acb.css", Method::GET, general_handlers::css)
-                .route("/src.d29a4435.js", Method::GET, general_handlers::js)
+                .route("/src.f34027af.css", Method::GET, general_handlers::css)
+                .route("/src.895bcfb9.js", Method::GET, general_handlers::js)
                 .middleware(Logger::new(LOGGER_FORMAT))
                 .middleware(cors::Cors::build().finish())
                 .boxed(),
