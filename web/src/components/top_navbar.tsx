@@ -57,27 +57,36 @@ export function TopNavbarNoRouter(props: Props) {
             <div class="navbar-item">
               <b>Uptime:&nbsp;</b> {numberAsTimeStr(uptime)}
             </div>
-            <div class="navbar-item is-paddingless">
-              <input
-                class="button is-primary is-small"
-                type="button"
-                value="Update"
-                onClick={props.update}
-              />
-            </div>
             <div class="navbar-item">
-              <div class={classNames("select", "is-small", { "is-loading": props.updating })}>
-                <select
-                  value={String(props.interval)}
-                  onChange={event => props.setUpdateInterval(str2number(event.currentTarget.value))}
-                >
-                  <option value={"null"}>Off</option>
-                  <option value={"1000"}>1s</option>
-                  <option value={"5000"}>5s</option>
-                  <option value={"10000"}>10s</option>
-                  <option value={"30000"}>30s</option>
-                  <option value={"60000"}>1m</option>
-                </select>
+              <div class="field has-addons">
+                <p class="control">
+                  <input
+                    class="button is-primary is-small"
+                    type="button"
+                    value="Update"
+                    onClick={props.update}
+                  />
+                </p>
+                <p class="control">
+                  <div class={classNames("select", "is-small", { "is-loading": props.updating })}>
+                    <select
+                      value={String(props.interval)}
+                      onChange={event =>
+                        props.setUpdateInterval(str2number(event.currentTarget.value))
+                      }
+                    >
+                      <option value={"null"}>Off</option>
+                      <option value={"1000"}>1s</option>
+                      <option value={"2000"}>2s</option>
+                      <option value={"3000"}>3s</option>
+                      <option value={"4000"}>4s</option>
+                      <option value={"5000"}>5s</option>
+                      <option value={"10000"}>10s</option>
+                      <option value={"30000"}>30s</option>
+                      <option value={"60000"}>1m</option>
+                    </select>
+                  </div>
+                </p>
               </div>
             </div>
           </div>

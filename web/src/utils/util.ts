@@ -125,6 +125,8 @@ export function rootUrl(): string {
   return "http://0.0.0.0:3140";
 }
 
+export const BASE_PATH = process.env.NODE_ENV === "development" ? "/" : "/ui";
+
 const ROOT_URL =
   process.env.NODE_ENV === "development" ? "http://0.0.0.0:3140" : window.location.origin;
 

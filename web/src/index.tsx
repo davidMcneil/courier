@@ -9,8 +9,7 @@ import { SubscriptionsTab } from "./components/subscriptions_tab";
 import { TopNavbar } from "./components/top_navbar";
 import { TopicsTab } from "./components/topics_tab";
 import { CourierState, courierStateFromJson, newCourierState } from "./utils/data_parsers";
-import { NotificationType } from "./utils/types";
-import { fetchError2message, ICON, METRICS_URL } from "./utils/util";
+import { BASE_PATH, fetchError2message, ICON, METRICS_URL, NotificationType } from "./utils/util";
 
 interface NotificationState {
   type: NotificationType;
@@ -79,7 +78,7 @@ class App extends Component<{}, State> {
     const c = this.state.courierState;
     const ui = this.state.uiState;
     return (
-      <BrowserRouter>
+      <BrowserRouter basename={BASE_PATH}>
         <div>
           <TopNavbar
             displayStats={ui.displayStats}

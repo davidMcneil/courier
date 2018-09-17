@@ -2254,7 +2254,7 @@ inferno-router@^5.6.1:
     inferno-shared "5.6.1"
     path-to-regexp-es6 "1.7.0"
 
-inferno-shared@5.6.1:
+inferno-shared@5.6.1, inferno-shared@^5:
   version "5.6.1"
   resolved "https://registry.yarnpkg.com/inferno-shared/-/inferno-shared-5.6.1.tgz#5c5e471dbff72eb9f1768f97510a32e5fa76b6dd"
 
@@ -2262,7 +2262,7 @@ inferno-vnode-flags@5.6.1:
   version "5.6.1"
   resolved "https://registry.yarnpkg.com/inferno-vnode-flags/-/inferno-vnode-flags-5.6.1.tgz#43974687cc54f22c24ecee116376f6c1bd697499"
 
-inferno@5.6.1, inferno@^5.6.1:
+inferno@5.6.1, inferno@^5:
   version "5.6.1"
   resolved "https://registry.yarnpkg.com/inferno/-/inferno-5.6.1.tgz#fd48043a4e9a1d861856e09494e06bdb4a1776ba"
   dependencies:

@@ -33,20 +33,10 @@ use structopt::StructOpt;
 #[structopt()]
 struct Opt {
     /// An IP address or host the application will listen on
-    #[structopt(
-        default_value = "0.0.0.0",
-        env = "COURIER_HOST",
-        long = "host",
-        short = "H"
-    )]
+    #[structopt(default_value = "0.0.0.0", env = "COURIER_HOST", long = "host", short = "H")]
     host: String,
     /// A port number to listen on
-    #[structopt(
-        default_value = "3140",
-        env = "COURIER_PORT",
-        long = "port",
-        short = "P"
-    )]
+    #[structopt(default_value = "3140", env = "COURIER_PORT", long = "port", short = "P")]
     port: u16,
     /// Log level
     #[structopt(
@@ -107,7 +97,8 @@ pub fn main() {
             WriteStyle::Never
         } else {
             WriteStyle::Always
-        }).init();
+        })
+        .init();
 
     match opt.cmd {
         Command::Run {
@@ -131,7 +122,7 @@ pub fn main() {
             http_protocol::start(config)
         }
         Command::Ui {} => {
-            let url = format!("http://{}:{}/web/ui", &opt.host, opt.port);
+            let url = format!("http://{}:{}/ui", &opt.host, opt.port);
             match open::that(url.clone()) {
                 Ok(exit_status) => {
                     if exit_status.success() {
