@@ -1,6 +1,7 @@
 import "./index.scss";
 
 import { Component, render } from "inferno";
+import { BrowserRouter, Redirect, Route, Switch } from "inferno-router";
 import { AllSingleStats } from "./components/all_single_stats";
 import { DeleteConfirmation } from "./components/delete_confirmation";
 import { Notification } from "./components/notification";
@@ -8,8 +9,8 @@ import { SubscriptionsTab } from "./components/subscriptions_tab";
 import { TopNavbar } from "./components/top_navbar";
 import { TopicsTab } from "./components/topics_tab";
 import { CourierState, courierStateFromJson, newCourierState } from "./utils/data_parsers";
-import { NotificationType, Tabs } from "./utils/types";
-import { fetchError2message, metricsUrl } from "./utils/util";
+import { NotificationType } from "./utils/types";
+import { fetchError2message, ICON, METRICS_URL } from "./utils/util";
 
 interface NotificationState {
   type: NotificationType;
@@ -25,7 +26,6 @@ interface UiState {
   interval: number | null;
   updating: boolean;
   displayStats: boolean;
-  tab: Tabs;
   notification: NotificationState;
   delete_confirmation: DeleteConfirmationState;
 }
@@ -36,13 +36,12 @@ interface State {
   previousCourierState: CourierState;
 }
 
-class App extends Component<null, State> {
+class App extends Component<{}, State> {
   public state = {
     uiState: {
       interval: 1000,
       updating: false,
       displayStats: false,
-      tab: Tabs.Topics,
       notification: {
         type: NotificationType.Success,
         message: "",
@@ -65,9 +64,6 @@ class App extends Component<null, State> {
     this.showStats = this.showStats.bind(this);
     this.hideStats = this.hideStats.bind(this);
     this.toggleStats = this.toggleStats.bind(this);
-    this.showTopics = this.showTopics.bind(this);
-    this.showSubscriptions = this.showSubscriptions.bind(this);
-    this.showDocs = this.showDocs.bind(this);
     this.setNotification = this.setNotification.bind(this);
     this.clearNotification = this.clearNotification.bind(this);
     this.setDeleteConfirmation = this.setDeleteConfirmation.bind(this);
@@ -83,49 +79,61 @@ class App extends Component<null, State> {
     const c = this.state.courierState;
     const ui = this.state.uiState;
     return (
-      <div>
-        <TopNavbar
-          displayStats={ui.displayStats}
-          tab={ui.tab}
-          interval={ui.interval}
-          updating={ui.updating}
-          startTime={c.startTime}
-          handleStats={this.toggleStats}
-          handleTopics={this.showTopics}
-          handleSubscriptions={this.showSubscriptions}
-          handleDocs={this.showDocs}
-          update={this.update}
-          setUpdateInterval={this.setUpdateInterval}
-        />
+      <BrowserRouter>
+        <div>
+          <TopNavbar
+            displayStats={ui.displayStats}
+            interval={ui.interval}
+            updating={ui.updating}
+            startTime={c.startTime}
+            handleStats={this.toggleStats}
+            update={this.update}
+            setUpdateInterval={this.setUpdateInterval}
+          />
 
-        {ui.displayStats ? <AllSingleStats courierState={c} /> : null}
+          {ui.displayStats ? <AllSingleStats courierState={c} /> : null}
 
-        <Notification
-          type={ui.notification.type}
-          message={ui.notification.message}
-          clear={this.clearNotification}
-        />
+          <Notification
+            type={ui.notification.type}
+            message={ui.notification.message}
+            clear={this.clearNotification}
+          />
 
-        <TopicsTab
-          visible={ui.tab === Tabs.Topics}
-          courierState={c}
-          setNotification={this.setNotification}
-          setDeleteConfirmation={this.setDeleteConfirmation}
-        />
+          <Switch>
+            <Route
+              exact
+              path="/topics"
+              render={() => (
+                <TopicsTab
+                  courierState={c}
+                  setNotification={this.setNotification}
+                  setDeleteConfirmation={this.setDeleteConfirmation}
+                />
+              )}
+            />
 
-        <SubscriptionsTab
-          visible={ui.tab === Tabs.Subscriptions}
-          courierState={c}
-          setNotification={this.setNotification}
-          setDeleteConfirmation={this.setDeleteConfirmation}
-        />
+            <Route
+              exact
+              path="/subscriptions"
+              render={() => (
+                <SubscriptionsTab
+                  courierState={c}
+                  setNotification={this.setNotification}
+                  setDeleteConfirmation={this.setDeleteConfirmation}
+                />
+              )}
+            />
 
-        <DeleteConfirmation
-          message={ui.delete_confirmation.message}
-          action={ui.delete_confirmation.action}
-          clearDeleteConfirmation={this.clearDeleteConfirmation}
-        />
-      </div>
+            <Redirect to="/topics" />
+          </Switch>
+
+          <DeleteConfirmation
+            message={ui.delete_confirmation.message}
+            action={ui.delete_confirmation.action}
+            clearDeleteConfirmation={this.clearDeleteConfirmation}
+          />
+        </div>
+      </BrowserRouter>
     );
   }
 
@@ -143,7 +151,7 @@ class App extends Component<null, State> {
       }
     };
     this.setState({ uiState: { ...this.state.uiState, updating: true } });
-    fetch(metricsUrl())
+    fetch(METRICS_URL)
       .then(response => {
         if (response.ok) {
           return response.json();
@@ -184,18 +192,6 @@ class App extends Component<null, State> {
   private toggleStats() {
     const ui = this.state.uiState;
     this.setState({ uiState: { ...ui, displayStats: !ui.displayStats } });
-  }
-
-  private showTopics() {
-    this.setState({ uiState: { ...this.state.uiState, tab: Tabs.Topics } });
-  }
-
-  private showSubscriptions() {
-    this.setState({ uiState: { ...this.state.uiState, tab: Tabs.Subscriptions } });
-  }
-
-  private showDocs() {
-    this.setState({ uiState: { ...this.state.uiState, tab: Tabs.Docs } });
   }
 
   private setNotification(type: NotificationType, message: string) {
@@ -251,4 +247,11 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
+
+  // Add the favicon
+  const docHead = document.getElementsByTagName("head")[0];
+  const newLink = document.createElement("link");
+  newLink.rel = "shortcut icon";
+  newLink.href = ICON;
+  docHead.appendChild(newLink);
 });

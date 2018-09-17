@@ -1,5 +1,5 @@
 import { SubscriptionMetrics } from "../utils/data_parsers";
-import { NotificationType } from "../utils/types";
+import { NotificationType } from "../utils/util";
 import { Subscription } from "./subscription";
 
 interface Props {

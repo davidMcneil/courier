@@ -2,10 +2,10 @@ import classNames from "classnames";
 
 import { Component } from "inferno";
 import { SubscriptionMetrics, TopicMetrics } from "../utils/data_parsers";
-import { NotificationType } from "../utils/types";
 import {
   fetchError2message,
   HEADERS,
+  NotificationType,
   numberAsPercentage,
   numberAsTimeStr,
   topicsUrl,

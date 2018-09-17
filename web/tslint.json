@@ -3,9 +3,10 @@
   "rules": {
     "arrow-parens": false,
     "interface-name": [true, "never-prefix"],
+    "max-classes-per-file": false,
+    "max-line-length": [true, 100],
+    "no-submodule-imports": false,
     "object-literal-sort-keys": false,
-    "max-classes-per-file": [false],
-    "variable-name": [true, "allow-leading-underscore"],
-    "max-line-length": [true, 100]
+    "variable-name": [true, "allow-leading-underscore"]
   }
 }

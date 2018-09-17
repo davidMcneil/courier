@@ -4,7 +4,10 @@ extern crate chrono;
 extern crate env_logger;
 extern crate futures;
 #[macro_use]
+extern crate include_dir;
+#[macro_use]
 extern crate log;
+extern crate mime_guess;
 extern crate open;
 extern crate parking_lot;
 extern crate psutil;
@@ -30,10 +33,20 @@ use structopt::StructOpt;
 #[structopt()]
 struct Opt {
     /// An IP address or host the application will listen on
-    #[structopt(default_value = "0.0.0.0", env = "COURIER_HOST", long = "host", short = "H")]
+    #[structopt(
+        default_value = "0.0.0.0",
+        env = "COURIER_HOST",
+        long = "host",
+        short = "H"
+    )]
     host: String,
     /// A port number to listen on
-    #[structopt(default_value = "3140", env = "COURIER_PORT", long = "port", short = "P")]
+    #[structopt(
+        default_value = "3140",
+        env = "COURIER_PORT",
+        long = "port",
+        short = "P"
+    )]
     port: u16,
     /// Log level
     #[structopt(
@@ -94,8 +107,7 @@ pub fn main() {
             WriteStyle::Never
         } else {
             WriteStyle::Always
-        })
-        .init();
+        }).init();
 
     match opt.cmd {
         Command::Run {

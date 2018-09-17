@@ -1,3 +1,14 @@
+import * as process from "process";
+
+export const ICON =
+  // tslint:disable-next-line:max-line-length
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAQAAADZc7J/AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAADdcAAA3XAUIom3gAAAAHdElNRQfiCQ4PCxcR7B5aAAACGUlEQVRIx+3TXWiOcRgG8B/GiJphmeVjyHJAjNnJDkTKR7PZwU5Q3iimKGTLgaSJ2hwpRzjAcLDZgchkRVE7YMk0HxuG5WubadObTanXwd49PW975Vy7ju7nuq7u//1//tfNKP5LLPPToEE9pofY6wYMGPBO6b9bzHXeXbMSuP3emi9bhbZEc0qSBp2OeW29vhDXJUuehQ67mmgek3SGiV7I8jSBy9dmg6la/jbBcnlyfXbfY8f1yrAnZN5hlvFKvFdqmieaE9tnqNfntkoXvBH121JVbgT6TL02uiSmyRmVbutTL2NYXqTLFenBTK16nTfDD6viXK0aR7V7bnecSXdFl0UwTpOq0DRHPJPptXInNYBi3U7oNM8WnSYEzipNxlGmVWpA5ohahSV+yNSvQJpPtvpmJWi2L/CmalVGnYOhN3ngdLx+br1K95xzU65PcXaTzyYF/oPq6FAQEGV+2SsiIuKeWw6I6TfbYTWBpyl0YIGOFGmhwMTcVxyvs6VIEXXKR5m+hDK5OKj7pNEokjRMDfaYYtACbNOY1BPRONYjm5NIk612xy7fRfFYfsJqDWOzR2ToVjRCqlEv01OvVICLro3wFOkeClOJHoUhIVW1D0GwhpCmU3XouSnUo2T4o9hXtXbKtcYh7R7KGXHeHI1eKrdWrp1qfR363cPbOMM+eVbo16LBZbEkNx5ju3VWxpfprG9G8b/gDwJ2mQ7P17mEAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE4LTA5LTE0VDE1OjExOjIzKzAyOjAwOUZQJgAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxOC0wOS0xNFQxNToxMToyMyswMjowMEgb6JoAAAAZdEVYdFNvZnR3YXJlAHd3dy5pbmtzY2FwZS5vcmeb7jwaAAAAAElFTkSuQmCC";
+
+export enum NotificationType {
+  Success,
+  Failure,
+}
+
 export function assert(condition: boolean, message: string = "Assertion failed") {
   if (!condition) {
     if (typeof Error !== undefined) {
@@ -114,20 +125,21 @@ export function rootUrl(): string {
   return "http://0.0.0.0:3140";
 }
 
-export function apiPrefix(): string {
-  return "api/v0";
-}
+const ROOT_URL =
+  process.env.NODE_ENV === "development" ? "http://0.0.0.0:3140" : window.location.origin;
 
-export function metricsUrl(): string {
-  return `${rootUrl()}/${apiPrefix()}/metrics`;
-}
+const API_PREFIX = "api/v0";
+
+const FULL_URL = `${ROOT_URL}/${API_PREFIX}`;
+
+export const METRICS_URL = `${FULL_URL}/metrics`;
 
 export function topicsUrl(topic: string = ""): string {
-  return `${rootUrl()}/${apiPrefix()}/topics/${topic}`;
+  return `${FULL_URL}/topics/${topic}`;
 }
 
 export function subscriptionsUrl(subscription: string = ""): string {
-  return `${rootUrl()}/${apiPrefix()}/subscriptions/${subscription}`;
+  return `${FULL_URL}/subscriptions/${subscription}`;
 }
 
 export function publishUrl(topic: string): string {

@@ -1,6 +1,5 @@
 import classNames from "classnames";
-
-import { NotificationType } from "../utils/types";
+import { NotificationType } from "../utils/util";
 
 interface Props {
   type: NotificationType;
@@ -17,7 +16,8 @@ export function Notification(props: Props) {
         <div class="container">
           <div class={classNames("notification", { "is-danger": fail })}>
             <button class="delete" onClick={props.clear} />
-            <b>{prefix}</b>&nbsp;
+            <b>{prefix}</b>
+            &nbsp;
             {props.message}
           </div>
         </div>

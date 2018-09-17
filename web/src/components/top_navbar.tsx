@@ -1,23 +1,24 @@
 import classNames from "classnames";
 
-import { Tabs } from "../utils/types";
-import { numberAsTimeStr, str2number } from "../utils/util";
+import { Link, withRouter } from "inferno-router";
+import { RouteComponentProps } from "inferno-router/Route";
+import { ICON, numberAsTimeStr, str2number } from "../utils/util";
 
 interface Props {
   displayStats: boolean;
-  tab: Tabs;
   interval: number | null;
   updating: boolean;
   startTime: Date;
   handleStats: () => void;
-  handleTopics: () => void;
-  handleSubscriptions: () => void;
-  handleDocs: () => void;
   update: () => void;
   setUpdateInterval: (interval: number | null) => void;
 }
 
-export function TopNavbar(props: Props) {
+interface PropsWithRouter extends Props, RouteComponentProps<any> {}
+
+export function TopNavbarNoRouter(props: Props) {
+  const propsWithRouter = props as PropsWithRouter;
+  const path = propsWithRouter.location.pathname;
   const uptime = (new Date().getTime() - props.startTime.getTime()) / 1000;
   return (
     <nav class="navbar is-fixed-top">
@@ -26,6 +27,9 @@ export function TopNavbar(props: Props) {
           <a class="navbar-item is-size-3" href="https://github.com/davidMcneil/courier">
             Courier
           </a>
+          <div class="navbar-item is-paddingless">
+            <img src={ICON} />
+          </div>
           <div class="navbar-burger" data-target="topNavbar">
             <span />
             <span />
@@ -40,16 +44,12 @@ export function TopNavbar(props: Props) {
             </a>
             <div class="navbar-item tabs is-boxed">
               <ul>
-                <li class={classNames({ "is-active": props.tab === Tabs.Topics })}>
-                  <a onClick={props.handleTopics}>Topics</a>
+                <li class={classNames({ "is-active": path.startsWith("/topics") })}>
+                  <Link to="/topics">Topics</Link>
                 </li>
-                <li class={classNames({ "is-active": props.tab === Tabs.Subscriptions })}>
-                  <a onClick={props.handleSubscriptions}>Subscriptions</a>
+                <li class={classNames({ "is-active": path.startsWith("/subscriptions") })}>
+                  <Link to="/subscriptions">Subscriptions</Link>
                 </li>
-                {/* For now do not show the docs tab. */}
-                {/* <li class={classNames({ "is-active": props.tab === Tabs.Docs })}>
-                  <a onClick={props.handleDocs}>Docs</a>
-                </li> */}
               </ul>
             </div>
           </div>
@@ -86,3 +86,6 @@ export function TopNavbar(props: Props) {
     </nav>
   );
 }
+
+// tslint:disable-next-line:variable-name
+export const TopNavbar = withRouter(TopNavbarNoRouter);

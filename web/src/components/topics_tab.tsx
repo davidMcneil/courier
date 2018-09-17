@@ -1,13 +1,10 @@
-import classNames from "classnames";
-
 import { CourierState } from "../utils/data_parsers";
-import { NotificationType } from "../utils/types";
+import { NotificationType } from "../utils/util";
 import { NewTopic } from "./new_topic";
 import { Publish } from "./publish";
 import { TopicsTable } from "./topics_table";
 
 interface Props {
-  visible: boolean;
   courierState: CourierState;
   setNotification: (type: NotificationType, message: string) => void;
   setDeleteConfirmation: (message: string, action: () => void) => void;
@@ -16,7 +13,7 @@ interface Props {
 export function TopicsTab(props: Props) {
   const c = props.courierState;
   return (
-    <div class={classNames({ "is-hidden": !props.visible })}>
+    <div>
       <section class="section">
         <div class="container">
           <div class="columns">

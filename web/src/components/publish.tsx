@@ -1,7 +1,5 @@
 import { Component, FormEvent } from "inferno";
-
-import { NotificationType } from "../utils/types";
-import { fetchError2message, HEADERS, publishUrl } from "../utils/util";
+import { fetchError2message, HEADERS, NotificationType, publishUrl } from "../utils/util";
 
 interface Props {
   setNotification: (type: NotificationType, message: string) => void;

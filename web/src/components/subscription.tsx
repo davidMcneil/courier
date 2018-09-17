@@ -1,11 +1,10 @@
 import classNames from "classnames";
 import { Component } from "inferno";
-
 import { SubscriptionMetrics } from "../utils/data_parsers";
-import { NotificationType } from "../utils/types";
 import {
   fetchError2message,
   HEADERS,
+  NotificationType,
   numberAsPercentage,
   numberAsTimeStr,
   subscriptionsUrl,
@@ -53,7 +52,9 @@ export class Subscription extends Component<Props, State> {
           <td class={classNames({ "has-text-danger": m.orphaned })}>{m.topic}</td>
           <td>{m.pending}</td>
           <td>
-            {m.normalizedMessageIndex}&nbsp;/&nbsp;{m.topicMessages}
+            {m.normalizedMessageIndex}
+            &nbsp;/&nbsp;
+            {m.topicMessages}
           </td>
           <td>{numberAsPercentage(m.percentageProcessed)}</td>
           <td>{numberAsTimeStr(age)}</td>

@@ -7,15 +7,19 @@ mod topic_handlers;
 mod types;
 
 use actix;
-use actix_web::http::Method;
+use actix_web::http::{header, Method};
 use actix_web::middleware::{cors, Logger};
-use actix_web::{server, App};
+use actix_web::{server, App, HttpRequest, HttpResponse};
+use include_dir::Dir;
+use mime_guess::guess_mime_type;
 use std::sync::Arc;
 use std::thread;
 use std::time;
 
 pub use self::state::{Config, HttpState};
 use courier::Registry;
+
+const WEB: Dir = include_dir!("../web/dist");
 
 static LOGGER_FORMAT: &'static str = "%a \"%r\" (%s %Ts %bB)";
 
@@ -41,12 +45,25 @@ pub fn create(
     });
 
     move || {
+        let mut web_app = App::new().prefix("/web");
+        // Add the static files to the web app
+        for file in WEB.files() {
+            let path = file.path();
+            let path_str = path.to_string_lossy();
+            let handler = move |_: HttpRequest| {
+                let mime = guess_mime_type(path);
+                let mime_str = format!("{}/{}", mime.type_(), mime.subtype());
+                HttpResponse::Ok()
+                    .header(header::CONTENT_TYPE, mime_str)
+                    .body(file.contents())
+            };
+            if path_str == "index.html" {
+                web_app = web_app.route("/ui", Method::GET, handler);
+            }
+            web_app = web_app.route(&path_str, Method::GET, handler);
+        }
         vec![
-            App::new()
-                .prefix("/web")
-                .route("/ui", Method::GET, general_handlers::html)
-                .route("/src.f34027af.css", Method::GET, general_handlers::css)
-                .route("/src.895bcfb9.js", Method::GET, general_handlers::js)
+            web_app
                 .middleware(Logger::new(LOGGER_FORMAT))
                 .middleware(cors::Cors::build().finish())
                 .boxed(),
@@ -66,25 +83,25 @@ pub fn create(
                             "/{name}/subscriptions",
                             Method::GET,
                             topic_handlers::subscriptions,
+                        ).route(
+                            "/{name}/publish",
+                            Method::POST,
+                            topic_handlers::publish,
                         )
-                        .route("/{name}/publish", Method::POST, topic_handlers::publish)
-                })
-                .scope("/subscriptions", |scope| {
+                }).scope("/subscriptions", |scope| {
                     scope
                         .route(
                             "/{name}",
                             Method::PUT,
                             subscription_handlers::create_with_name,
-                        )
-                        .route("/", Method::PUT, subscription_handlers::create_without_name)
+                        ).route("/", Method::PUT, subscription_handlers::create_without_name)
                         .route("/{name}", Method::PATCH, subscription_handlers::update)
                         .route("/{name}", Method::DELETE, subscription_handlers::delete)
                         .route("/{name}", Method::GET, subscription_handlers::get)
                         .route("/", Method::GET, subscription_handlers::list)
                         .route("/{name}/pull", Method::POST, subscription_handlers::pull)
                         .route("/{name}/ack", Method::POST, subscription_handlers::ack)
-                })
-                .middleware(Logger::new(LOGGER_FORMAT))
+                }).middleware(Logger::new(LOGGER_FORMAT))
                 .middleware(cors::Cors::build().finish())
                 .boxed(),
         ]

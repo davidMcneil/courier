@@ -1,8 +1,14 @@
 import { ChangeEvent, Component, FormEvent } from "inferno";
-
 import { messageFromMessagesJson } from "../utils/data_parsers";
-import { NotificationType } from "../utils/types";
-import { ackUrl, fetchError2message, HEADERS, isArray, isJson, pullUrl } from "../utils/util";
+import {
+  ackUrl,
+  fetchError2message,
+  HEADERS,
+  isArray,
+  isJson,
+  NotificationType,
+  pullUrl,
+} from "../utils/util";
 
 interface Props {
   setNotification: (type: NotificationType, message: string) => void;

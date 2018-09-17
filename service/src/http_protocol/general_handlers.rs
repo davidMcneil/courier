@@ -1,33 +1,11 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
-use actix_web::{http, FromRequest, HttpRequest, HttpResponse, State};
+use actix_web::{FromRequest, HttpRequest, HttpResponse, State};
 use serde_json;
 use std::clone::Clone;
 use std::sync::Arc;
 
 use http_protocol::HttpState;
-
-static HTML: &'static str = include_str!("../../../web/dist/index.html");
-static CSS: &'static str = include_str!("../../../web/dist/src.f34027af.css");
-static JS: &'static str = include_str!("../../../web/dist/src.895bcfb9.js");
-
-pub fn html(_: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok()
-        .header(http::header::CONTENT_TYPE, "text/html")
-        .body(HTML)
-}
-
-pub fn css(_: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok()
-        .header(http::header::CONTENT_TYPE, "text/css")
-        .body(CSS)
-}
-
-pub fn js(_: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok()
-        .header(http::header::CONTENT_TYPE, "application/javascript")
-        .body(JS)
-}
 
 pub fn heartbeat(_: HttpRequest<HttpState>) -> &'static str {
     "heartbeat"

@@ -1,13 +1,10 @@
-import classNames from "classnames";
-
 import { CourierState } from "../utils/data_parsers";
-import { NotificationType } from "../utils/types";
+import { NotificationType } from "../utils/util";
 import { NewSubscription } from "./new_subscription";
 import { Pull } from "./pull";
 import { SubscriptionsTable } from "./subscriptions_table";
 
 interface Props {
-  visible: boolean;
   courierState: CourierState;
   setNotification: (type: NotificationType, message: string) => void;
   setDeleteConfirmation: (message: string, action: () => void) => void;
@@ -15,7 +12,7 @@ interface Props {
 
 export function SubscriptionsTab(props: Props) {
   return (
-    <div class={classNames({ "is-hidden": !props.visible })}>
+    <div>
       <section class="section">
         <div class="container">
           <div class="columns">
