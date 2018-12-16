@@ -2,9 +2,9 @@ language: rust
 sudo: required
 dist: xenial
 addons:
-    apt:
-        packages:
-            - libssl-dev
+  apt:
+    packages:
+      - libssl-dev
 
 rust:
   - stable
@@ -14,6 +14,7 @@ cache: cargo
 matrix:
   allow_failures:
     - rust: nightly
+    - rust: beta
 script:
   - cargo clean
   - cargo build

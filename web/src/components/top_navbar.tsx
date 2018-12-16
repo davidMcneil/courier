@@ -42,15 +42,17 @@ export function TopNavbarNoRouter(props: Props) {
             <a class="navbar-item" onClick={props.handleStats}>
               Stats {props.displayStats ? <span class="arrow-down" /> : <span class="arrow-up" />}
             </a>
-            <div class="navbar-item tabs is-boxed">
-              <ul>
-                <li class={classNames({ "is-active": path.startsWith("/topics") })}>
-                  <Link to="/topics">Topics</Link>
-                </li>
-                <li class={classNames({ "is-active": path.startsWith("/subscriptions") })}>
-                  <Link to="/subscriptions">Subscriptions</Link>
-                </li>
-              </ul>
+            <div class="navbar-item">
+              <div class="tabs is-boxed">
+                <ul>
+                  <li class={classNames({ "is-active": path.startsWith("/topics") })}>
+                    <Link to="/topics">Topics</Link>
+                  </li>
+                  <li class={classNames({ "is-active": path.startsWith("/subscriptions") })}>
+                    <Link to="/subscriptions">Subscriptions</Link>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
           <div class="navbar-end">
