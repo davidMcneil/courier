@@ -1,9 +1,10 @@
 //! The core pubsub module containing [Message](struct.Message.html), [Topic](struct.Topic.html),
 //! and [Subscription](struct.Subscription.html).
 
+use crate::commit_log::{CommitLog, Cursor, Index};
 use chrono::prelude::*;
 use chrono::Duration;
-use commit_log::{CommitLog, Cursor, Index};
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use uuid::Uuid;

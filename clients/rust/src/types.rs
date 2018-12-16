@@ -1,5 +1,6 @@
 use chrono::prelude::*;
 use uuid::Uuid;
+use serde_derive::{Deserialize, Serialize};
 
 /// A message which can be published to a [Topic](struct.Topic.html).
 #[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]

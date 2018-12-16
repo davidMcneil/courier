@@ -3,11 +3,10 @@
 use actix_web::dev::HttpResponseBuilder;
 use actix_web::{HttpResponse, Json, Path, State};
 use chrono::Duration;
-use http_protocol::state::HttpState;
-use http_protocol::types;
-use http_protocol::Config;
+use crate::http_protocol::state::HttpState;
+use crate::http_protocol::types;
+use crate::http_protocol::Config;
 use uuid::Uuid;
-
 use courier::SharedRegistry;
 use courier::TopicMeta;
 

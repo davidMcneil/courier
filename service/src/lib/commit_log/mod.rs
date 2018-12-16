@@ -61,7 +61,7 @@ impl<T: Clone> Index<T> {
 }
 
 impl<T: Clone + Debug> Debug for Index<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Index {{ {:?} }}", self.get())
     }
 }
@@ -156,7 +156,7 @@ impl<T: Clone> Cursor<T> {
 }
 
 impl<T: Clone + Debug> Debug for Cursor<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Cursor {{ {:?} }}", self.peek())
     }
 }
@@ -218,7 +218,7 @@ impl<T> CommitLog<T> {
     ///
     /// Given a function expired, elements will be removed from the tail as long as expired returns
     /// true once expired returns false cleanup will exit.
-    pub fn cleanup(&mut self, expired: &Fn(&T) -> bool) -> usize {
+    pub fn cleanup(&mut self, expired: &dyn Fn(&T) -> bool) -> usize {
         let mut count = 0;
         loop {
             // Check if the head has expired
@@ -275,7 +275,7 @@ impl<T> Drop for CommitLog<T> {
 }
 
 impl<T: Clone + Debug> Debug for CommitLog<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut cursor = Cursor::new_head(self);
         write!(f, "CommitLog {{ ")?;
         while let Some(value) = cursor.next() {

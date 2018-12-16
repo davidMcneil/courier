@@ -1,42 +1,35 @@
-extern crate actix;
-extern crate actix_web;
-extern crate chrono;
-extern crate env_logger;
-extern crate futures;
-#[macro_use]
-extern crate include_dir;
-#[macro_use]
-extern crate log;
-extern crate mime_guess;
-extern crate open;
-extern crate parking_lot;
-extern crate psutil;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
-#[macro_use]
-extern crate structopt;
-extern crate uuid;
-
-extern crate courier;
-
-mod http_protocol;
-
+use actix;
 use chrono::Duration;
 use env_logger::fmt::WriteStyle;
 use env_logger::Builder;
 use log::LevelFilter;
+use log::{error, info};
+use open;
+use serde_derive;
+use serde_json;
+use structopt;
 use structopt::StructOpt;
+
+mod http_protocol;
 
 #[derive(Debug, StructOpt)]
 #[structopt()]
 struct Opt {
     /// An IP address or host the application will listen on
-    #[structopt(default_value = "0.0.0.0", env = "COURIER_HOST", long = "host", short = "H")]
+    #[structopt(
+        default_value = "0.0.0.0",
+        env = "COURIER_HOST",
+        long = "host",
+        short = "H"
+    )]
     host: String,
     /// A port number to listen on
-    #[structopt(default_value = "3140", env = "COURIER_PORT", long = "port", short = "P")]
+    #[structopt(
+        default_value = "3140",
+        env = "COURIER_PORT",
+        long = "port",
+        short = "P"
+    )]
     port: u16,
     /// Log level
     #[structopt(

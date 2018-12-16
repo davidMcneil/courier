@@ -1,4 +1,4 @@
-use commit_log::*;
+use crate::commit_log::*;
 use rand::{thread_rng, Rng};
 
 #[test]

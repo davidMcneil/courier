@@ -1,14 +1,12 @@
+use crate::http_protocol::types::*;
+use crate::http_protocol::*;
 use actix_web::http::{Method, StatusCode};
 use actix_web::{test, HttpMessage};
 use chrono::Duration;
+use courier::{SubscriptionMeta, TopicMeta};
 use futures::Future;
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
-
-use courier::{SubscriptionMeta, TopicMeta};
-
-use http_protocol::types::*;
-use http_protocol::*;
 use std::thread;
 use std::time;
 
@@ -788,6 +786,6 @@ fn http_protocol_general_handlers() {
     let status = get_status(&mut server, "metrics", Method::GET, ());
     assert_eq!(StatusCode::OK, status);
 
-    let status = get_status_with_prefix(&mut server, "web", "ui", Method::GET, ());
+    let status = get_status_with_prefix(&mut server, "/ui", "", Method::GET, ());
     assert_eq!(StatusCode::OK, status);
 }

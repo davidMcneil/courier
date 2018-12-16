@@ -1,24 +1,15 @@
-extern crate chrono;
-extern crate parking_lot;
-extern crate psutil;
-extern crate rand;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
-extern crate uuid;
-
-pub mod commit_log;
-mod core;
-
+pub use crate::core::{Message, Subscription, SubscriptionMeta, Topic, TopicMeta};
 use chrono::prelude::*;
 use chrono::Duration;
 use parking_lot::RwLock;
+use psutil;
+use serde_derive::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub use core::{Message, Subscription, SubscriptionMeta, Topic, TopicMeta};
+pub mod commit_log;
+mod core;
 
 struct TopicStore {
     topic: Topic,
@@ -508,7 +499,7 @@ impl Registry {
 
         // Cleanup the messages of each topic
         let mut messages_removed = 0;
-        for (topic_name, mut topic_store) in topics.iter_mut() {
+        for (topic_name, topic_store) in topics.iter_mut() {
             let count = topic_store.topic.cleanup();
             messages_removed += count;
 

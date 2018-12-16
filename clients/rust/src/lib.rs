@@ -1,27 +1,21 @@
-extern crate chrono;
-extern crate reqwest;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
-extern crate url;
-extern crate uuid;
+use reqwest;
+use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
+use std::error::Error;
+use url;
+use url::Url;
+use uuid::Uuid;
 
 #[cfg(test)]
 mod tests;
 mod types;
 
-use reqwest::header::{ContentType, Headers};
-use std::error::Error;
-use url::Url;
-use uuid::Uuid;
-
-pub use types::{
+pub use crate::types::{
     MessageIdList, MessageList, PullConfig, RawMessage, RawMessageList, Subscription,
     SubscriptionCreateConfig, SubscriptionList, SubscriptionNameList, SubscriptionUpdateConfig,
     Topic, TopicCreateConfig, TopicList, TopicUpdateConfig,
 };
 
+static HEARTBEAT_PATH: &'static str = "/api/v0/heartbeat";
 static TOPICS_PATH: &'static str = "/api/v0/topics";
 static SUBSCRIPTIONS_PATH: &'static str = "/api/v0/subscriptions";
 
@@ -33,12 +27,23 @@ pub struct Client {
 impl Client {
     pub fn new(base_url: &str) -> Result<Self, Box<dyn Error>> {
         let base_url = Url::parse(base_url)?;
-        let mut headers = Headers::new();
-        headers.set(ContentType::json());
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
         let http = reqwest::ClientBuilder::new()
             .default_headers(headers)
             .build()?;
         Ok(Client { base_url, http })
+    }
+
+    pub fn heartbeat(&self) -> bool {
+        let url = match self.base_url.join(HEARTBEAT_PATH) {
+            Ok(url) => url,
+            Err(_) => return false,
+        };
+        match self.http.put(url).send() {
+            Ok(_) => true,
+            Err(_) => false,
+        }
     }
 
     pub fn create_topic(
@@ -47,7 +52,8 @@ impl Client {
         config: &TopicCreateConfig,
     ) -> Result<Topic, Box<dyn Error>> {
         let url = self.base_url.join(&format!("{}/{}", TOPICS_PATH, name))?;
-        Ok(self.http
+        Ok(self
+            .http
             .put(url)
             .json(config)
             .send()?
@@ -68,7 +74,8 @@ impl Client {
         config: &TopicUpdateConfig,
     ) -> Result<Topic, Box<dyn Error>> {
         let url = self.base_url.join(&format!("{}/{}", TOPICS_PATH, name))?;
-        Ok(self.http
+        Ok(self
+            .http
             .patch(url)
             .json(&config)
             .send()?
@@ -97,13 +104,15 @@ impl Client {
     }
 
     pub fn publish(&self, topic: &str, data: Vec<String>) -> Result<MessageIdList, Box<dyn Error>> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("{}/{}/publish", TOPICS_PATH, topic))?;
         let mut raw_messages = Vec::with_capacity(data.len());
         for d in data {
             raw_messages.push(RawMessage::new(d));
         }
-        Ok(self.http
+        Ok(self
+            .http
             .post(url)
             .json(&RawMessageList::new(raw_messages))
             .send()?
@@ -115,7 +124,8 @@ impl Client {
         &self,
         topic: &str,
     ) -> Result<SubscriptionNameList, Box<dyn Error>> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("{}/{}/subscriptions", TOPICS_PATH, topic))?;
         Ok(self.http.get(url).send()?.error_for_status()?.json()?)
     }
@@ -125,9 +135,11 @@ impl Client {
         name: &str,
         config: &SubscriptionCreateConfig,
     ) -> Result<Subscription, Box<dyn Error>> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("{}/{}", SUBSCRIPTIONS_PATH, name))?;
-        Ok(self.http
+        Ok(self
+            .http
             .put(url)
             .json(config)
             .send()?
@@ -147,9 +159,11 @@ impl Client {
         name: &str,
         config: &SubscriptionUpdateConfig,
     ) -> Result<Subscription, Box<dyn Error>> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("{}/{}", SUBSCRIPTIONS_PATH, name))?;
-        Ok(self.http
+        Ok(self
+            .http
             .patch(url)
             .json(&config)
             .send()?
@@ -158,14 +172,16 @@ impl Client {
     }
 
     pub fn delete_subscription(&self, name: &str) -> Result<(), Box<dyn Error>> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("{}/{}", SUBSCRIPTIONS_PATH, name))?;
         self.http.delete(url).send()?.error_for_status()?;
         Ok(())
     }
 
     pub fn get_subscription(&self, name: &str) -> Result<Subscription, Box<dyn Error>> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("{}/{}", SUBSCRIPTIONS_PATH, name))?;
         Ok(self.http.get(url).send()?.error_for_status()?.json()?)
     }
@@ -184,9 +200,11 @@ impl Client {
         subscription: &str,
         max_messages: usize,
     ) -> Result<MessageList, Box<dyn Error>> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("{}/{}/pull", SUBSCRIPTIONS_PATH, subscription))?;
-        Ok(self.http
+        Ok(self
+            .http
             .post(url)
             .json(&PullConfig::new(max_messages))
             .send()?
@@ -207,9 +225,11 @@ impl Client {
         subscription: &str,
         message_ids: Vec<Uuid>,
     ) -> Result<MessageIdList, Box<dyn Error>> {
-        let url = self.base_url
+        let url = self
+            .base_url
             .join(&format!("{}/{}/ack", SUBSCRIPTIONS_PATH, subscription))?;
-        Ok(self.http
+        Ok(self
+            .http
             .post(url)
             .json(&MessageIdList::new(message_ids))
             .send()?

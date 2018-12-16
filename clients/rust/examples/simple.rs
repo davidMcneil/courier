@@ -1,15 +1,12 @@
-extern crate chrono;
-extern crate courier_client;
-extern crate rand;
-
 use chrono::Utc;
+use courier_client::{Client, MessageList, SubscriptionCreateConfig, TopicCreateConfig};
 use rand::distributions::Uniform;
-use rand::{thread_rng, Rng};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
+use rand::Rng;
 use std::error::Error;
 use std::thread;
 use std::time;
-
-use courier_client::{Client, MessageList, SubscriptionCreateConfig, TopicCreateConfig};
 
 static ADDRESS: &str = "http://127.0.0.1:3140";
 
@@ -41,7 +38,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
         loop {
             let MessageList { mut messages } = client.pull("sub1", rng.sample(uniform2)).unwrap();
-            thread_rng().shuffle(&mut messages);
+            messages.shuffle(&mut rng);
             let to_ack = messages
                 .iter()
                 .take(rng.sample(uniform2))

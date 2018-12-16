@@ -10,7 +10,8 @@ use actix;
 use actix_web::http::{header, Method, NormalizePath};
 use actix_web::middleware::{cors, Logger};
 use actix_web::{server, App, HttpRequest, HttpResponse};
-use include_dir::Dir;
+use include_dir::{include_dir, include_dir_impl, Dir};
+use log::debug;
 use mime_guess::guess_mime_type;
 use std::sync::Arc;
 use std::thread;
@@ -19,13 +20,14 @@ use std::time;
 pub use self::state::{Config, HttpState};
 use courier::Registry;
 
-const WEB: Dir = include_dir!("../web/dist");
+const WEB: Dir<'_> = include_dir!("../web/dist");
 
 static LOGGER_FORMAT: &'static str = "%a \"%r\" (%s %Ts %bB)";
 
 pub fn create(
     config: Config,
-) -> impl Fn() -> Vec<Box<server::HttpHandler<Task = Box<server::HttpHandlerTask>>>> {
+) -> impl Fn() -> Vec<Box<dyn server::HttpHandler<Task = Box<dyn server::HttpHandlerTask>>>> + Clone
+{
     let registry = Registry::new();
     let registry_cleanup = Arc::clone(&registry);
 
@@ -60,7 +62,8 @@ pub fn create(
             web_app = web_app.route(&path_str, Method::GET, handler);
         }
         // Register the index route last
-        let file = WEB.get_file("index.html")
+        let file = WEB
+            .get_file("index.html")
             .expect("no index.html file found");
         web_app = web_app
             .route("{tail:.*}", Method::GET, move |_: HttpRequest| {

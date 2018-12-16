@@ -1,6 +1,6 @@
-use uuid::Uuid;
-
 use courier::{Message, SubscriptionMeta, TopicMeta};
+use serde_derive::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct TopicCreateConfig {

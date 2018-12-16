@@ -1,12 +1,16 @@
+use crate::types::*;
+use crate::Client;
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use types::*;
 use uuid::Uuid;
-use Client;
 
 #[test]
 fn client() {
     let client = Client::new("http://127.0.0.1:3140").unwrap();
+
+    if !client.heartbeat() {
+        return;
+    }
 
     let topic_name = "rust-topic";
     let sub_name = "rust-sub";

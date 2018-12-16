@@ -5,7 +5,7 @@ use serde_json;
 use std::clone::Clone;
 use std::sync::Arc;
 
-use http_protocol::HttpState;
+use crate::http_protocol::HttpState;
 
 pub fn heartbeat(_: HttpRequest<HttpState>) -> &'static str {
     "heartbeat"
