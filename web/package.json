@@ -14,21 +14,23 @@
     "size": "du -sh dist/* && du -sh dist/"
   },
   "dependencies": {
-    "bulma": "^0.7.1",
+    "bulma": "^0.7.2",
     "classnames": "^2.2.6",
     "history": "^4.7.2",
     "hoist-non-inferno-statics": "^1.1.3",
-    "inferno": "^5",
-    "inferno-router": "^5.6.1",
-    "inferno-shared": "^5",
+    "inferno": "^7.0.5",
+    "inferno-router": "^7.0.5",
+    "inferno-shared": "^7.0.5",
     "path-to-regexp-es6": "1.7.0"
   },
   "devDependencies": {
-    "@types/classnames": "^2.2.6",
-    "babel-plugin-inferno": "^5.1.0",
-    "node-sass": "^4.9.3",
-    "parcel-bundler": "^1.9.7",
-    "tslint": "^5.11.0",
-    "typescript": "^3.0.1"
+    "@babel/core": "^7.2.2",
+    "@types/classnames": "^2.2.7",
+    "babel-plugin-inferno": "^6.0.4",
+    "babel-preset-env": "^1.7.0",
+    "node-sass": "^4.11.0",
+    "parcel-bundler": "^1.11.0",
+    "tslint": "^5.12.0",
+    "typescript": "^3.2.4"
   }
 }

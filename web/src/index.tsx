@@ -172,7 +172,7 @@ class App extends Component<{}, State> {
           const courierState = newCourierState();
           return {
             courierState,
-            previousCourierState: newCourierState,
+            previousCourierState: newCourierState(),
           };
         }, helper);
         const message = fetchError2message(error);

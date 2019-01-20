@@ -1,7 +1,7 @@
 import classNames from "classnames";
 
 import { Link, withRouter } from "inferno-router";
-import { RouteComponentProps } from "inferno-router/Route";
+import { RouteComponentProps } from "inferno-router/dist/Route";
 import { ICON, numberAsTimeStr, str2number } from "../utils/util";
 
 interface Props {

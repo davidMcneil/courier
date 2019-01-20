@@ -1,12 +1,9 @@
-use actix;
 use chrono::Duration;
 use env_logger::fmt::WriteStyle;
 use env_logger::Builder;
 use log::LevelFilter;
 use log::{error, info};
 use open;
-use serde_derive;
-use serde_json;
 use structopt;
 use structopt::StructOpt;
 
