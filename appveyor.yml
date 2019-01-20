@@ -54,7 +54,7 @@ test_script:
 
 before_deploy:
   # TODO Update this to build the artifacts that matter to you
-  - cargo rustc --target %TARGET% --release --bin courier -- -C lto
+  - cargo rustc --target %TARGET% --release -p courier --bin courier -- -C lto
   - ps: ci\before_deploy.ps1
 
 deploy:
@@ -64,7 +64,7 @@ deploy:
   # - Encrypt it. Go to https://ci.appveyor.com/tools/encrypt
   # - Paste the output down here
   auth_token:
-    secure: UAfXFVn7HomTQpRRWf6xvUlD3CHo84uIigEKiTL2vyxBj6lifiSXUTbocZP64KzIMAzIsI7sDk1PJ6IC/wmYsCETSVjcQWETDNx3qdVm+HMQQmgZX+Lq1ID9lNAjx03PFRzWfb7itrUK0FWCJGkQ8nvvYBQ+FyIzXfUQ3AE4ZG8QPdtHbEiLYvrS081kTCgm9fq0b62ZaR8UGQPiHinNPGVnAwAAjbQO0nqwpuUjFM74EErpLDrmtppbmMOxiM05FjccTp2DB4/nCs/QYlFX5tthwccQZT2tjKwoyjp2W/0ctTRF013XyfqQ/N7avrmSUuuKcof3O/2HUKwdQ7r4LdS1dBzQqx8RHKCYlQgx3hgSKo5Sxmaj2xqayHFWF1SWTDtDZl0Jo+GiwkEly2MZTk4mnBp3mYedJk7d6ujNM0pu8JY0rG77oKKVpFP56v/ngweDAwBJf2h8tLhPVrVHDClQ7I6wYeYfiO8LRoWqM2Jn3tkg2xmq74xRJ1+SizdsAQ5tsEOQPREsIrJrn2jNDnBnO+MZRnjUQa/G3A8hjNE9TirAqAZGw7mE+EKCZmGZrS3/da8jkJIYYLbNsVjXBofVpc4LwDBBxyLi11HeQ5CIvN1TNxJv4Vpw6n8jV8O0uyw9bpeumG7OLUQSkVBV/13mVxqmmjcK3yAO+G9h4wY=
+    secure: 7XvnKQJ2QD1+Anm5rCw1/QFEvMkixKytC3SdIYPPazGadYuL5IoBWWTcr4mfk/2c
   description: ""
   on:
     # TODO Here you can pick which targets will generate binary releases
