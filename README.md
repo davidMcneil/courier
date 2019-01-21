@@ -10,13 +10,11 @@ A simple pub/sub service.
 
 Courier provides an in-memory, non-distributed pub/sub service with an http, json interface. There are three primary objects that apps using Courier interact with **messages**, **topics**, and **subscriptions**. The basic flow is that apps **pub**lish messages to a given topic while **sub**scribers read messages from the topic to which they are subscribed.
 
+_I am currently seeking a full-time position writing Rust code. See my [resume](https://github.com/davidMcneil/resume/blob/master/resume.pdf) and please contact me with any opportunitites._
+
 ## Install
 
-**Linux** - Simply grab the [latest release](https://github.com/davidMcneil/courier/releases/latest). It is 100% statically linked and _should_ run on any x86, unix-like system.
-
-**macOS** - Currently Courier is not distributed for macOS.
-
-**Windows** - Currently Courier is not distributed for Windows.
+Grab the [latest release](https://github.com/davidMcneil/courier/releases/latest) for your architecture. The `x86_64-unknown-linux-musl` is 100% statically linked and _should_ run on any x86, unix-like system.
 
 ## HTTP JSON API <a name="http_json_api"></a>
 
@@ -437,11 +435,8 @@ where successfully acked.
 
 This project makes heavy use of the [rust](https://www.rust-lang.org/en-US/) ecosystem. It is highly recommended to use [rustup](https://rustup.rs/) and [cargo](https://github.com/rust-lang/cargo) when working on Courier.
 
-Courier is developed with rust version 1.27.
-
 Courier also depends on:
 
-- [uber-dev](https://github.com/davidMcneil/uber-dev) - for offline builds
 - [rustfmt](https://github.com/rust-lang-nursery/rustfmt) - for code formatting
 - [clippy](https://github.com/rust-lang-nursery/rust-clippy) - for linting
 - [tarpaulin](https://github.com/xd009642/tarpaulin) - for code coverage

@@ -1,14 +1,14 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 
-use actix_web::dev::HttpResponseBuilder;
-use actix_web::{HttpResponse, Json, Path, State};
-use chrono::Duration;
 use crate::http_protocol::state::HttpState;
 use crate::http_protocol::types;
 use crate::http_protocol::Config;
-use uuid::Uuid;
+use actix_web::dev::HttpResponseBuilder;
+use actix_web::{HttpResponse, Json, Path, State};
+use chrono::Duration;
 use courier::SharedRegistry;
 use courier::TopicMeta;
+use uuid::Uuid;
 
 fn create(
     name: &str,
