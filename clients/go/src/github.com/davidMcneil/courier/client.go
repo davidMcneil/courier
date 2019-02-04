@@ -11,8 +11,8 @@ import (
 	"path"
 )
 
-const topicsPath = "/api/v0/topics"
-const subscriptionsPath = "/api/v0/subscriptions"
+const topicsPath = "/api/v1/topics"
+const subscriptionsPath = "/api/v1/subscriptions"
 
 // Client TODO
 type Client struct {

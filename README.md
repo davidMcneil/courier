@@ -6,15 +6,19 @@
 [![License](http://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE-MIT)
 [![License](http://img.shields.io/badge/license-APACHE-blue.svg)](./LICENSE-APACHE)
 
-A simple pub/sub service.
+Courier provides an in-memory pub/sub service with an HTTP, JSON interface. There are three primary objects that apps using Courier interact with **messages**, **topics**, and **subscriptions**. The basic flow is that apps **pub**lish messages to a given topic while **sub**scribers read messages from the topic to which they are subscribed.
 
-Courier provides an in-memory, non-distributed pub/sub service with an http, json interface. There are three primary objects that apps using Courier interact with **messages**, **topics**, and **subscriptions**. The basic flow is that apps **pub**lish messages to a given topic while **sub**scribers read messages from the topic to which they are subscribed.
-
-_I am currently seeking a full-time position writing Rust code. See my [resume](https://github.com/davidMcneil/resume/blob/master/resume.pdf) and please contact me with any opportunitites._
+_I am a full-stack software engineer whose language of choice is Rust. I am interested in pursuing new opportunities. See my [resume](https://github.com/davidMcneil/resume/raw/master/resume.pdf) and please contact me with potential openings._
 
 ## Install
 
-Grab the [latest release](https://github.com/davidMcneil/courier/releases/latest) for your architecture. The `x86_64-unknown-linux-musl` is 100% statically linked and _should_ run on any x86, unix-like system.
+Grab the [latest release](https://github.com/davidMcneil/courier/releases/latest). The `x86_64-unknown-linux-musl` is 100% statically linked and _should_ run on any x86, unix-like system. Currently, Courier is not built for other architectures.
+
+## Setup
+
+Run `courier -h` to see commands and options. If you execute `courier run`, the services will be bound to host `0.0.0.0` on port `3140`. Run `courier ui` to open up your default web browser to the management page or navigate your browser to [http://0.0.0.0:3140/ui](http://0.0.0.0:3140/ui)
+
+You can interact with Courier through the web interface or programmatically through the HTTP, JSON API. For examples see the C++, Go, Python, and Rust [clients]().
 
 ## HTTP JSON API <a name="http_json_api"></a>
 
@@ -47,19 +51,19 @@ All messages require the following HTTP headers to be set:
 
 ### Topic <a name="topic_type"></a>
 
-```json
+```js
 {
-  "name": "string",
-  "message_ttl": "i64",
-  "ttl": "i64",
-  "created": "string",
-  "updated": "string"
+  "name": "string", // The name of the topic
+  "message_ttl": "i64", // The time to live (ttl) applied to all messages, use 0 for no ttl (seconds)
+  "ttl": "i64", // The time to live (ttl) of the topic, use 0 for no ttl (seconds)
+  "created": "string", // When the topic was created as an ISO 8601 datetime string (UTC)
+  "updated": "string" // // When the topic was last updated as an ISO 8601 datetime string (UTC)
 }
 ```
 
 ### TopicList <a name="topic_list_type"></a>
 
-```json
+```js
 {
   "topics": "Topic[]"
 }
@@ -67,20 +71,20 @@ All messages require the following HTTP headers to be set:
 
 ### Subscription <a name="subscription_type"></a>
 
-```json
+```js
 {
-  "name": "string",
-  "topic": "string",
-  "ack_deadline": "i64",
-  "ttl": "i64",
-  "created": "string",
-  "updated": "string"
+  "name": "string", // The name of the subscriptions
+  "topic": "string", // The name of the topic to subscribe to
+  "ack_deadline": "i64", // The amount of time given to ack a message before it is resent (seconds)
+  "ttl": "i64", // The time to live (ttl) of the subscription, use 0 for no ttl (seconds)
+  "created": "string", // When the subscription was created as an ISO 8601 datetime string (UTC)
+  "updated": "string" // // When the subscription was last updated as an ISO 8601 datetime string (UTC)
 }
 ```
 
 ### SubscriptionList <a name="topic_list_type"></a>
 
-```json
+```js
 {
   "subscriptions": "Subscription[]"
 }
@@ -88,7 +92,7 @@ All messages require the following HTTP headers to be set:
 
 ### SubscriptionNameList <a name="subscription_name_list_type"></a>
 
-```json
+```js
 {
   "subscription_names": "string[]"
 }
@@ -96,26 +100,26 @@ All messages require the following HTTP headers to be set:
 
 ### RawMessage <a name="raw_message_type"></a>
 
-```json
+```js
 {
-  "data": "string"
+  "data": "string" // The messages contents as a string blob
 }
 ```
 
 ### Message <a name="message_type"></a>
 
-```json
+```js
 {
-  "id": "string",
-  "time": "string", // The time the message was published
+  "id": "string", // The unique id of the message
+  "time": "string", // When the messages was published as an ISO 8601 datetime string (UTC)
   "tries": "u32", // The number of times the message has been pulled
-  "data": "string"
+  "data": "string" // The messages contents as a string blob
 }
 ```
 
 ### MessageList <a name="message_list_type"></a>
 
-```json
+```js
 {
   "messages": "Message[]"
 }
@@ -123,7 +127,7 @@ All messages require the following HTTP headers to be set:
 
 ### MessageIdList <a name="message_id_list_type"></a>
 
-```json
+```js
 {
   "message_ids": "string[]"
 }
@@ -131,13 +135,13 @@ All messages require the following HTTP headers to be set:
 
 ### Topic End Points <a name="topic_end_points"></a>
 
-#### Create - (PUT) /api/v0/topics/&lt;topic&gt; <a name="topic_create"></a>
+#### Create - (PUT) /api/v1/topics/&lt;topic&gt; <a name="topic_create"></a>
 
 Create a new topic.
 
 ##### Request
 
-```json
+```js
 {
   "message_ttl": "u32",
   "ttl": "u32"
@@ -157,13 +161,13 @@ Create a new topic.
 | 201 (Created)  | [Topic](#topic_type) | Successfully created a new topic                                                |
 | 409 (Conflict) | &lt;empty&gt;        | Could not create a topic because a topic with the specified name already exists |
 
-#### Update - (PATCH) /api/v0/topics/&lt;topic&gt; <a name="topic_update"></a>
+#### Update - (PATCH) /api/v1/topics/&lt;topic&gt; <a name="topic_update"></a>
 
 Update a topic. Updates the topic's `updated` field regardless of if a value is actually updated.
 
 ##### Request
 
-```json
+```js
 {
   "message_ttl": "u32",
   "ttl": "u32"
@@ -183,7 +187,7 @@ Update a topic. Updates the topic's `updated` field regardless of if a value is 
 | 200 (Ok)        | [Topic](#topic_type) | Successfully updated the topic                     |
 | 404 (Not Found) | &lt;empty&gt;        | A topic with the specified name could not be found |
 
-#### Delete - (DELETE) /api/v0/topics/&lt;topic&gt; <a name="topic_delete"></a>
+#### Delete - (DELETE) /api/v1/topics/&lt;topic&gt; <a name="topic_delete"></a>
 
 Delete a topic. This will also delete all the subscriptions subscribed to this topic.
 
@@ -200,7 +204,7 @@ Delete a topic. This will also delete all the subscriptions subscribed to this t
 | 200 (Ok)        | &lt;empty&gt; | Successfully deleted the topic                     |
 | 404 (Not Found) | &lt;empty&gt; | A topic with the specified name could not be found |
 
-#### Get - (GET) /api/v0/topics/&lt;topic&gt; <a name="topic_get"></a>
+#### Get - (GET) /api/v1/topics/&lt;topic&gt; <a name="topic_get"></a>
 
 Get a topic.
 
@@ -217,7 +221,7 @@ Get a topic.
 | 200 (Ok)        | [Topic](#topic_type) | Successfully retrieved the topic                   |
 | 404 (Not Found) | &lt;empty&gt;        | A topic with the specified name could not be found |
 
-#### List - (GET) /api/v0/topics <a name="topic_list"></a>
+#### List - (GET) /api/v1/topics <a name="topic_list"></a>
 
 List all of the topics.
 
@@ -233,7 +237,7 @@ List all of the topics.
 | ----------- | ----------------------------- | ------------------------------------- |
 | 200 (Ok)    | [TopicList](#topic_list_type) | Successfully retrieved the topic list |
 
-#### Subscriptions - (GET) /api/v0/topics/&lt;topic&gt;/subscriptions <a name="topic_subscriptions"></a>
+#### Subscriptions - (GET) /api/v1/topics/&lt;topic&gt;/subscriptions <a name="topic_subscriptions"></a>
 
 List all of the subscription names which are subscribed to this topic.
 
@@ -250,11 +254,11 @@ List all of the subscription names which are subscribed to this topic.
 | 200 (Ok)        | [SubscriptionNameList](#subscription_name_list_type) | Successfully retrieved the subscription name list  |
 | 404 (Not Found) | &lt;empty&gt;                                        | A topic with the specified name could not be found |
 
-#### Publish - (POST) /api/v0/topics/&lt;topic&gt;/publish <a name="topic_publish"></a>
+#### Publish - (POST) /api/v1/topics/&lt;topic&gt;/publish <a name="topic_publish"></a>
 
 Add messages to a topic. Updates the topics `updated` fields
 
-```json
+```js
 {
   "raw_messages": "RawMessage[]"
 }
@@ -276,13 +280,13 @@ Add messages to a topic. Updates the topics `updated` fields
 
 ### Subscription End Points <a name="subscription_end_points"></a>
 
-#### Create - (PUT) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_create"></a>
+#### Create - (PUT) /api/v1/subscriptions/&lt;subscription&gt; <a name="subscription_create"></a>
 
 Create a new subscription.
 
 ##### Request
 
-```json
+```js
 {
   "topic": "string",
   "ack_deadline": "u32",
@@ -306,13 +310,13 @@ Create a new subscription.
 | 201 (Created)  | [Subscription](#subscription_type) | Successfully created a new subscription                                                       |
 | 409 (Conflict) | &lt;empty&gt;                      | Could not create a subscription because a subscription with the specified name already exists |
 
-#### Update - (PATCH) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_update"></a>
+#### Update - (PATCH) /api/v1/subscriptions/&lt;subscription&gt; <a name="subscription_update"></a>
 
 Update a subscription. Update the subscriptions `updated` field regardless of if a value is actually updated.
 
 ##### Request
 
-```json
+```js
 {
   "ack_deadline": "u32",
   "ttl": "u32"
@@ -332,7 +336,7 @@ Update a subscription. Update the subscriptions `updated` field regardless of if
 | 200 (Ok)        | [Subscription](#subscription_type) | Successfully updated the subscription                     |
 | 404 (Not Found) | &lt;empty&gt;                      | A subscription with the specified name could not be found |
 
-#### Delete - (DELETE) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_delete"></a>
+#### Delete - (DELETE) /api/v1/subscriptions/&lt;subscription&gt; <a name="subscription_delete"></a>
 
 Delete a subscription.
 
@@ -349,7 +353,7 @@ Delete a subscription.
 | 200 (Ok)        | &lt;empty&gt; | Successfully deleted the subscription                     |
 | 404 (Not Found) | &lt;empty&gt; | A subscription with the specified name could not be found |
 
-#### Get - (GET) /api/v0/subscriptions/&lt;subscription&gt; <a name="subscription_get"></a>
+#### Get - (GET) /api/v1/subscriptions/&lt;subscription&gt; <a name="subscription_get"></a>
 
 Get a subscription.
 
@@ -366,7 +370,7 @@ Get a subscription.
 | 200 (Ok)        | [Subscription](#subscription_type) | Successfully retrieved the subscription                   |
 | 404 (Not Found) | &lt;empty&gt;                      | A subscription with the specified name could not be found |
 
-#### List - (GET) /api/v0/subscriptions <a name="subscription_list"></a>
+#### List - (GET) /api/v1/subscriptions <a name="subscription_list"></a>
 
 List all of the subscriptions.
 
@@ -382,11 +386,11 @@ List all of the subscriptions.
 | ----------- | ------------------------------------------- | -------------------------------------------- |
 | 200 (Ok)    | [SubscriptionList](#subscription_list_type) | Successfully retrieved the subscription list |
 
-#### Pull - (POST) /api/v0/subscriptions/&lt;subscription&gt;/pull <a name="subscription_pull"></a>
+#### Pull - (POST) /api/v1/subscriptions/&lt;subscription&gt;/pull <a name="subscription_pull"></a>
 
 Pull messages from a subscription. Updates the subscriptions `updated` field.
 
-```json
+```js
 {
   "max_messages": "u32"
 }
@@ -406,12 +410,12 @@ Pull messages from a subscription. Updates the subscriptions `updated` field.
 | 200 (Ok)        | [MessageList](#message_list_type) | Successfully retrieved the messages                       |
 | 404 (Not Found) | &lt;empty&gt;                     | A subscription with the specified name could not be found |
 
-#### Ack - (POST) /api/v0/subscriptions/&lt;subscription&gt;/ack <a name="subscription_ack"></a>
+#### Ack - (POST) /api/v1/subscriptions/&lt;subscription&gt;/ack <a name="subscription_ack"></a>
 
 Acknowledged that messages have been processed. Updates the subscriptions `updated` field. Returns only the ids which
 where successfully acked.
 
-```json
+```js
 {
   "message_ids": "string[]"
 }
@@ -497,8 +501,8 @@ Clean
 
 Create a topic and subscription. Publish a message to the topic and then pull and ack the message.
 
-    > curl -X PUT -H "Content-Type: application/json" -d '{"message_ttl": 600}' http://localhost:3140/api/v0/topics/topic0 && echo
-    > curl -X PUT -H "Content-Type: application/json" -d '{"topic": "topic0", "ack_deadline": 60}' http://localhost:3140/api/v0/subscriptions/sub0 && echo
-    > curl -X POST -H "content-Type: application/json" -d '{"messages": [{"data": "testing 123"}]}' http://localhost:3140/api/v0/topics/topic0/publish && echo
-    > curl -X POST -H "Content-Type: application/json" -d '{}' http://localhost:3140/api/v0/subscriptions/sub0/pull && echo
-    > curl -X POST -H "Content-Type: application/json" -d '{"message_ids": ["<some id>"]}' http://localhost:3140/api/v0/subscriptions/sub0/ack && echo
+    > curl -X PUT -H "Content-Type: application/json" -d '{"message_ttl": 600}' http://localhost:3140/api/v1/topics/topic0 && echo
+    > curl -X PUT -H "Content-Type: application/json" -d '{"topic": "topic0", "ack_deadline": 60}' http://localhost:3140/api/v1/subscriptions/sub0 && echo
+    > curl -X POST -H "content-Type: application/json" -d '{"messages": [{"data": "testing 123"}]}' http://localhost:3140/api/v1/topics/topic0/publish && echo
+    > curl -X POST -H "Content-Type: application/json" -d '{}' http://localhost:3140/api/v1/subscriptions/sub0/pull && echo
+    > curl -X POST -H "Content-Type: application/json" -d '{"message_ids": ["<some id>"]}' http://localhost:3140/api/v1/subscriptions/sub0/ack && echo

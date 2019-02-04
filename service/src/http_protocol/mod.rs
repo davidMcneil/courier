@@ -78,7 +78,7 @@ pub fn create(
                 .middleware(cors::Cors::build().finish())
                 .boxed(),
             App::with_state(HttpState::new(&registry, &config))
-                .prefix("/api/v0")
+                .prefix("/api/v1")
                 .route("/heartbeat", Method::GET, general_handlers::heartbeat)
                 .route("/metrics", Method::GET, general_handlers::metrics)
                 .scope("/topics", |scope| {

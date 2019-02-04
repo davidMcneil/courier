@@ -1,8 +1,8 @@
 import requests
 from urlparse import urljoin
 
-topics_path = "/api/v0/topics"
-subscriptions_path = "/api/v0/subscriptions"
+topics_path = "/api/v1/topics"
+subscriptions_path = "/api/v1/subscriptions"
 
 
 class Client:

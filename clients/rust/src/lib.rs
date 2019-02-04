@@ -15,9 +15,9 @@ pub use crate::types::{
     Topic, TopicCreateConfig, TopicList, TopicUpdateConfig,
 };
 
-static HEARTBEAT_PATH: &'static str = "/api/v0/heartbeat";
-static TOPICS_PATH: &'static str = "/api/v0/topics";
-static SUBSCRIPTIONS_PATH: &'static str = "/api/v0/subscriptions";
+static HEARTBEAT_PATH: &'static str = "/api/v1/heartbeat";
+static TOPICS_PATH: &'static str = "/api/v1/topics";
+static SUBSCRIPTIONS_PATH: &'static str = "/api/v1/subscriptions";
 
 pub struct Client {
     base_url: url::Url,

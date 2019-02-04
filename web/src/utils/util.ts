@@ -130,7 +130,7 @@ export const BASE_PATH = process.env.NODE_ENV === "development" ? "/" : "/ui";
 const ROOT_URL =
   process.env.NODE_ENV === "development" ? "http://0.0.0.0:3140" : window.location.origin;
 
-const API_PREFIX = "api/v0";
+const API_PREFIX = "api/v1";
 
 const FULL_URL = `${ROOT_URL}/${API_PREFIX}`;
 

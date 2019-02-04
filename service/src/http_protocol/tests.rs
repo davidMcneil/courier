@@ -33,7 +33,7 @@ fn get_status<T>(server: &mut test::TestServer, path: &str, method: Method, json
 where
     T: Serialize,
 {
-    get_status_with_prefix(server, "api/v0", path, method, json)
+    get_status_with_prefix(server, "api/v1", path, method, json)
 }
 
 fn get_response<T, R>(
@@ -47,7 +47,7 @@ where
     R: DeserializeOwned + 'static,
 {
     let request = server
-        .client(method, &format!("api/v0/{}", path))
+        .client(method, &format!("api/v1/{}", path))
         .content_type("application/json")
         .json(json)
         .unwrap();

@@ -25,8 +25,8 @@ enum class HttpMethod {
 
 class Client {
    public:
-    static constexpr const char* topics_path = "/api/v0/topics";
-    static constexpr const char* subscriptions_path = "/api/v0/subscriptions";
+    static constexpr const char* topics_path = "/api/v1/topics";
+    static constexpr const char* subscriptions_path = "/api/v1/subscriptions";
 
     Client(const std::string& base_url);
 
